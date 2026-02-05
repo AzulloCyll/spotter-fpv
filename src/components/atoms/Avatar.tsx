@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Image, StyleSheet, type ViewStyle } from 'react-native';
-import { theme } from '../../theme';
+import { useTheme } from '../../theme/ThemeContext';
 
 interface AvatarProps {
     source?: string;
@@ -13,18 +13,21 @@ export const Avatar: React.FC<AvatarProps> = ({
     size = 50,
     style
 }) => {
+    const { theme } = useTheme();
+    const dynamicStyles = getStyles(theme);
+
     return (
-        <View style={[styles.container, { width: size, height: size, borderRadius: size / 2 }, style]}>
+        <View style={[dynamicStyles.container, { width: size, height: size, borderRadius: size / 2 }, style]}>
             <Image
                 source={{ uri: source }}
-                style={[styles.image, { borderRadius: size / 2 }]}
+                style={[dynamicStyles.image, { borderRadius: size / 2 }]}
             />
-            <View style={styles.onlineBadge} />
+            <View style={dynamicStyles.onlineBadge} />
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
     container: {
         borderWidth: 2,
         borderColor: theme.colors.primary,

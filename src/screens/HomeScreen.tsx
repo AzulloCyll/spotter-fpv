@@ -1,16 +1,19 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View, SafeAreaView } from 'react-native';
-import { theme } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { WeatherSummary } from '../components/organisms/WeatherSummary';
 import { QuickNavigation } from '../components/organisms/QuickNavigation';
 import { TopBar } from '../components/organisms/TopBar';
 import { FlightStatus } from '../components/organisms/FlightStatus';
 
 export default function HomeScreen({ navigation }: any) {
+  const { theme } = useTheme();
+  const dynamicStyles = getStyles(theme);
+
   return (
-    <View style={styles.safeArea}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.topSpacer} />
+    <View style={dynamicStyles.safeArea}>
+      <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
+        <View style={dynamicStyles.topSpacer} />
         {/* Organizm: TopBar z Profilem i Alertami */}
         <TopBar />
 
@@ -30,7 +33,7 @@ export default function HomeScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: theme.colors.background,
@@ -39,6 +42,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topSpacer: {
-    height: 80, // Zmniejszony odstęp pod mniejszy TopBar
+    height: 80,
   }
 });

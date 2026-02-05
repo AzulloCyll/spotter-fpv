@@ -16,16 +16,20 @@ export const ActionCard: React.FC<ActionCardProps> = ({
     iconBgColor,
     title,
     description,
-    onPress
+    onPress,
 }) => {
     return (
-        <TouchableOpacity style={styles.card} onPress={onPress}>
+        <TouchableOpacity
+            activeOpacity={0.7}
+            style={styles.card}
+            onPress={onPress}
+        >
             <View style={[styles.iconCircle, { backgroundColor: iconBgColor }]}>
                 {icon}
             </View>
             <View style={styles.cardContent}>
-                <Typography variant="h2">{title}</Typography>
-                <Typography variant="caption" color="textSecondary" style={styles.desc}>
+                <Typography variant="h3">{title}</Typography>
+                <Typography variant="bodySmall" color="textSecondary">
                     {description}
                 </Typography>
             </View>
@@ -38,24 +42,21 @@ const styles = StyleSheet.create({
         backgroundColor: theme.colors.surface,
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 15,
-        borderRadius: 20,
-        marginBottom: 15,
+        padding: theme.spacing.md,
+        borderRadius: theme.borderRadius.md,
+        marginBottom: theme.spacing.sm + 4,
         borderWidth: 1,
-        borderColor: '#333',
+        borderColor: theme.colors.border,
     },
     iconCircle: {
-        width: 60,
-        height: 60,
-        borderRadius: 30,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         justifyContent: 'center',
         alignItems: 'center',
     },
     cardContent: {
-        marginLeft: 15,
+        marginLeft: theme.spacing.md,
         flex: 1,
-    },
-    desc: {
-        marginTop: 2,
     }
 });

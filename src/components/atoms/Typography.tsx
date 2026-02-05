@@ -1,24 +1,36 @@
 import React from 'react';
-import { Text, TextProps, StyleSheet } from 'react-native';
-import { theme } from '../../theme';
+import { Text, TextProps, StyleSheet, TextStyle } from 'react-native';
+import { useTheme } from '../../theme/ThemeContext';
 
 interface TypographyProps extends TextProps {
-    variant?: 'h1' | 'h2' | 'body' | 'caption';
-    color?: keyof typeof theme.colors;
+    variant?: 'h1' | 'h2' | 'h3' | 'body' | 'bodySmall' | 'caption' | 'label';
+    color?: string; // Or dynamic key
+    align?: TextStyle['textAlign'];
+    weight?: TextStyle['fontWeight'];
+    lineHeight?: number;
 }
 
 export const Typography: React.FC<TypographyProps> = ({
     variant = 'body',
     color = 'text',
+    align = 'left',
+    weight,
+    lineHeight,
     style,
     children,
     ...props
 }) => {
+    const { theme } = useTheme();
+    const typographyStyle = theme.typography[variant as keyof typeof theme.typography];
+    const textColor = theme.colors[color as keyof typeof theme.colors] || color;
+
     return (
         <Text
             style={[
-                styles[variant],
-                { color: theme.colors[color] },
+                typographyStyle as any,
+                { color: textColor, textAlign: align },
+                weight ? { fontWeight: weight } : null,
+                lineHeight ? { lineHeight } : null,
                 style
             ]}
             {...props}
@@ -27,22 +39,3 @@ export const Typography: React.FC<TypographyProps> = ({
         </Text>
     );
 };
-
-const styles = StyleSheet.create({
-    h1: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        letterSpacing: 0.5,
-    },
-    h2: {
-        fontSize: 18,
-        fontWeight: 'bold',
-        letterSpacing: 1,
-    },
-    body: {
-        fontSize: 16,
-    },
-    caption: {
-        fontSize: 12,
-    },
-});
