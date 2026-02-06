@@ -10,6 +10,7 @@ export interface Theme {
     error: string;
     success: string;
     warning: string;
+    green: string;
     border: string;
     iconBg: string;
   };
@@ -42,20 +43,21 @@ export interface Theme {
   };
 }
 
-export const theme: Theme = {
+export const lightTheme: Theme = {
   colors: {
-    primary: "#2563EB",
-    secondary: "#fcf8f8ff",
-    background: "#F8FAFC",
-    surface: "#FFFFFF",
-    text: "#002887ff",
-    textSecondary: "#818181ff",
-    accent: "#059669",
+    primary: "#002887",
+    secondary: "#ffffff",
+    background: "#EFF6FF",
+    surface: "#ffffff",
+    text: "#002887",
+    textSecondary: "#5084C4",
+    accent: "#0284C7",
     error: "#E11D48",
-    success: "#059669",
+    success: "#0284C7",
     warning: "#F59E0B",
-    border: "#F1F5F9",
-    iconBg: "#F8FAFC",
+    green: "#22C55E",
+    border: "#abcaebff",
+    iconBg: "#73b9ff",
   },
   typography: {
     h1: {
@@ -129,3 +131,20 @@ export const theme: Theme = {
     },
   },
 };
+
+export const darkTheme: Theme = {
+  ...lightTheme,
+  colors: {
+    ...lightTheme.colors,
+    primary: "#563df3",
+    secondary: "#0F172A",
+    background: "#0F172A",
+    surface: "#1E293B",
+    text: "#F8FAFC",
+    textSecondary: "#CBD5E1", // Jaśniejszy tekst pomocniczy
+    border: "#334155",
+    iconBg: "#1E293B",
+  },
+};
+
+export const theme = lightTheme;

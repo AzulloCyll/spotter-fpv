@@ -27,17 +27,15 @@ export const TopBar: React.FC = () => {
                     activeOpacity={0.7}
                     onPress={toggleTheme}
                 >
-                    <Icon name={isDark ? "Sun" : "Moon"} size={22} color={theme.colors.text} />
+                    <Icon name={isDark ? "Sun" : "Moon"} size={24} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
-
-                <View style={dynamicStyles.separator} />
 
                 <TouchableOpacity
                     style={dynamicStyles.hudButton}
                     activeOpacity={0.7}
                     onPress={() => navigation.navigate('Telemetria')}
                 >
-                    <Icon name="Hexagon" size={24} color={theme.colors.accent} />
+                    <Icon name="Gauge" size={24} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -57,7 +55,7 @@ const getStyles = (theme: any) => StyleSheet.create({
         paddingHorizontal: theme.spacing.lg - 4,
         paddingTop: theme.spacing.md - 1,
         paddingBottom: theme.spacing.md - 1,
-        backgroundColor: theme.colors.background,
+        backgroundColor: 'transparent',
     },
     leftSection: {
         flexDirection: 'row',
@@ -71,20 +69,10 @@ const getStyles = (theme: any) => StyleSheet.create({
         alignItems: 'center',
     },
     iconButton: {
-        padding: theme.spacing.sm,
-        backgroundColor: theme.colors.surface,
-        borderRadius: theme.borderRadius.md,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        ...theme.shadows.soft,
+        padding: theme.spacing.xs,
     },
     hudButton: {
-        padding: theme.spacing.sm,
+        padding: theme.spacing.xs,
+        marginLeft: theme.spacing.md,
     },
-    separator: {
-        width: 1,
-        height: 20,
-        backgroundColor: theme.colors.border,
-        marginHorizontal: theme.spacing.sm + 2,
-    }
 });

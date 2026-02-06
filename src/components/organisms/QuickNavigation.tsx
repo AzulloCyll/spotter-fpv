@@ -17,14 +17,14 @@ const NavCard: React.FC<ActionCardProps> = ({ title, description, icon, color, o
     const { theme } = useTheme();
     return (
         <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.card}>
-            <View style={[styles.iconBox, { backgroundColor: color + '15' }]}>
-                <Icon name={icon} size={24} color={color} />
+            <View style={[styles.iconBox, { backgroundColor: color }]}>
+                <Icon name={icon} size={24} color="#FFFFFF" />
             </View>
             <View style={styles.content}>
                 <Typography variant="h3" style={styles.title}>{title}</Typography>
                 <Typography variant="bodySmall" color="textSecondary">{description}</Typography>
             </View>
-            <Icon name="ChevronRight" size={18} color={theme.colors.border} />
+            <Icon name="ChevronRight" size={24} color={color} />
         </TouchableOpacity>
     );
 };
@@ -56,7 +56,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
                 title="Pogoda dla FPV"
                 description="Status Kp-Index i siła wiatru"
                 icon="CloudSun"
-                color="#0891B2"
+                color={theme.colors.primary}
                 onPress={() => onNavigate('Pogoda')}
                 styles={dynamicStyles}
             />
@@ -65,7 +65,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
                 title="Czat Pilotów"
                 description="Ustaw się na latanie z ekipą"
                 icon="MessageCircle"
-                color="#7C3AED"
+                color={theme.colors.primary}
                 onPress={() => onNavigate('Czat')}
                 styles={dynamicStyles}
             />
@@ -80,7 +80,11 @@ const getStyles = (theme: any) => StyleSheet.create({
     },
     sectionTitle: {
         marginBottom: theme.spacing.md,
-        paddingHorizontal: theme.spacing.xs,
+        fontSize: 13,
+        fontWeight: '700',
+        textTransform: 'uppercase',
+        letterSpacing: 1.2,
+        textAlign: 'center',
     },
     card: {
         flexDirection: 'row',
@@ -89,9 +93,8 @@ const getStyles = (theme: any) => StyleSheet.create({
         padding: 16,
         borderRadius: theme.borderRadius.md,
         marginBottom: 12,
-        borderWidth: 1,
-        borderColor: theme.colors.border,
-        ...theme.shadows.soft,
+        ...theme.shadows.medium, // Increased shadow for no-border look
+        shadowOpacity: 0.08,
     },
     iconBox: {
         width: 48,

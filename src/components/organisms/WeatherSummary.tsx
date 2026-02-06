@@ -12,19 +12,22 @@ export const WeatherSummary: React.FC = () => {
     return (
         <View style={styles.container}>
             <StatBox
-                icon={<Icon name="Wind" color={theme.colors.success} size={28} />}
+                icon={<Icon name="Wind" color={theme.colors.textSecondary} size={40} strokeWidth={1.2} />}
+                color={theme.colors.primary}
                 value={weather.windSpeed.toString()}
                 unit="km/h"
                 label="Wiatr"
             />
             <StatBox
-                icon={<Icon name="Droplets" color={theme.colors.success} size={28} />}
+                icon={<Icon name="Droplets" color={theme.colors.textSecondary} size={40} strokeWidth={1.2} />}
+                color={theme.colors.primary}
                 value={weather.precipitation.toString()}
                 unit="%"
                 label="Opady"
             />
             <StatBox
-                icon={<Icon name="Zap" color={theme.colors.accent} size={28} />}
+                icon={<Icon name="Zap" color={theme.colors.textSecondary} size={40} strokeWidth={1.2} />}
+                color={theme.colors.primary}
                 value={weather.kpIndex.toString()}
                 unit="Kp"
                 label="Kp-Index"
@@ -37,7 +40,8 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        marginBottom: 40,
+        paddingHorizontal: 30,
+        marginBottom: 50,
+        marginTop: -20,
     },
 });

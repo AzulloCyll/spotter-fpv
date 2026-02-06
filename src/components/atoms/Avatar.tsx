@@ -29,9 +29,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 
 const getStyles = (theme: any) => StyleSheet.create({
     container: {
-        borderWidth: 2,
-        borderColor: theme.colors.primary,
-        padding: 2,
+        // No border, clean look
     },
     image: {
         width: '100%',
@@ -44,7 +42,7 @@ const getStyles = (theme: any) => StyleSheet.create({
         width: 14,
         height: 14,
         borderRadius: 7,
-        backgroundColor: theme.colors.success,
+        backgroundColor: theme.colors.green,
         borderWidth: 2,
         borderColor: theme.colors.background,
     }

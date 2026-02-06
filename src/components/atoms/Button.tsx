@@ -34,10 +34,10 @@ export const Button: React.FC<ButtonProps> = ({
     style,
     textStyle,
 }) => {
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
     const isPrimary = variant === 'primary';
     const isDanger = variant === 'danger';
-    const dynamicStyles = getStyles(theme);
+    const dynamicStyles = getStyles(theme, isDark);
 
     return (
         <TouchableOpacity
@@ -65,7 +65,7 @@ export const Button: React.FC<ButtonProps> = ({
                         style={[
                             dynamicStyles.text,
                             (variant === 'outline' || variant === 'ghost') && { color: theme.colors.primary },
-                            variant === 'secondary' && { color: theme.colors.text },
+                            variant === 'secondary' && { color: isDark ? "#A5B4FC" : theme.colors.primary },
                             isDanger && { color: '#FFFFFF' },
                             textStyle
                         ]}
@@ -78,12 +78,13 @@ export const Button: React.FC<ButtonProps> = ({
     );
 };
 
-const getStyles = (theme: any) => StyleSheet.create({
+const getStyles = (theme: any, isDark: boolean) => StyleSheet.create({
     button: {
         borderRadius: theme.borderRadius.md,
         justifyContent: 'center',
         alignItems: 'center',
         flexDirection: 'row',
+
     },
     content: {
         flexDirection: 'row',
@@ -101,6 +102,8 @@ const getStyles = (theme: any) => StyleSheet.create({
     },
     secondary: {
         backgroundColor: theme.colors.secondary,
+        borderWidth: 2,
+        borderColor: isDark ? "#A5B4FC" : theme.colors.primary,
     },
     outline: {
         backgroundColor: 'transparent',

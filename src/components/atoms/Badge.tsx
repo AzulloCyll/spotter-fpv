@@ -5,7 +5,7 @@ import { Typography } from './Typography';
 
 interface BadgeProps {
     label: string;
-    variant?: 'success' | 'error' | 'warning' | 'info' | 'primary';
+    variant?: 'success' | 'error' | 'warning' | 'info' | 'primary' | 'green';
     pulse?: boolean;
     style?: ViewStyle;
 }
@@ -46,6 +46,7 @@ export const Badge: React.FC<BadgeProps> = ({
             case 'error': return theme.colors.error;
             case 'warning': return theme.colors.warning;
             case 'primary': return theme.colors.primary;
+            case 'green': return theme.colors.green;
             default: return theme.colors.textSecondary;
         }
     };
@@ -54,19 +55,19 @@ export const Badge: React.FC<BadgeProps> = ({
     const dynamicStyles = getStyles(theme);
 
     return (
-        <View style={[dynamicStyles.container, { backgroundColor: color + '15', borderColor: color + '30' }, style]}>
+        <View style={[dynamicStyles.container, { backgroundColor: color, borderColor: color }, style]}>
             {pulse && (
                 <Animated.View
                     style={[
                         dynamicStyles.dot,
-                        { backgroundColor: color, transform: [{ scale: pulseAnim }] }
+                        { backgroundColor: '#FFFFFF', transform: [{ scale: pulseAnim }] }
                     ]}
                 />
             )}
-            {!pulse && <View style={[dynamicStyles.dot, { backgroundColor: color }]} />}
+            {!pulse && <View style={[dynamicStyles.dot, { backgroundColor: '#FFFFFF' }]} />}
             <Typography
                 variant="label"
-                style={{ color, fontSize: 10, marginBottom: 0 }}
+                style={{ color: '#FFFFFF', fontSize: 12, marginBottom: 0, fontWeight: '700' }}
             >
                 {label}
             </Typography>
@@ -78,16 +79,16 @@ const getStyles = (theme: any) => StyleSheet.create({
     container: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
         borderRadius: theme.borderRadius.full,
         borderWidth: 1,
         alignSelf: 'flex-start',
     },
     dot: {
-        width: 6,
-        height: 6,
-        borderRadius: 3,
-        marginRight: 6,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        marginRight: 8,
     }
 });

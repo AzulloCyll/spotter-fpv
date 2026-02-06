@@ -5,13 +5,55 @@ import { WeatherSummary } from '../components/organisms/WeatherSummary';
 import { QuickNavigation } from '../components/organisms/QuickNavigation';
 import { TopBar } from '../components/organisms/TopBar';
 import { FlightStatus } from '../components/organisms/FlightStatus';
+import { Button } from '../components/atoms/Button';
+
+import { LinearGradient } from 'expo-linear-gradient';
+import { Icon } from '../components/atoms/Icon';
 
 export default function HomeScreen({ navigation }: any) {
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const dynamicStyles = getStyles(theme);
 
   return (
     <View style={dynamicStyles.safeArea}>
+      {/* Tło: Gradient nieba */}
+      <LinearGradient
+        colors={[theme.colors.background, theme.colors.primary + '15']}
+        style={StyleSheet.absoluteFillObject}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.6 }}
+      />
+      {/* Tło: Wektorowe chmury */}
+      <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} pointerEvents="none">
+
+        {/* STREFA 1: Góra */}
+        <View style={{ position: 'absolute', top: -50, left: -50, opacity: isDark ? 0.03 : 0.85 }}>
+          <Icon name="Cloud" size={250} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
+        </View>
+        <View style={{ position: 'absolute', top: 30, right: -40, opacity: isDark ? 0.03 : 0.8 }}>
+          <Icon name="Cloud" size={180} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
+        </View>
+        <View style={{ position: 'absolute', top: 100, left: '55%', opacity: isDark ? 0.02 : 0.5 }}>
+          <Icon name="Cloud" size={50} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
+        </View>
+
+        {/* STREFA 2: Środek */}
+        <View style={{ position: 'absolute', top: 180, left: 20, opacity: isDark ? 0.02 : 0.6 }}>
+          <Icon name="Cloud" size={80} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
+        </View>
+        <View style={{ position: 'absolute', top: 220, right: 10, opacity: isDark ? 0.025 : 0.65 }}>
+          <Icon name="Cloud" size={120} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
+        </View>
+        <View style={{ position: 'absolute', top: 155, left: '60%', opacity: isDark ? 0.02 : 0.5 }}>
+          <Icon name="Cloud" size={60} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
+        </View>
+
+        {/* STREFA 3: Dół */}
+        <View style={{ position: 'absolute', top: 320, left: -50, opacity: isDark ? 0.02 : 0.55 }}>
+          <Icon name="Cloud" size={200} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
+        </View>
+      </View>
+
       <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
         <View style={dynamicStyles.topSpacer} />
         {/* Organizm: TopBar z Profilem i Alertami */}
@@ -25,6 +67,7 @@ export default function HomeScreen({ navigation }: any) {
 
         {/* Organizm: Szybka Nawigacja */}
         <QuickNavigation onNavigate={(screen: string) => navigation.navigate(screen)} />
+
 
         {/* Dolny padding dla lepszego scrolla */}
         <View style={{ height: 40 }} />

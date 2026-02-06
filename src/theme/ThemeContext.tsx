@@ -1,20 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { theme as lightTheme, Theme } from './index';
-
-// Simple dark theme derivation or definition
-export const darkTheme: Theme = {
-    ...lightTheme,
-    colors: {
-        ...lightTheme.colors,
-        primary: "#3B82F6",
-        background: "#0F172A",
-        surface: "#1E293B",
-        text: "#F8FAFC",
-        textSecondary: "#94A3B8",
-        border: "#334155",
-        iconBg: "#1E293B",
-    },
-};
+import { lightTheme, darkTheme, Theme } from './index';
 
 type ThemeContextType = {
     theme: Theme;

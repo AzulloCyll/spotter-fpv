@@ -2,7 +2,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Icon } from '../components/atoms/Icon';
-import { theme } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 
 import HomeScreen from '../screens/HomeScreen';
 import MapScreen from '../screens/MapScreen';
@@ -13,6 +13,8 @@ import TelemetryScreen from '../screens/TelemetryScreen';
 const Tab = createBottomTabNavigator();
 
 export default function AppNavigator() {
+  const { theme, isDark } = useTheme();
+
   return (
     <NavigationContainer>
       <Tab.Navigator
@@ -20,13 +22,17 @@ export default function AppNavigator() {
           headerShown: false,
           tabBarShowLabel: true,
           tabBarStyle: {
-            backgroundColor: theme.colors.surface,
-            borderTopColor: theme.colors.border,
-            height: 60,
-            borderTopWidth: 1,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: 'transparent',
+            borderTopColor: 'transparent',
+            height: 70,
+            borderTopWidth: 0,
             elevation: 0,
-            paddingBottom: 5,
-            paddingTop: 5,
+            paddingBottom: 15,
+            paddingTop: 10,
           },
           tabBarItemStyle: {
             height: 50,
@@ -35,8 +41,8 @@ export default function AppNavigator() {
             fontSize: 10,
             fontWeight: '700',
           },
-          tabBarActiveTintColor: theme.colors.primary,
-          tabBarInactiveTintColor: theme.colors.textSecondary,
+          tabBarActiveTintColor: isDark ? '#FFFFFF' : theme.colors.primary,
+          tabBarInactiveTintColor: isDark ? '#FFFFFF40' : theme.colors.textSecondary,
         }}
       >
         <Tab.Screen

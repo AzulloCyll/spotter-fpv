@@ -9,13 +9,15 @@ interface IconProps {
     size?: number;
     color?: string;
     strokeWidth?: number;
+    fill?: string;
 }
 
 export const Icon: React.FC<IconProps> = ({
     name,
     size = 24,
     color,
-    strokeWidth = 2
+    strokeWidth = 2,
+    fill
 }) => {
     const { theme } = useTheme();
     const iconColor = color || theme.colors.text;
@@ -26,5 +28,12 @@ export const Icon: React.FC<IconProps> = ({
         return null;
     }
 
-    return <LucideIcon size={size} color={iconColor} strokeWidth={strokeWidth} />;
+    const iconProps = {
+        size,
+        color: iconColor,
+        strokeWidth,
+        ...(fill ? { fill } : {})
+    };
+
+    return <LucideIcon {...iconProps} />;
 };
