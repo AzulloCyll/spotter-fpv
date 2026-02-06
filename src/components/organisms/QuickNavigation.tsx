@@ -76,7 +76,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
 const getStyles = (theme: any) => StyleSheet.create({
     section: {
         paddingHorizontal: theme.spacing.lg - 4,
-        marginTop: theme.spacing.sm + 2,
+        marginTop: -10,
     },
     sectionTitle: {
         marginBottom: theme.spacing.md,

@@ -16,7 +16,7 @@ export const TopBar: React.FC = () => {
             <View style={dynamicStyles.leftSection}>
                 <Avatar size={48} />
                 <View style={dynamicStyles.greeting}>
-                    <Typography variant="caption" color="textSecondary">Witaj z powrotem,</Typography>
+                    <Typography variant="caption" color="textSecondary">Witaj,</Typography>
                     <Typography variant="h3">Pilot FPV</Typography>
                 </View>
             </View>
@@ -53,7 +53,7 @@ const getStyles = (theme: any) => StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: theme.spacing.lg - 4,
-        paddingTop: theme.spacing.md - 1,
+        paddingTop: 20,
         paddingBottom: theme.spacing.md - 1,
         backgroundColor: 'transparent',
     },
@@ -67,6 +67,7 @@ const getStyles = (theme: any) => StyleSheet.create({
     rightSection: {
         flexDirection: 'row',
         alignItems: 'center',
+        marginTop: -10,
     },
     iconButton: {
         padding: theme.spacing.xs,

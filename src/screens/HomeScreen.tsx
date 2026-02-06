@@ -27,29 +27,29 @@ export default function HomeScreen({ navigation }: any) {
       <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} pointerEvents="none">
 
         {/* STREFA 1: Góra */}
-        <View style={{ position: 'absolute', top: -50, left: -50, opacity: isDark ? 0.03 : 0.85 }}>
+        <View style={{ position: 'absolute', top: -50, left: -50, opacity: isDark ? 0.03 : 0.5 }}>
           <Icon name="Cloud" size={250} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
         </View>
-        <View style={{ position: 'absolute', top: 30, right: -40, opacity: isDark ? 0.03 : 0.8 }}>
+        <View style={{ position: 'absolute', top: 30, right: -40, opacity: isDark ? 0.03 : 0.45 }}>
           <Icon name="Cloud" size={180} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
         </View>
-        <View style={{ position: 'absolute', top: 100, left: '55%', opacity: isDark ? 0.02 : 0.5 }}>
+        <View style={{ position: 'absolute', top: 100, left: '55%', opacity: isDark ? 0.02 : 0.25 }}>
           <Icon name="Cloud" size={50} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
         </View>
 
         {/* STREFA 2: Środek */}
-        <View style={{ position: 'absolute', top: 180, left: 20, opacity: isDark ? 0.02 : 0.6 }}>
+        <View style={{ position: 'absolute', top: 180, left: 20, opacity: isDark ? 0.02 : 0.3 }}>
           <Icon name="Cloud" size={80} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
         </View>
-        <View style={{ position: 'absolute', top: 220, right: 10, opacity: isDark ? 0.025 : 0.65 }}>
+        <View style={{ position: 'absolute', top: 220, right: 10, opacity: isDark ? 0.025 : 0.35 }}>
           <Icon name="Cloud" size={120} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
         </View>
-        <View style={{ position: 'absolute', top: 155, left: '60%', opacity: isDark ? 0.02 : 0.5 }}>
+        <View style={{ position: 'absolute', top: 155, left: '60%', opacity: isDark ? 0.02 : 0.25 }}>
           <Icon name="Cloud" size={60} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
         </View>
 
         {/* STREFA 3: Dół */}
-        <View style={{ position: 'absolute', top: 320, left: -50, opacity: isDark ? 0.02 : 0.55 }}>
+        <View style={{ position: 'absolute', top: 320, left: -50, opacity: isDark ? 0.02 : 0.3 }}>
           <Icon name="Cloud" size={200} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
         </View>
       </View>
@@ -85,6 +85,6 @@ const getStyles = (theme: any) => StyleSheet.create({
     flex: 1,
   },
   topSpacer: {
-    height: 80,
+    height: 60,
   }
 });
