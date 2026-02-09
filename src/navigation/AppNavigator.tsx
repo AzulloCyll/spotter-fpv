@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useWindowDimensions } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { Icon } from '../components/atoms/Icon';
 import { useTheme } from '../theme/ThemeContext';
@@ -16,12 +17,16 @@ const Tab = createBottomTabNavigator();
 
 export default function AppNavigator() {
   const { theme, isDark } = useTheme();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
 
   useEffect(() => {
     // Ukrywa dolny pasek nawigacji systemowej (Android)
     NavigationBar.setVisibilityAsync("hidden");
-    NavigationBar.setBehaviorAsync("overlay-swipe");
+    NavigationBar.setBehaviorAsync("inset-swipe");
   }, []);
+
+  const hiddenTabBarStyle = { display: 'none' as const };
 
   const baseTabBarStyle = {
     position: 'absolute' as const,
@@ -37,6 +42,11 @@ export default function AppNavigator() {
     paddingTop: 10,
   };
 
+  const getTabBarStyle = (customStyle = {}) => {
+    if (isTabletLandscape) return hiddenTabBarStyle;
+    return { ...baseTabBarStyle, ...customStyle };
+  };
+
   return (
     <>
       <StatusBar hidden />
@@ -45,7 +55,7 @@ export default function AppNavigator() {
           screenOptions={{
             headerShown: false,
             tabBarShowLabel: true,
-            tabBarStyle: baseTabBarStyle,
+            tabBarStyle: getTabBarStyle(),
             tabBarItemStyle: {
               height: 50,
             },
@@ -69,12 +79,11 @@ export default function AppNavigator() {
             component={MapScreen}
             options={{
               tabBarIcon: ({ color, size }) => <Icon name="Map" color={color} size={size} />,
-              tabBarStyle: {
-                ...baseTabBarStyle,
+              tabBarStyle: getTabBarStyle({
                 backgroundColor: isDark ? 'rgba(20, 20, 20, 0.85)' : 'rgba(255, 255, 255, 0.85)',
                 borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
                 borderTopWidth: 1,
-              }
+              })
             }}
           />
           <Tab.Screen
@@ -95,7 +104,7 @@ export default function AppNavigator() {
             name="Telemetria"
             component={TelemetryScreen}
             options={{
-              tabBarItemStyle: { display: 'none' }, // Completely remove from layout
+              tabBarItemStyle: { display: 'none' },
             }}
           />
         </Tab.Navigator>

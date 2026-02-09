@@ -41,3 +41,31 @@ export const MOCK_LOCATION = {
 };
 
 export const MOCK_MAP_STYLE_ID = "light";
+
+export const MOCK_MESSAGES = [
+  {
+    id: "1",
+    sender: "Marek",
+    text: "Ktoś dzisiaj na Bemowie?",
+    timestamp: "14:20",
+  },
+  {
+    id: "2",
+    sender: "Ty",
+    text: "Ja będę za 30 min, biorę 5 cali i tinywhoopa.",
+    timestamp: "14:22",
+  },
+  {
+    id: "3",
+    sender: "Andrzej",
+    text: "Ja mogę koło 16:00. Macie wolne kanały?",
+    timestamp: "14:25",
+  },
+  {
+    id: "4",
+    sender: "Marek",
+    text: "R2 i R4 zajęte. Ja latam na R2.",
+    timestamp: "14:26",
+  },
+  { id: "5", sender: "Ty", text: "To ja biorę R6.", timestamp: "14:28" },
+];

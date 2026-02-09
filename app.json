@@ -3,7 +3,7 @@
     "name": "spotter-fpv",
     "slug": "spotter-fpv",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "landscape",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -16,11 +16,12 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.azullocyll.spotterfpv",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": false
     },
     "web": {
       "favicon": "./assets/favicon.png"

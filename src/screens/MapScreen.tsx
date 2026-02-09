@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image, useWindowDimensions } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, MapType } from 'react-native-maps';
 import * as Location from 'expo-location';
 import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
@@ -12,6 +12,12 @@ import { MOCK_SPOTS, Spot } from '../data/mockSpots';
 import { SpotMarker } from '../components/molecules/SpotMarker';
 import { useSpots } from '../context/SpotsContext';
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
+import { SidebarNav } from '../components/organisms/SidebarNav';
+import { FlightStatus } from '../components/organisms/FlightStatus';
+import { WeatherSummary } from '../components/organisms/WeatherSummary';
+import { QuickNavigation } from '../components/organisms/QuickNavigation';
+import { TopBar } from '../components/organisms/TopBar';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const MAP_STYLES = [
   { id: 'standard', label: 'Standardowa', type: 'standard' as MapType },
@@ -30,12 +36,14 @@ export default function MapScreen() {
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
   const mapRef = useRef<MapView>(null);
+  const [showSpotsModal, setShowSpotsModal] = useState(false);
 
   const activeStyleConfig = MAP_STYLES.find(s => s.id === activeStyleId) || MAP_STYLES[0];
   const mapType = activeStyleConfig.type;
 
-  // Custom map style logic: Dark specific, or Standard adapting to system theme
   const customStyle = activeStyleId === 'dark' || (activeStyleId === 'standard' && isDark)
     ? darkMapStyle
     : lightMapStyle;
@@ -56,12 +64,11 @@ export default function MapScreen() {
   }, []);
 
   const handleSaveSpot = (spotData: Omit<Spot, 'id' | 'coordinates' | 'rating'>) => {
-    // Determine location for new spot (User location or center of map - prioritizing user location for now)
     const newLocation = userLocation ? {
       latitude: userLocation.coords.latitude,
       longitude: userLocation.coords.longitude,
     } : {
-      latitude: 52.2297, // Fallback to Warsaw center
+      latitude: 52.2297,
       longitude: 21.0122,
     };
 
@@ -69,11 +76,10 @@ export default function MapScreen() {
       id: Date.now().toString(),
       ...spotData,
       coordinates: newLocation,
-      rating: 0, // Default rating
+      rating: 0,
     };
 
     addSpot(newSpot);
-    // Animate to new spot
     mapRef.current?.animateToRegion({
       ...newLocation,
       latitudeDelta: 0.01,
@@ -96,85 +102,118 @@ export default function MapScreen() {
 
   return (
     <View style={dynamicStyles.container}>
-      <MapView
-        ref={mapRef}
-        provider={PROVIDER_GOOGLE}
-        style={dynamicStyles.map}
-        mapType={mapType}
-        initialRegion={{
-          latitude: 52.2297,
-          longitude: 21.0122,
-          latitudeDelta: 0.15,
-          longitudeDelta: 0.15,
-        }}
-        customMapStyle={customStyle}
-        zoomControlEnabled={false}
-        showsUserLocation={locationPermission}
-        showsMyLocationButton={false}
-      >
-        {spots.map((spot) => (
-          <SpotMarker
-            key={spot.id}
-            spot={spot}
-            onPress={handleSpotPress}
-          />
-        ))}
-      </MapView>
+      {/* Split View Content */}
+      <View style={[dynamicStyles.contentWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
 
-      {/* Górna wyszukiwarka */}
-      <View style={dynamicStyles.topContainer}>
-        <Input
-          placeholder="Szukaj spotów..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          icon={<Icon name="Search" color={theme.colors.textSecondary} size={20} />}
-          containerStyle={dynamicStyles.searchBarContainer}
-        />
+        {/* Lewy Panel (Dashboard style z SG) */}
+        {isTabletLandscape && (
+          <View style={[dynamicStyles.sidebar, { flex: 1 }]}>
+            <LinearGradient
+              colors={[theme.colors.background, theme.colors.primary + '15']}
+              style={StyleSheet.absoluteFillObject}
+            />
+            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+              <View style={{ height: 60 }} />
+              <TopBar />
+
+              <View style={{ paddingHorizontal: 15 }}>
+                <FlightStatus />
+                <WeatherSummary />
+                <QuickNavigation onNavigate={(screen) => {
+                  if (screen === 'Mapa') setShowSpotsModal(true);
+                  // @ts-ignore
+                  else navigation.navigate(screen);
+                }} />
+              </View>
+              <View style={{ height: 60 }} />
+            </ScrollView>
+
+            <SidebarNav />
+          </View>
+        )}
+
+        {/* Obszar Mapy */}
+        <View style={{ flex: 1 }}>
+          <MapView
+            ref={mapRef}
+            provider={PROVIDER_GOOGLE}
+            style={dynamicStyles.map}
+            mapType={mapType}
+            initialRegion={{
+              latitude: 52.2297,
+              longitude: 21.0122,
+              latitudeDelta: 0.15,
+              longitudeDelta: 0.15,
+            }}
+            customMapStyle={customStyle}
+            zoomControlEnabled={false}
+            showsUserLocation={locationPermission}
+            showsMyLocationButton={false}
+          >
+            {spots.map((spot) => (
+              <SpotMarker
+                key={spot.id}
+                spot={spot}
+                onPress={handleSpotPress}
+              />
+            ))}
+          </MapView>
+
+          {!isTabletLandscape && (
+            <View style={dynamicStyles.topContainer}>
+              <Input
+                placeholder="Szukaj spotów..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                icon={<Icon name="Search" color={theme.colors.textSecondary} size={20} />}
+                containerStyle={dynamicStyles.searchBarContainer}
+              />
+            </View>
+          )}
+
+          <View style={[dynamicStyles.sideButtons, isTabletLandscape && { right: 20 }]}>
+            <IconButton
+              icon={<Icon name="Navigation" size={24} />}
+              onPress={async () => {
+                if (locationPermission) {
+                  const location = await Location.getCurrentPositionAsync({});
+                  mapRef.current?.animateToRegion({
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                    latitudeDelta: 0.05,
+                    longitudeDelta: 0.05,
+                  });
+                } else {
+                  Alert.alert('Brak uprawnień', 'Włącz lokalizację w ustawieniach.');
+                }
+              }}
+              style={dynamicStyles.sideButton}
+            />
+            <IconButton
+              icon={<Icon name="Layers" size={24} />}
+              onPress={() => setShowMenu(true)}
+              style={[dynamicStyles.sideButton, { marginTop: theme.spacing.md }]}
+            />
+          </View>
+
+          <View style={[dynamicStyles.fabContainer, isTabletLandscape && { right: 20, bottom: 40 }]}>
+            <TouchableOpacity
+              onPress={() => setShowAddModal(true)}
+              style={dynamicStyles.fab}
+              activeOpacity={0.8}
+            >
+              <Icon name="Plus" size={32} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
-      {/* Przyciski boczne */}
-      <View style={dynamicStyles.sideButtons}>
-        <IconButton
-          icon={<Icon name="Navigation" size={24} />}
-          onPress={async () => {
-            if (locationPermission) {
-              const location = await Location.getCurrentPositionAsync({});
-              mapRef.current?.animateToRegion({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-                latitudeDelta: 0.05,
-                longitudeDelta: 0.05,
-              });
-            } else {
-              Alert.alert('Brak uprawnień', 'Włącz lokalizację w ustawieniach.');
-            }
-          }}
-          style={dynamicStyles.sideButton}
-        />
-        <IconButton
-          icon={<Icon name="Layers" size={24} />}
-          onPress={() => setShowMenu(true)}
-          style={[dynamicStyles.sideButton, { marginTop: theme.spacing.md }]}
-        />
-      </View>
-
-      {/* FAB - Dodawanie Spota */}
-      <TouchableOpacity
-        onPress={() => setShowAddModal(true)}
-        style={dynamicStyles.fab}
-        activeOpacity={0.8}
-      >
-        <Icon name="Plus" size={32} color="#FFFFFF" />
-      </TouchableOpacity>
-
-      {/* Modal dodawania spota */}
       <AddSpotModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSave={handleSaveSpot}
       />
 
-      {/* Modal szczegółów spota (uproszczony) */}
       {selectedSpot && (
         <View style={dynamicStyles.spotCardContainer}>
           <TouchableWithoutFeedback onPress={closeSpotDetails}>
@@ -185,10 +224,10 @@ export default function MapScreen() {
               <View style={dynamicStyles.spotHeader}>
                 <Typography variant="h3">{selectedSpot.name}</Typography>
                 <TouchableOpacity onPress={closeSpotDetails}>
+                  <Icon name="X" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
-              {/* Galeria zdjęć */}
               {selectedSpot.images && selectedSpot.images.length > 0 && (
                 <ScrollView
                   horizontal
@@ -233,7 +272,8 @@ export default function MapScreen() {
             </View>
           </TouchableWithoutFeedback>
         </View>
-      )}
+      )
+      }
 
       {/* Menu wyboru stylu */}
       <Modal
@@ -274,7 +314,71 @@ export default function MapScreen() {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </View>
+
+      {/* Modal listy spotów (Eksploruj) */}
+      <Modal
+        visible={showSpotsModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSpotsModal(false)}
+      >
+        <TouchableWithoutFeedback onPress={() => setShowSpotsModal(false)}>
+          <View style={dynamicStyles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={[dynamicStyles.menuContent, { maxHeight: '80%', padding: 20 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                  <Typography variant="h2">Eksploruj Spoty</Typography>
+                  <IconButton icon={<Icon name="X" />} onPress={() => setShowSpotsModal(false)} variant="ghost" />
+                </View>
+
+                <Input
+                  placeholder="Szukaj spotów..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  icon={<Icon name="Search" color={theme.colors.textSecondary} size={20} />}
+                  containerStyle={{ marginBottom: 15 }}
+                />
+
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {spots.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).map((spot) => (
+                    <TouchableOpacity
+                      key={spot.id}
+                      style={[
+                        dynamicStyles.sidebarItem,
+                        { paddingHorizontal: 10, marginHorizontal: -10 },
+                        selectedSpot?.id === spot.id && { backgroundColor: theme.colors.primary + '10', borderLeftColor: theme.colors.primary }
+                      ]}
+                      onPress={() => {
+                        setSelectedSpot(spot);
+                        mapRef.current?.animateToRegion({
+                          ...spot.coordinates,
+                          latitudeDelta: 0.01,
+                          longitudeDelta: 0.01,
+                        }, 1000);
+                        setShowSpotsModal(false);
+                      }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Typography variant="body" style={{ fontWeight: '700' }}>{spot.name}</Typography>
+                        <Typography variant="label" color="textSecondary" style={{ marginTop: 2 }}>
+                          {spot.type.toUpperCase()} • {spot.difficulty}
+                        </Typography>
+                      </View>
+                      <Icon name="ChevronRight" size={20} color={theme.colors.textSecondary} />
+                    </TouchableOpacity>
+                  ))}
+                  {spots.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                    <View style={{ padding: 40, alignItems: 'center' }}>
+                      <Typography color="textSecondary">Nie znaleziono żadnych spotów</Typography>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+    </View >
   );
 }
 
@@ -299,7 +403,43 @@ const getStyles = (theme: any) => StyleSheet.create({
   sideButtons: {
     position: 'absolute',
     right: theme.spacing.lg - 4,
-    top: theme.spacing.xl * 4 + 2,
+    top: 100,
+  },
+  contentWrapper: {
+    flex: 1,
+  },
+  sidebar: {
+    width: '30%',
+    maxWidth: 400,
+    backgroundColor: theme.colors.background,
+    borderRightWidth: 1,
+    borderRightColor: theme.colors.border,
+    overflow: 'hidden',
+  },
+  sidebarHeader: {
+    padding: 15,
+    paddingBottom: 4,
+  },
+  sidebarSearch: {
+    paddingHorizontal: 15,
+    marginBottom: theme.spacing.md,
+  },
+  sidebarContent: {
+    flex: 1,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    borderLeftWidth: 4,
+    borderLeftColor: 'transparent',
+  },
+  fabContainer: {
+    position: 'absolute',
+    bottom: theme.spacing.xl + 90,
+    right: theme.spacing.md,
   },
   sideButton: {
     backgroundColor: theme.colors.surface,
@@ -378,16 +518,12 @@ const getStyles = (theme: any) => StyleSheet.create({
     marginTop: theme.spacing.lg,
   },
   fab: {
-    position: 'absolute',
-    bottom: theme.spacing.xl + 90, // Higher than spot card
-    right: theme.spacing.md,
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: theme.colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 9999,
     elevation: 8,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },

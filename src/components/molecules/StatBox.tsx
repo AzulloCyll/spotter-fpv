@@ -10,14 +10,16 @@ interface StatBoxProps {
     label: string;
     small?: boolean;
     color?: string;
+    dark?: boolean;
 }
 
-export const StatBox: React.FC<StatBoxProps> = ({ icon, value, unit, label, small, color }) => {
+export const StatBox: React.FC<StatBoxProps> = ({ icon, value, unit, label, small, color, dark }) => {
     const { theme } = useTheme();
     const dynamicStyles = getStyles(theme);
 
     const isColored = !!color;
-    const textColor = isColored ? color : theme.colors.text;
+    const textColor = dark ? '#FFFFFF' : (isColored ? color : theme.colors.text);
+    const labelColor = dark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
 
     return (
         <View style={[
@@ -45,7 +47,7 @@ export const StatBox: React.FC<StatBoxProps> = ({ icon, value, unit, label, smal
             </View>
             <Typography
                 variant="bodySmall"
-                style={[dynamicStyles.label, { color: theme.colors.textSecondary, marginTop: 2 }]}
+                style={[dynamicStyles.label, { color: labelColor, marginTop: 2 }]}
             >
                 {label}
             </Typography>

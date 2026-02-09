@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, useWindowDimensions, TouchableWithoutFeedback, ScrollView, Image } from 'react-native';
 import { Map as MapView, Marker } from 'pigeon-maps';
 import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
@@ -29,12 +29,17 @@ const WEB_STYLES = [
 
 export default function MapScreen() {
   const { theme, isDark } = useTheme();
-  const { height: windowHeight } = useWindowDimensions();
+  const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const { spots, addSpot } = useSpots();
   const [center, setCenter] = useState<[number, number]>([52.2297, 21.0122]); // Warsaw
   const [zoom, setZoom] = useState(12);
-  const [activeStyleId, setActiveStyleId] = useState(MOCK_MAP_STYLE_ID);
+  const [activeStyleId, setActiveStyleId] = useState(isDark ? 'dark' : 'light');
+
+  useEffect(() => {
+    setActiveStyleId(isDark ? 'dark' : 'light');
+  }, [isDark]);
   const [showMenu, setShowMenu] = useState(false);
+  const [showSpotList, setShowSpotList] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
 
@@ -64,6 +69,7 @@ export default function MapScreen() {
       <View style={dynamicStyles.mapContainer}>
         <MapView
           height={windowHeight}
+          width={windowWidth}
           center={center}
           zoom={zoom}
           onBoundsChanged={({ center, zoom }) => {
@@ -115,6 +121,13 @@ export default function MapScreen() {
       <View style={dynamicStyles.sideButtons}>
         <TouchableOpacity
           style={dynamicStyles.sideButton}
+          onPress={() => setShowSpotList(!showSpotList)}
+        >
+          <Icon name="List" color={theme.colors.primary} size={24} />
+        </TouchableOpacity>
+        <View style={{ height: 10 }} />
+        <TouchableOpacity
+          style={dynamicStyles.sideButton}
           onPress={() => setShowMenu(!showMenu)}
         >
           <Icon name="Layers" color={theme.colors.primary} size={24} />
@@ -152,8 +165,42 @@ export default function MapScreen() {
               {activeStyleId === style.id && (
                 <Icon name="Check" color={theme.colors.primary} size={20} />
               )}
+
+
             </TouchableOpacity>
           ))}
+        </View>
+      )}
+
+      {/* Spot List Sidebar (Web) */}
+      {showSpotList && (
+        <View style={dynamicStyles.spotListContainer}>
+          <View style={dynamicStyles.spotListHeader}>
+            <Typography variant="h3">Dostępne Spoty</Typography>
+            <TouchableOpacity onPress={() => setShowSpotList(false)}>
+              <Icon name="X" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={dynamicStyles.spotListContent}>
+            {spots.map((spot) => (
+              <TouchableOpacity
+                key={spot.id}
+                style={dynamicStyles.spotListItem}
+                onPress={() => {
+                  setSelectedSpot(spot);
+                  setCenter([spot.coordinates.latitude, spot.coordinates.longitude]);
+                  setZoom(15);
+                  // Don't close the list, allow browsing
+                }}
+              >
+                <View style={dynamicStyles.spotListItemContent}>
+                  <Typography variant="body" style={{ fontWeight: 'bold' }}>{spot.name}</Typography>
+                  <Typography variant="caption" color="textSecondary">{spot.type.toUpperCase()} • {spot.difficulty}</Typography>
+                </View>
+                <Icon name="ChevronRight" size={20} color={theme.colors.textSecondary} />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
         </View>
       )}
 
@@ -222,9 +269,10 @@ const getStyles = (theme: any) => StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   mapContainer: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: '#f5f5f5',
     overflow: 'hidden',
+    zIndex: -1,
   },
   searchBar: {
     position: 'absolute',
@@ -337,5 +385,49 @@ const getStyles = (theme: any) => StyleSheet.create({
     right: 0,
     bottom: 0,
     zIndex: 5,
-  }
+  },
+  spotListContainer: {
+    position: 'absolute',
+    left: 20,
+    top: 100,
+    bottom: 100,
+    width: 300,
+    backgroundColor: theme.colors.surface + 'CC', // 80% opacity
+    // @ts-ignore
+    backdropFilter: 'blur(10px)', // Web specific
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+    zIndex: 30,
+    display: 'flex',
+    flexDirection: 'column',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  spotListHeader: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  spotListContent: {
+    flex: 1,
+  },
+  spotListItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    cursor: 'pointer',
+  },
+  spotListItemContent: {
+    flex: 1,
+  },
 });

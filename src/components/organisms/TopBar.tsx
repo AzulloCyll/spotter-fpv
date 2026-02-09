@@ -6,18 +6,20 @@ import { Avatar } from '../atoms/Avatar';
 import { Icon } from '../atoms/Icon';
 import { useNavigation } from '@react-navigation/native';
 
-export const TopBar: React.FC = () => {
+export const TopBar: React.FC<{ dark?: boolean }> = ({ dark }) => {
     const navigation = useNavigation<any>();
     const { theme, isDark, toggleTheme } = useTheme();
     const dynamicStyles = getStyles(theme);
+    const textColor = dark ? '#FFFFFF' : theme.colors.text;
+    const secondaryColor = dark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
 
     return (
         <View style={dynamicStyles.container}>
             <View style={dynamicStyles.leftSection}>
                 <Avatar size={48} />
                 <View style={dynamicStyles.greeting}>
-                    <Typography variant="caption" color="textSecondary">Witaj,</Typography>
-                    <Typography variant="h3">Pilot FPV</Typography>
+                    <Typography variant="caption" color={dark ? "white" : "textSecondary"}>Witaj,</Typography>
+                    <Typography variant="h3" style={{ color: textColor }}>Pilot FPV</Typography>
                 </View>
             </View>
 
@@ -27,7 +29,7 @@ export const TopBar: React.FC = () => {
                     activeOpacity={0.7}
                     onPress={toggleTheme}
                 >
-                    <Icon name={isDark ? "Sun" : "Moon"} size={24} color={theme.colors.textSecondary} />
+                    <Icon name={isDark ? "Sun" : "Moon"} size={24} color={secondaryColor} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -35,7 +37,7 @@ export const TopBar: React.FC = () => {
                     activeOpacity={0.7}
                     onPress={() => navigation.navigate('Telemetria')}
                 >
-                    <Icon name="Gauge" size={24} color={theme.colors.textSecondary} />
+                    <Icon name="Gauge" size={24} color={secondaryColor} />
                 </TouchableOpacity>
             </View>
         </View>
@@ -52,8 +54,8 @@ const getStyles = (theme: any) => StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: theme.spacing.lg - 4,
-        paddingTop: 20,
+        paddingHorizontal: theme.spacing.md - 4,
+        paddingTop: 15,
         paddingBottom: theme.spacing.md - 1,
         backgroundColor: 'transparent',
     },

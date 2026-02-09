@@ -6,13 +6,16 @@ import { Icon } from '../atoms/Icon';
 import { Badge } from '../atoms/Badge';
 import { MOCK_BATTERY, MOCK_GPS_POSITION, MOCK_IS_LINK_ACTIVE, MOCK_VTX_TEMP, MOCK_WEATHER_DATA } from '../../constants/mockData';
 
-export const FlightStatus: React.FC = () => {
+export const FlightStatus: React.FC<{ dark?: boolean }> = ({ dark }) => {
     const { theme } = useTheme();
     const isLinkActive = MOCK_IS_LINK_ACTIVE;
     const battery = MOCK_BATTERY;
     const gps = MOCK_GPS_POSITION;
     const weather = MOCK_WEATHER_DATA;
     const vtxTemp = MOCK_VTX_TEMP;
+
+    const textColor = dark ? '#FFFFFF' : theme.colors.text;
+    const secondaryColor = dark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
 
     const dynamicStyles = getStyles(theme);
 
@@ -28,11 +31,11 @@ export const FlightStatus: React.FC = () => {
                     <Icon name="Radar" color={isLinkActive ? theme.colors.success : theme.colors.error} size={64} strokeWidth={1.2} />
                 </View>
 
-                <Typography variant="h3" style={[dynamicStyles.title, { color: isLinkActive ? theme.colors.success : theme.colors.text }]}>
+                <Typography variant="h3" style={[dynamicStyles.title, { color: isLinkActive ? theme.colors.success : textColor }]}>
                     {isLinkActive ? "Gotowy do startu" : "Oczekiwanie na link"}
                 </Typography>
 
-                <Typography variant="bodySmall" color="textSecondary" style={dynamicStyles.telemetry}>
+                <Typography variant="bodySmall" style={[dynamicStyles.telemetry, { color: secondaryColor }]}>
                     GPS: {gps.satellites} • {battery.voltage}V • {vtxTemp}°C • Kp: {weather.kpIndex}
                 </Typography>
 
@@ -50,9 +53,9 @@ export const FlightStatus: React.FC = () => {
 
 const getStyles = (theme: any) => StyleSheet.create({
     wrapper: {
-        paddingHorizontal: 20,
+        paddingHorizontal: 8,
         marginBottom: 32,
-        marginTop: 40,
+        marginTop: 20,
     },
     container: {
         alignItems: 'center',

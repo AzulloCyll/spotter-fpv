@@ -13,18 +13,30 @@ interface ActionCardProps {
     styles: any;
 }
 
-const NavCard: React.FC<ActionCardProps> = ({ title, description, icon, color, onPress, styles }) => {
-    const { theme } = useTheme();
+const NavCard: React.FC<ActionCardProps & { styles: any }> = ({ title, description, icon, color, onPress, styles }) => {
     return (
-        <TouchableOpacity activeOpacity={0.8} onPress={onPress} style={styles.card}>
-            <View style={[styles.iconBox, { backgroundColor: color }]}>
+        <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={onPress}
+            style={[styles.card, { elevation: 0, shadowOpacity: 0 }]}
+        >
+            <View style={{
+                width: 44,
+                height: 44,
+                borderRadius: 14,
+                backgroundColor: color,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginRight: 16,
+                overflow: 'hidden'
+            }}>
                 <Icon name={icon} size={24} color="#FFFFFF" />
             </View>
             <View style={styles.content}>
                 <Typography variant="h3" style={styles.title}>{title}</Typography>
                 <Typography variant="bodySmall" color="textSecondary">{description}</Typography>
             </View>
-            <Icon name="ChevronRight" size={24} color={color} />
+            <Icon name="ChevronRight" size={20} color={color} />
         </TouchableOpacity>
     );
 };
@@ -37,45 +49,36 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
     const { theme } = useTheme();
     const dynamicStyles = getStyles(theme);
 
+    const navItems = [
+        { title: "Eksploruj Spoty", description: "Mapa najlepszych miejsc w okolicy", icon: "Map" as IconName, color: theme.colors.primary, screen: 'Mapa' },
+        { title: "Pogoda dla FPV", description: "Status Kp-Index i siła wiatru", icon: "CloudSun" as IconName, color: theme.colors.primary, screen: 'Pogoda' },
+        { title: "Czat Pilotów", description: "Ustaw się na latanie z ekipą", icon: "MessageCircle" as IconName, color: theme.colors.primary, screen: 'Czat' },
+    ];
+
     return (
         <View style={dynamicStyles.section}>
             <Typography variant="label" color="textSecondary" style={dynamicStyles.sectionTitle}>
                 Szybki dostęp
             </Typography>
 
-            <NavCard
-                title="Eksploruj Spoty"
-                description="Mapa najlepszych miejsc w okolicy"
-                icon="Map"
-                color={theme.colors.primary}
-                onPress={() => onNavigate('Mapa')}
-                styles={dynamicStyles}
-            />
-
-            <NavCard
-                title="Pogoda dla FPV"
-                description="Status Kp-Index i siła wiatru"
-                icon="CloudSun"
-                color={theme.colors.primary}
-                onPress={() => onNavigate('Pogoda')}
-                styles={dynamicStyles}
-            />
-
-            <NavCard
-                title="Czat Pilotów"
-                description="Ustaw się na latanie z ekipą"
-                icon="MessageCircle"
-                color={theme.colors.primary}
-                onPress={() => onNavigate('Czat')}
-                styles={dynamicStyles}
-            />
+            {navItems.map((item) => (
+                <NavCard
+                    key={item.title}
+                    title={item.title}
+                    description={item.description}
+                    icon={item.icon}
+                    color={item.color}
+                    onPress={() => onNavigate(item.screen)}
+                    styles={dynamicStyles}
+                />
+            ))}
         </View>
     );
 };
 
 const getStyles = (theme: any) => StyleSheet.create({
     section: {
-        paddingHorizontal: theme.spacing.lg - 4,
+        paddingHorizontal: 0,
         marginTop: -10,
     },
     sectionTitle: {
@@ -89,25 +92,29 @@ const getStyles = (theme: any) => StyleSheet.create({
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: theme.colors.surface,
         padding: 16,
-        borderRadius: theme.borderRadius.md,
         marginBottom: 12,
-        ...theme.shadows.medium, // Increased shadow for no-border look
-        shadowOpacity: 0.08,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        elevation: 0,
+        shadowOpacity: 0,
     },
     iconBox: {
-        width: 48,
-        height: 48,
-        borderRadius: theme.borderRadius.sm,
+        width: 44,
+        height: 44,
+        borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 16,
+        overflow: 'hidden',
     },
     content: {
         flex: 1,
     },
     title: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#2C3E50',
         marginBottom: 2,
     }
 });
