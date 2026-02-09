@@ -5,14 +5,9 @@ import { Typography } from '../components/atoms/Typography';
 import { IconButton } from '../components/atoms/IconButton';
 import { Input } from '../components/atoms/Input';
 import { Icon } from '../components/atoms/Icon';
-import { SidebarNav } from '../components/organisms/SidebarNav';
-import { FlightStatus } from '../components/organisms/FlightStatus';
-import { WeatherSummary } from '../components/organisms/WeatherSummary';
-import { QuickNavigation } from '../components/organisms/QuickNavigation';
-import { TopBar } from '../components/organisms/TopBar';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useNavigation } from '@react-navigation/native';
+import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { MOCK_MESSAGES } from '../constants/mockData';
+import { useNavigation } from '@react-navigation/native';
 
 export default function ChatScreen() {
   const { theme, isDark } = useTheme();
@@ -27,27 +22,12 @@ export default function ChatScreen() {
     <View style={dynamicStyles.container}>
       <View style={[dynamicStyles.mainWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
 
-        {/* DASHBOARD COLUMN (Tablet Landscape) */}
         {isTabletLandscape && (
-          <View style={[dynamicStyles.sidebar, { flex: 1 }]}>
-            <LinearGradient
-              colors={[theme.colors.background, theme.colors.primary + '15']}
-              style={StyleSheet.absoluteFillObject}
-            />
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              <View style={{ height: 60 }} />
-              <TopBar />
-
-              <View style={{ paddingHorizontal: 15 }}>
-                <FlightStatus />
-                <WeatherSummary />
-                <QuickNavigation onNavigate={(screen: string) => navigation.navigate(screen)} />
-              </View>
-              <View style={{ height: 60 }} />
-            </ScrollView>
-
-            <SidebarNav />
-          </View>
+          <DashboardSidebar
+            navigation={navigation}
+            isTabletLandscape={isTabletLandscape}
+            style={{ flex: 1 }}
+          />
         )}
 
         {/* PRAWY PANEL (Czat) */}

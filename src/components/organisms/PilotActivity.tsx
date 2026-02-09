@@ -15,7 +15,7 @@ const MOCK_ACTIVITY = [
 ];
 
 export const PilotActivity: React.FC = () => {
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
 
     return (
         <View style={styles.container}>
@@ -30,11 +30,11 @@ export const PilotActivity: React.FC = () => {
                 contentContainerStyle={{ gap: 10, paddingBottom: 20 }}
             >
                 {MOCK_ACTIVITY.map((item) => (
-                    <View key={item.id} style={styles.item}>
+                    <View key={item.id} style={[styles.item, isDark && { backgroundColor: 'rgba(255,255,255,0.05)' }]}>
                         <Avatar size={34} source={item.avatar} />
                         <View style={styles.content}>
                             <View style={styles.itemHeader}>
-                                <Typography variant="bodySmall" style={{ fontWeight: '700' }}>
+                                <Typography variant="h3" style={{ fontWeight: '700', fontSize: 13, color: theme.colors.text }}>
                                     {item.pilot} <Typography variant="bodySmall" color="textSecondary" style={{ fontWeight: '400' }}>{item.action}</Typography>
                                 </Typography>
                                 <Typography variant="caption" color="textSecondary" style={{ fontSize: 10 }}>
@@ -49,15 +49,11 @@ export const PilotActivity: React.FC = () => {
                             )}
 
                             {item.message && (
-                                <View style={styles.messageBubble}>
-                                    <Typography variant="bodySmall" style={styles.messageText}>
+                                <View style={[styles.messageBubble, isDark && { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+                                    <Typography variant="bodySmall" style={[styles.messageText, { color: theme.colors.text }]}>
                                         {item.message}
                                     </Typography>
                                 </View>
-                            )}
-
-                            {item.image && (
-                                <Image source={{ uri: item.image }} style={styles.activityImage} />
                             )}
                         </View>
                     </View>

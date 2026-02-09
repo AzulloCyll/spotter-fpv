@@ -13,12 +13,12 @@ interface ActionCardProps {
     styles: any;
 }
 
-const NavCard: React.FC<ActionCardProps & { styles: any }> = ({ title, description, icon, color, onPress, styles }) => {
+const NavCard: React.FC<ActionCardProps & { styles: any; dark?: boolean }> = ({ title, description, icon, color, onPress, styles, dark }) => {
     return (
         <TouchableOpacity
             activeOpacity={0.8}
             onPress={onPress}
-            style={[styles.card, { elevation: 0, shadowOpacity: 0 }]}
+            style={[styles.card, { elevation: 0, shadowOpacity: 0 }, dark && { backgroundColor: 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }]}
         >
             <View style={{
                 width: 44,
@@ -33,8 +33,8 @@ const NavCard: React.FC<ActionCardProps & { styles: any }> = ({ title, descripti
                 <Icon name={icon} size={24} color="#FFFFFF" />
             </View>
             <View style={styles.content}>
-                <Typography variant="h3" style={styles.title}>{title}</Typography>
-                <Typography variant="bodySmall" color="textSecondary">{description}</Typography>
+                <Typography variant="h3" style={[styles.title, dark && { color: '#FFFFFF' }]}>{title}</Typography>
+                <Typography variant="bodySmall" color={dark ? "white" : "textSecondary"} style={dark && { opacity: 0.7 }}>{description}</Typography>
             </View>
             <Icon name="ChevronRight" size={20} color={color} />
         </TouchableOpacity>
@@ -46,7 +46,7 @@ interface QuickNavigationProps {
 }
 
 export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) => {
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
     const dynamicStyles = getStyles(theme);
 
     const navItems = [
@@ -70,6 +70,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
                     color={item.color}
                     onPress={() => onNavigate(item.screen)}
                     styles={dynamicStyles}
+                    dark={isDark}
                 />
             ))}
         </View>

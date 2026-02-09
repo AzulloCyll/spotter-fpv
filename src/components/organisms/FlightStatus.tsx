@@ -6,16 +6,16 @@ import { Icon } from '../atoms/Icon';
 import { Badge } from '../atoms/Badge';
 import { MOCK_BATTERY, MOCK_GPS_POSITION, MOCK_IS_LINK_ACTIVE, MOCK_VTX_TEMP, MOCK_WEATHER_DATA } from '../../constants/mockData';
 
-export const FlightStatus: React.FC<{ dark?: boolean }> = ({ dark }) => {
-    const { theme } = useTheme();
+export const FlightStatus: React.FC = () => {
+    const { theme, isDark } = useTheme();
     const isLinkActive = MOCK_IS_LINK_ACTIVE;
     const battery = MOCK_BATTERY;
     const gps = MOCK_GPS_POSITION;
     const weather = MOCK_WEATHER_DATA;
     const vtxTemp = MOCK_VTX_TEMP;
 
-    const textColor = dark ? '#FFFFFF' : theme.colors.text;
-    const secondaryColor = dark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
+    const textColor = isDark ? '#FFFFFF' : theme.colors.text;
+    const secondaryColor = isDark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
 
     const dynamicStyles = getStyles(theme);
 

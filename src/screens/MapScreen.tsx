@@ -12,12 +12,7 @@ import { MOCK_SPOTS, Spot } from '../data/mockSpots';
 import { SpotMarker } from '../components/molecules/SpotMarker';
 import { useSpots } from '../context/SpotsContext';
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
-import { SidebarNav } from '../components/organisms/SidebarNav';
-import { FlightStatus } from '../components/organisms/FlightStatus';
-import { WeatherSummary } from '../components/organisms/WeatherSummary';
-import { QuickNavigation } from '../components/organisms/QuickNavigation';
-import { TopBar } from '../components/organisms/TopBar';
-import { LinearGradient } from 'expo-linear-gradient';
+import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 
 const MAP_STYLES = [
   { id: 'standard', label: 'Standardowa', type: 'standard' as MapType },
@@ -26,10 +21,10 @@ const MAP_STYLES = [
   { id: 'dark', label: 'Ciemna', type: 'standard' as MapType, customStyle: true },
 ];
 
-export default function MapScreen() {
+export default function MapScreen({ navigation }: any) {
   const { theme, isDark } = useTheme();
   const { spots, addSpot } = useSpots();
-  const [activeStyleId, setActiveStyleId] = useState(MOCK_MAP_STYLE_ID);
+  const [activeStyleId, setActiveStyleId] = useState('hybrid');
   const [showMenu, setShowMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -107,29 +102,15 @@ export default function MapScreen() {
 
         {/* Lewy Panel (Dashboard style z SG) */}
         {isTabletLandscape && (
-          <View style={[dynamicStyles.sidebar, { flex: 1 }]}>
-            <LinearGradient
-              colors={[theme.colors.background, theme.colors.primary + '15']}
-              style={StyleSheet.absoluteFillObject}
-            />
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              <View style={{ height: 60 }} />
-              <TopBar />
-
-              <View style={{ paddingHorizontal: 15 }}>
-                <FlightStatus />
-                <WeatherSummary />
-                <QuickNavigation onNavigate={(screen) => {
-                  if (screen === 'Mapa') setShowSpotsModal(true);
-                  // @ts-ignore
-                  else navigation.navigate(screen);
-                }} />
-              </View>
-              <View style={{ height: 60 }} />
-            </ScrollView>
-
-            <SidebarNav />
-          </View>
+          <DashboardSidebar
+            navigation={navigation}
+            isTabletLandscape={isTabletLandscape}
+            style={{ flex: 1, height: '100%', maxWidth: 400 }}
+            onNavigate={(screen) => {
+              if (screen === 'Mapa') setShowSpotsModal(true);
+              else navigation.navigate(screen);
+            }}
+          />
         )}
 
         {/* Obszar Mapy */}

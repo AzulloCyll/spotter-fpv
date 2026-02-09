@@ -1,12 +1,7 @@
 import React from 'react';
 import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
-import { WeatherSummary } from '../components/organisms/WeatherSummary';
-import { QuickNavigation } from '../components/organisms/QuickNavigation';
-import { TopBar } from '../components/organisms/TopBar';
-import { FlightStatus } from '../components/organisms/FlightStatus';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SidebarNav } from '../components/organisms/SidebarNav';
+import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { FeaturedSpot } from '../components/organisms/FeaturedSpot';
 import { PilotActivity } from '../components/organisms/PilotActivity';
 import { CommunityGallery } from '../components/organisms/CommunityGallery';
@@ -24,70 +19,18 @@ export default function HomeScreen({ navigation }: any) {
       <View style={[dynamicStyles.mainWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
 
         {/* DASHBOARD COLUMN (30%) */}
-        <View style={[
-          dynamicStyles.dashboardColumn,
-          isTabletLandscape ? { width: '30%', maxWidth: 400, flex: 0 } : { flex: 1 }
-        ]}>
-          <LinearGradient
-            colors={[theme.colors.background, theme.colors.primary + '25']}
-            style={StyleSheet.absoluteFillObject}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 0.8 }}
-          />
-
-          {/* Tło: Wektorowe chmury */}
-          <View style={[StyleSheet.absoluteFill, { overflow: 'hidden' }]} pointerEvents="none">
-            {/* STREFA 1: Góra */}
-            <View style={{ position: 'absolute', top: -50, left: -50, opacity: isDark ? 0.05 : 0.9 }}>
-              <Icon name="Cloud" size={250} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
-            </View>
-            <View style={{ position: 'absolute', top: 30, right: -40, opacity: isDark ? 0.05 : 0.8 }}>
-              <Icon name="Cloud" size={180} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
-            </View>
-            <View style={{ position: 'absolute', top: 100, left: '55%', opacity: isDark ? 0.03 : 0.6 }}>
-              <Icon name="Cloud" size={50} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
-            </View>
-
-            {/* STREFA 2: Środek */}
-            <View style={{ position: 'absolute', top: 180, left: 20, opacity: isDark ? 0.03 : 0.7 }}>
-              <Icon name="Cloud" size={80} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
-            </View>
-            <View style={{ position: 'absolute', top: 220, right: 10, opacity: isDark ? 0.04 : 0.75 }}>
-              <Icon name="Cloud" size={120} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
-            </View>
-
-            {/* STREFA 3: Dół */}
-            <View style={{ position: 'absolute', top: 320, left: -50, opacity: isDark ? 0.03 : 0.7 }}>
-              <Icon name="Cloud" size={200} color="#FFFFFF" strokeWidth={1} fill="#FFFFFF" />
-            </View>
-          </View>
-
-          <ScrollView
-            style={dynamicStyles.container}
-            showsVerticalScrollIndicator={false}
-            scrollEnabled={!isTabletLandscape}
-          >
-            <View style={dynamicStyles.topSpacer} />
-            <TopBar dark={false} />
-
-            <View style={{ paddingHorizontal: isTabletLandscape ? 15 : theme.spacing.lg }}>
-              <FlightStatus dark={false} />
-              <WeatherSummary dark={false} />
-              <QuickNavigation onNavigate={(screen: string) => navigation.navigate(screen)} />
-            </View>
-
-            <View style={{ height: 60 }} />
-          </ScrollView>
-
-          {isTabletLandscape && <SidebarNav />}
-        </View>
+        <DashboardSidebar
+          navigation={navigation}
+          isTabletLandscape={isTabletLandscape}
+          style={isTabletLandscape ? { width: '30%', maxWidth: 400, flex: 0 } : { flex: 1 }}
+        />
 
         {/* PRAWA STRONA (CENTRUM DOWODZENIA) */}
         {isTabletLandscape && (
-          <View style={[dynamicStyles.rightPanel, { backgroundColor: '#FFFFFF' }]}>
+          <View style={[dynamicStyles.rightPanel, { backgroundColor: theme.colors.background }]}>
             <View style={dynamicStyles.rightContent}>
               <View style={styles.welcomeHeader}>
-                <Typography variant="h1" style={{ fontSize: 26 }}>Centrum Dowodzenia</Typography>
+                <Typography variant="h1" style={{ fontSize: 26, color: theme.colors.text }}>Centrum Dowodzenia</Typography>
                 <Typography variant="bodySmall" color="textSecondary">Wszystko czego potrzebujesz przed dzisiejszym lotem</Typography>
               </View>
 
@@ -97,28 +40,28 @@ export default function HomeScreen({ navigation }: any) {
                   <FeaturedSpot />
 
                   <View style={styles.statsRow}>
-                    <View style={styles.quickStat}>
+                    <View style={[styles.quickStat, isDark && styles.quickStatDark]}>
                       <Icon name="Activity" size={18} color={theme.colors.primary} />
                       <View style={{ marginLeft: 10 }}>
-                        <Typography variant="h3" style={{ fontSize: 16 }}>12.5h</Typography>
+                        <Typography variant="h3" style={{ fontSize: 16, color: theme.colors.text }}>12.5h</Typography>
                         <Typography variant="label" color="textSecondary" style={{ fontSize: 8 }}>Czas lotu</Typography>
                       </View>
                     </View>
-                    <View style={styles.quickStat}>
+                    <View style={[styles.quickStat, isDark && styles.quickStatDark]}>
                       <Icon name="MapPin" size={18} color={theme.colors.primary} />
                       <View style={{ marginLeft: 10 }}>
-                        <Typography variant="h3" style={{ fontSize: 16 }}>8</Typography>
+                        <Typography variant="h3" style={{ fontSize: 16, color: theme.colors.text }}>8</Typography>
                         <Typography variant="label" color="textSecondary" style={{ fontSize: 8 }}>Spoty</Typography>
                       </View>
                     </View>
                   </View>
 
-                  <View style={[styles.notamCard, { marginTop: 12 }]}>
+                  <View style={[styles.notamCard, isDark && styles.notamCardDark, { marginTop: 12 }]}>
                     <View style={styles.notamHeader}>
                       <Icon name="AlertTriangle" size={16} color={theme.colors.warning} />
-                      <Typography variant="h3" style={{ marginLeft: 8, fontSize: 14 }}>NOTAM: Bemowo</Typography>
+                      <Typography variant="h3" style={{ marginLeft: 8, fontSize: 14, color: isDark ? theme.colors.warning : '#B45309' }}>NOTAM: Bemowo</Typography>
                     </View>
-                    <Typography variant="bodySmall" color="textSecondary" numberOfLines={1}>
+                    <Typography variant="bodySmall" style={{ color: isDark ? theme.colors.textSecondary : '#92400E' }} numberOfLines={1}>
                       Wzmożona aktywność lotnictwa ogólnego. Zachowaj ostrożność.
                     </Typography>
                   </View>
@@ -161,6 +104,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
   },
+  quickStatDark: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
   notamCard: {
     marginTop: 15,
     padding: 15,
@@ -168,6 +115,10 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#FEF3C7',
+  },
+  notamCardDark: {
+    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    borderColor: 'rgba(245, 158, 11, 0.2)',
   },
   notamHeader: {
     flexDirection: 'row',

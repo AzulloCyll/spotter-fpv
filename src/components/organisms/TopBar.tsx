@@ -6,19 +6,19 @@ import { Avatar } from '../atoms/Avatar';
 import { Icon } from '../atoms/Icon';
 import { useNavigation } from '@react-navigation/native';
 
-export const TopBar: React.FC<{ dark?: boolean }> = ({ dark }) => {
+export const TopBar: React.FC = () => {
     const navigation = useNavigation<any>();
     const { theme, isDark, toggleTheme } = useTheme();
     const dynamicStyles = getStyles(theme);
-    const textColor = dark ? '#FFFFFF' : theme.colors.text;
-    const secondaryColor = dark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
+    const textColor = isDark ? '#FFFFFF' : theme.colors.text;
+    const secondaryColor = isDark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
 
     return (
         <View style={dynamicStyles.container}>
             <View style={dynamicStyles.leftSection}>
                 <Avatar size={48} />
                 <View style={dynamicStyles.greeting}>
-                    <Typography variant="caption" color={dark ? "white" : "textSecondary"}>Witaj,</Typography>
+                    <Typography variant="caption" color={isDark ? "white" : "textSecondary"}>Witaj,</Typography>
                     <Typography variant="h3" style={{ color: textColor }}>Pilot FPV</Typography>
                 </View>
             </View>

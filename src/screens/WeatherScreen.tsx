@@ -7,11 +7,7 @@ import { IconButton } from '../components/atoms/IconButton';
 import { Icon } from '../components/atoms/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
-import { SidebarNav } from '../components/organisms/SidebarNav';
-import { FlightStatus } from '../components/organisms/FlightStatus';
-import { WeatherSummary } from '../components/organisms/WeatherSummary';
-import { QuickNavigation } from '../components/organisms/QuickNavigation';
-import { TopBar } from '../components/organisms/TopBar';
+import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MOCK_WEATHER_DATA, MOCK_LOCATION } from '../constants/mockData';
 
@@ -51,26 +47,12 @@ export default function WeatherScreen() {
     <View style={dynamicStyles.container}>
       <View style={[dynamicStyles.mainWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
 
-        {/* DASHBOARD COLUMN (Tablet Landscape) */}
         {isTabletLandscape && (
-          <View style={[dynamicStyles.sidebar, { flex: 1 }]}>
-            <LinearGradient
-              colors={[theme.colors.background, theme.colors.primary + '15']}
-              style={StyleSheet.absoluteFillObject}
-            />
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              <View style={{ height: 60 }} />
-              <TopBar />
-
-              <View style={{ paddingHorizontal: 15 }}>
-                <FlightStatus />
-                <WeatherSummary />
-                <QuickNavigation onNavigate={(screen) => navigation.navigate(screen)} />
-              </View>
-              <View style={{ height: 60 }} />
-            </ScrollView>
-            <SidebarNav />
-          </View>
+          <DashboardSidebar
+            navigation={navigation}
+            isTabletLandscape={isTabletLandscape}
+            style={{ width: '30%', maxWidth: 400 }}
+          />
         )}
 
         {/* PRAWY PANEL (Pogoda) */}
