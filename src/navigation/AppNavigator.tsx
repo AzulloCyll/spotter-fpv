@@ -23,6 +23,20 @@ export default function AppNavigator() {
     NavigationBar.setBehaviorAsync("overlay-swipe");
   }, []);
 
+  const baseTabBarStyle = {
+    position: 'absolute' as const,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'transparent',
+    borderTopColor: 'transparent',
+    height: 70,
+    borderTopWidth: 0,
+    elevation: 0,
+    paddingBottom: 15,
+    paddingTop: 10,
+  };
+
   return (
     <>
       <StatusBar hidden />
@@ -31,19 +45,7 @@ export default function AppNavigator() {
           screenOptions={{
             headerShown: false,
             tabBarShowLabel: true,
-            tabBarStyle: {
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              backgroundColor: 'transparent',
-              borderTopColor: 'transparent',
-              height: 70,
-              borderTopWidth: 0,
-              elevation: 0,
-              paddingBottom: 15,
-              paddingTop: 10,
-            },
+            tabBarStyle: baseTabBarStyle,
             tabBarItemStyle: {
               height: 50,
             },
@@ -67,6 +69,12 @@ export default function AppNavigator() {
             component={MapScreen}
             options={{
               tabBarIcon: ({ color, size }) => <Icon name="Map" color={color} size={size} />,
+              tabBarStyle: {
+                ...baseTabBarStyle,
+                backgroundColor: isDark ? 'rgba(20, 20, 20, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                borderTopWidth: 1,
+              }
             }}
           />
           <Tab.Screen

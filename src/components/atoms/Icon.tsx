@@ -25,7 +25,7 @@ export const Icon: React.FC<IconProps> = ({
 
     if (!LucideIcon) {
         console.warn(`Icon "${name}" not found in lucide-react-native`);
-        return null;
+        return <LucideIcons.HelpCircle size={size} color={theme.colors.error} />;
     }
 
     const iconProps = {

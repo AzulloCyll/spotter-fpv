@@ -1,13 +1,17 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, Marker, MapType } from 'react-native-maps';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image } from 'react-native';
+import MapView, { PROVIDER_GOOGLE, MapType } from 'react-native-maps';
+import * as Location from 'expo-location';
 import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
-import { Badge } from '../components/atoms/Badge';
 import { IconButton } from '../components/atoms/IconButton';
 import { Input } from '../components/atoms/Input';
 import { Icon } from '../components/atoms/Icon';
+import { MOCK_SPOTS, Spot } from '../data/mockSpots';
+import { SpotMarker } from '../components/molecules/SpotMarker';
+import { useSpots } from '../context/SpotsContext';
+import { AddSpotModal } from '../components/organisms/AddSpotModal';
 
 const MAP_STYLES = [
   { id: 'standard', label: 'Standardowa', type: 'standard' as MapType },
@@ -18,9 +22,15 @@ const MAP_STYLES = [
 
 export default function MapScreen() {
   const { theme, isDark } = useTheme();
+  const { spots, addSpot } = useSpots();
   const [activeStyleId, setActiveStyleId] = useState(MOCK_MAP_STYLE_ID);
   const [showMenu, setShowMenu] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
+  const [locationPermission, setLocationPermission] = useState<boolean>(false);
+  const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+  const mapRef = useRef<MapView>(null);
 
   const activeStyleConfig = MAP_STYLES.find(s => s.id === activeStyleId) || MAP_STYLES[0];
   const mapType = activeStyleConfig.type;
@@ -30,37 +40,85 @@ export default function MapScreen() {
     ? darkMapStyle
     : lightMapStyle;
 
+  const dynamicStyles = getStyles(theme);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Brak uprawnień', 'Nie możemy pokazać Twojej lokalizacji bez zgody.');
+        return;
+      }
+      setLocationPermission(true);
+      const location = await Location.getCurrentPositionAsync({});
+      setUserLocation(location);
+    })();
+  }, []);
+
+  const handleSaveSpot = (spotData: Omit<Spot, 'id' | 'coordinates' | 'rating'>) => {
+    // Determine location for new spot (User location or center of map - prioritizing user location for now)
+    const newLocation = userLocation ? {
+      latitude: userLocation.coords.latitude,
+      longitude: userLocation.coords.longitude,
+    } : {
+      latitude: 52.2297, // Fallback to Warsaw center
+      longitude: 21.0122,
+    };
+
+    const newSpot: Spot = {
+      id: Date.now().toString(),
+      ...spotData,
+      coordinates: newLocation,
+      rating: 0, // Default rating
+    };
+
+    addSpot(newSpot);
+    // Animate to new spot
+    mapRef.current?.animateToRegion({
+      ...newLocation,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
+  };
+
   const handleStyleSelect = (style: typeof MAP_STYLES[0]) => {
     setActiveStyleId(style.id);
     setShowMenu(false);
   };
 
-  const dynamicStyles = getStyles(theme);
+  const handleSpotPress = (spot: Spot) => {
+    setSelectedSpot(spot);
+  };
+
+  const closeSpotDetails = () => {
+    setSelectedSpot(null);
+  };
 
   return (
     <View style={dynamicStyles.container}>
       <MapView
+        ref={mapRef}
         provider={PROVIDER_GOOGLE}
         style={dynamicStyles.map}
         mapType={mapType}
         initialRegion={{
           latitude: 52.2297,
           longitude: 21.0122,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
+          latitudeDelta: 0.15,
+          longitudeDelta: 0.15,
         }}
         customMapStyle={customStyle}
         zoomControlEnabled={false}
+        showsUserLocation={locationPermission}
+        showsMyLocationButton={false}
       >
-        <Marker
-          coordinate={{ latitude: 52.2297, longitude: 21.0122 }}
-          title="Spot FPV Warszawa"
-          description="Fajny park do freestyle"
-        >
-          <View style={dynamicStyles.markerContainer}>
-            <Icon name="MapPin" color={theme.colors.success} size={32} />
-          </View>
-        </Marker>
+        {spots.map((spot) => (
+          <SpotMarker
+            key={spot.id}
+            spot={spot}
+            onPress={handleSpotPress}
+          />
+        ))}
       </MapView>
 
       {/* Górna wyszukiwarka */}
@@ -77,11 +135,105 @@ export default function MapScreen() {
       {/* Przyciski boczne */}
       <View style={dynamicStyles.sideButtons}>
         <IconButton
-          icon={<Icon name="Layers" size={24} />}
-          onPress={() => setShowMenu(true)}
+          icon={<Icon name="Navigation" size={24} />}
+          onPress={async () => {
+            if (locationPermission) {
+              const location = await Location.getCurrentPositionAsync({});
+              mapRef.current?.animateToRegion({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
+                latitudeDelta: 0.05,
+                longitudeDelta: 0.05,
+              });
+            } else {
+              Alert.alert('Brak uprawnień', 'Włącz lokalizację w ustawieniach.');
+            }
+          }}
           style={dynamicStyles.sideButton}
         />
+        <IconButton
+          icon={<Icon name="Layers" size={24} />}
+          onPress={() => setShowMenu(true)}
+          style={[dynamicStyles.sideButton, { marginTop: theme.spacing.md }]}
+        />
       </View>
+
+      {/* FAB - Dodawanie Spota */}
+      <TouchableOpacity
+        onPress={() => setShowAddModal(true)}
+        style={dynamicStyles.fab}
+        activeOpacity={0.8}
+      >
+        <Icon name="Plus" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
+
+      {/* Modal dodawania spota */}
+      <AddSpotModal
+        visible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSave={handleSaveSpot}
+      />
+
+      {/* Modal szczegółów spota (uproszczony) */}
+      {selectedSpot && (
+        <View style={dynamicStyles.spotCardContainer}>
+          <TouchableWithoutFeedback onPress={closeSpotDetails}>
+            <View style={dynamicStyles.spotCard}>
+              <View style={[dynamicStyles.spotTypeBadge, { backgroundColor: theme.colors.primary }]}>
+                <Typography variant="caption" style={{ color: '#fff' }}>{selectedSpot.type.toUpperCase()}</Typography>
+              </View>
+              <View style={dynamicStyles.spotHeader}>
+                <Typography variant="h3">{selectedSpot.name}</Typography>
+                <TouchableOpacity onPress={closeSpotDetails}>
+                </TouchableOpacity>
+              </View>
+
+              {/* Galeria zdjęć */}
+              {selectedSpot.images && selectedSpot.images.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginVertical: 12 }}
+                  contentContainerStyle={{ paddingRight: 20 }}
+                >
+                  {selectedSpot.images.map((img, index) => (
+                    <Image
+                      key={index}
+                      source={{ uri: img }}
+                      style={{
+                        width: 120,
+                        height: 80,
+                        borderRadius: 8,
+                        marginRight: 8,
+                        backgroundColor: theme.colors.background
+                      }}
+                    />
+                  ))}
+                </ScrollView>
+              )}
+
+              <Typography variant="body" color="textSecondary" style={{ marginTop: 4 }}>
+                {selectedSpot.description}
+              </Typography>
+
+              <View style={dynamicStyles.spotMeasures}>
+                <View style={dynamicStyles.measureItem}>
+                  <Icon name="Activity" size={16} color={theme.colors.warning} />
+                  <Typography variant="caption" style={{ marginLeft: 4 }}>Trudność: {selectedSpot.difficulty}</Typography>
+                </View>
+                <View style={dynamicStyles.measureItem}>
+                  <Icon name="Star" size={16} color={theme.colors.secondary} />
+                  <Typography variant="caption" style={{ marginLeft: 4 }}>Ocena: {selectedSpot.rating}</Typography>
+                </View>
+              </View>
+
+              <TouchableOpacity style={dynamicStyles.navigateButton}>
+                <Typography variant="label" style={{ color: '#fff' }}>Nawiguj</Typography>
+              </TouchableOpacity>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      )}
 
       {/* Menu wyboru stylu */}
       <Modal
@@ -101,12 +253,17 @@ export default function MapScreen() {
                     style={dynamicStyles.menuItem}
                     onPress={() => handleStyleSelect(style)}
                   >
-                    <Typography
-                      color={activeStyleId === style.id ? "primary" : "text"}
-                      style={dynamicStyles.menuItemText}
-                    >
-                      {style.label}
-                    </Typography>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <View style={{ marginRight: 12 }}>
+                        <Icon name={style.id === 'dark' ? 'Moon' : style.id === 'satellite' ? 'Globe' : 'Map'} size={20} color={theme.colors.textSecondary} />
+                      </View>
+                      <Typography
+                        color={activeStyleId === style.id ? "primary" : "text"}
+                        style={dynamicStyles.menuItemText}
+                      >
+                        {style.label}
+                      </Typography>
+                    </View>
                     {activeStyleId === style.id && (
                       <Icon name="Check" color={theme.colors.primary} size={20} />
                     )}
@@ -177,6 +334,65 @@ const getStyles = (theme: any) => StyleSheet.create({
   menuItemText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  spotCardContainer: {
+    position: 'absolute',
+    bottom: theme.spacing.xl + 60,
+    left: theme.spacing.md,
+    right: theme.spacing.md,
+  },
+  spotCard: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.lg,
+    ...theme.shadows.strong,
+  },
+  spotHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.xs,
+  },
+  spotTypeBadge: {
+    position: 'absolute',
+    top: -10,
+    left: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  spotMeasures: {
+    flexDirection: 'row',
+    marginTop: theme.spacing.md,
+  },
+  measureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: theme.spacing.lg,
+  },
+  navigateButton: {
+    backgroundColor: theme.colors.primary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: theme.spacing.lg,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: theme.spacing.xl + 90, // Higher than spot card
+    right: theme.spacing.md,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   }
 });
 
@@ -197,7 +413,8 @@ const darkMapStyle = [
   { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
   { "elementType": "labels.text.stroke", "stylers": [{ "color": "#212121" }] },
   { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#181818" }] },
+  { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#2c2c2c" }] },
   { "featureType": "road", "elementType": "geometry.fill", "stylers": [{ "color": "#2c2c2c" }] },
+  { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#8a8a8a" }] },
   { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] }
 ];

@@ -14,15 +14,15 @@
 
 Cel: Umożliwienie użytkownikom znajdowania i dodawania miejsc do latania.
 
-- [ ] **Ekran Mapy:**
-  - [ ] Pełna integracja z mapą (np. z filtrami stylów: satelita/teren).
-  - [ ] Wyświetlanie pinów (Spoty: Bando, Natura, Parki).
-  - [ ] Pobieranie lokalizacji użytkownika.
-- [ ] **Szczegóły Spota:**
-  - [ ] Karta spota (Trudność, ryzyko zakłóceń, dostępność).
-  - [ ] Galeria zdjęć/filmów z drona.
-- [ ] **Zarządzanie Spotami:**
-  - [ ] Dodawanie nowych miejscówek przez użytkowników.
+- [x] **Ekran Mapy:**
+  - [x] Pełna integracja z mapą (np. z filtrami stylów: satelita/teren).
+  - [x] Wyświetlanie pinów (Spoty: Bando, Natura, Parki).
+  - [x] Pobieranie lokalizacji użytkownika.
+- [x] **Szczegóły Spota:**
+  - [x] Karta spota (Trudność, ryzyko zakłóceń, dostępność).
+  - [x] Galeria zdjęć/filmów z drona (częściowo - brak galerii, tylko opis).
+- [x] **Zarządzanie Spotami:**
+  - [x] Dodawanie nowych miejscówek przez użytkowników.
 
 ## 🌤️ Faza 3: Zaawansowana Pogoda dla FPV
 

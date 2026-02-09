@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, StyleSheet, type ViewStyle } from 'react-native';
+import { TouchableOpacity, StyleSheet, type ViewStyle, type StyleProp } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 
 interface IconButtonProps {
@@ -8,7 +8,7 @@ interface IconButtonProps {
     variant?: 'primary' | 'surface' | 'glass' | 'ghost';
     size?: number;
     round?: boolean;
-    style?: ViewStyle;
+    style?: StyleProp<ViewStyle>;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({

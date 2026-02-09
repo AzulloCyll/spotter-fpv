@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, useWindowDimensions, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, useWindowDimensions, TouchableWithoutFeedback, ScrollView, Image } from 'react-native';
 import { Map as MapView, Marker } from 'pigeon-maps';
 import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
+import { useSpots } from '../context/SpotsContext';
+import { AddSpotModal } from '../components/organisms/AddSpotModal';
+import { Spot } from '../data/mockSpots';
 
 // Custom providers for different modes
 const providers = {
@@ -27,21 +30,34 @@ const WEB_STYLES = [
 export default function MapScreen() {
   const { theme, isDark } = useTheme();
   const { height: windowHeight } = useWindowDimensions();
+  const { spots, addSpot } = useSpots();
   const [center, setCenter] = useState<[number, number]>([52.2297, 21.0122]); // Warsaw
   const [zoom, setZoom] = useState(12);
   const [activeStyleId, setActiveStyleId] = useState(MOCK_MAP_STYLE_ID);
   const [showMenu, setShowMenu] = useState(false);
-
-  // Default provider adapts to theme if no specific style is forcefully selected?
-  // Current implementation has manual selection. Let's make the "default" logic smarter if needed,
-  // but for now, if the user picks a style, they pick a style.
-  // HOWEVER, we might want the initial load to respect the theme if it's 'dark'?
-  // But MOCK_MAP_STYLE_ID is 'standard' (light map usually).
-  // Let's stick to manual selection for now to not overcomplicate, but fix the UI styling.
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
 
   const activeProvider = WEB_STYLES.find(s => s.id === activeStyleId)?.provider || providers.light;
 
   const dynamicStyles = getStyles(theme);
+
+  const handleSaveSpot = (spotData: Omit<Spot, 'id' | 'coordinates' | 'rating'>) => {
+    // Web implementation: simple geolocation or center of map
+    const newLocation = {
+      latitude: center[0],
+      longitude: center[1],
+    };
+
+    const newSpot: Spot = {
+      id: Date.now().toString(),
+      ...spotData,
+      coordinates: newLocation,
+      rating: 0, // Default rating
+    };
+
+    addSpot(newSpot);
+  };
 
   return (
     <View style={dynamicStyles.container}>
@@ -57,12 +73,33 @@ export default function MapScreen() {
           provider={activeProvider}
           metaWheelZoom={true}
         >
-          <Marker
-            width={40}
-            anchor={[52.2297, 21.0122]}
-          >
-            <Icon name="MapPin" color={theme.colors.success} size={32} />
-          </Marker>
+          {spots.map((spot) => (
+            <Marker
+              key={spot.id}
+              width={40}
+              anchor={[spot.coordinates.latitude, spot.coordinates.longitude]}
+            >
+              <View
+                // @ts-ignore - Direct DOM interaction for Web
+                onClick={(e: any) => {
+                  e.stopPropagation();
+                  console.log('DOM Click:', spot.name);
+                  setSelectedSpot(spot);
+                }}
+                style={{
+                  width: 40,
+                  height: 40,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  // @ts-ignore
+                  pointerEvents: 'auto'
+                }}
+              >
+                <Icon name="MapPin" color={theme.colors.error} size={32} />
+              </View>
+            </Marker>
+          ))}
         </MapView>
       </View>
 
@@ -83,6 +120,15 @@ export default function MapScreen() {
           <Icon name="Layers" color={theme.colors.primary} size={24} />
         </TouchableOpacity>
       </View>
+
+      {/* FAB - Dodawanie Spota */}
+      <TouchableOpacity
+        onPress={() => setShowAddModal(true)}
+        style={dynamicStyles.fab}
+        activeOpacity={0.8}
+      >
+        <Icon name="Plus" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
 
       {/* Menu wyboru stylu (Web specific overlay) */}
       {showMenu && (
@@ -110,6 +156,55 @@ export default function MapScreen() {
           ))}
         </View>
       )}
+
+      {/* Spot Details Overlay (Web) */}
+      {selectedSpot && (
+        <View style={dynamicStyles.webSpotCard}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <Typography variant="h3">{selectedSpot.name}</Typography>
+            <TouchableOpacity onPress={() => setSelectedSpot(null)}>
+              <Icon name="X" size={24} color={theme.colors.textSecondary} />
+            </TouchableOpacity>
+          </View>
+
+
+
+          {/* Galeria zdjęć (Web) */}
+          {selectedSpot.images && selectedSpot.images.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={true}
+              style={{ marginVertical: 12 }}
+              contentContainerStyle={{ paddingRight: 20 }}
+            >
+              {selectedSpot.images.map((img, index) => (
+                <Image
+                  key={index}
+                  source={{ uri: img }}
+                  resizeMode="cover"
+                  style={{
+                    width: 120,
+                    height: 80,
+                    borderRadius: 8,
+                    marginRight: 8,
+                    backgroundColor: theme.colors.background
+                  }}
+                />
+              ))}
+            </ScrollView>
+          )}
+
+          <Typography variant="body" style={{ marginTop: 8 }}>{selectedSpot.description}</Typography>
+          <Typography variant="caption" style={{ marginTop: 8, color: theme.colors.textSecondary }}>Typ: {selectedSpot.type.toUpperCase()}</Typography>
+        </View>
+      )}
+
+      {/* Modal dodawania spota */}
+      <AddSpotModal
+        visible={showAddModal}
+        onClose={() => setShowAddModal(false)}
+        onSave={handleSaveSpot}
+      />
 
       {/* Overlay to close menu when clicking outside */}
       {showMenu && (
@@ -169,6 +264,24 @@ const getStyles = (theme: any) => StyleSheet.create({
     borderWidth: 1,
     borderColor: theme.colors.border,
   },
+  fab: {
+    position: 'absolute',
+    bottom: theme.spacing.xl + 90,
+    right: theme.spacing.md,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
+    cursor: 'pointer', // Web specific
+  },
   webMenu: {
     position: 'absolute',
     right: 80,
@@ -185,6 +298,21 @@ const getStyles = (theme: any) => StyleSheet.create({
     zIndex: 20,
     borderWidth: 1,
     borderColor: theme.colors.border,
+  },
+  webSpotCard: {
+    position: 'absolute',
+    bottom: 100,
+    left: 20,
+    right: 20,
+    backgroundColor: theme.colors.surface,
+    padding: 20,
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10,
+    zIndex: 20,
   },
   menuTitle: {
     marginBottom: 15,
