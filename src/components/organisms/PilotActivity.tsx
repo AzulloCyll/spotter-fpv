@@ -49,10 +49,23 @@ export const PilotActivity: React.FC = () => {
                             )}
 
                             {item.message && (
-                                <View style={[styles.messageBubble, isDark && { backgroundColor: 'rgba(255,255,255,0.08)' }]}>
+                                <View style={[
+                                    styles.messageBubble,
+                                    { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)' }
+                                ]}>
                                     <Typography variant="bodySmall" style={[styles.messageText, { color: theme.colors.text }]}>
                                         {item.message}
                                     </Typography>
+                                </View>
+                            )}
+
+                            {item.image && (
+                                <View style={{ marginTop: 8, borderRadius: 12, overflow: 'hidden' }}>
+                                    <Image
+                                        source={{ uri: item.image }}
+                                        style={{ width: '100%', height: 120, borderRadius: 12 }}
+                                        resizeMode="cover"
+                                    />
                                 </View>
                             )}
                         </View>

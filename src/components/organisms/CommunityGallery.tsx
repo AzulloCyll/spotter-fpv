@@ -18,13 +18,16 @@ const MOCK_PHOTOS = [
 ];
 
 export const CommunityGallery: React.FC = () => {
-    const { theme } = useTheme();
+    const { theme, isDark } = useTheme();
 
     return (
         <View style={styles.container}>
             <View style={styles.header}>
                 <Typography variant="label" color="textSecondary" style={styles.label}>GALERIA SPOŁECZNOŚCI</Typography>
-                <TouchableOpacity style={styles.addButton}>
+                <TouchableOpacity style={[
+                    styles.addButton,
+                    { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)' }
+                ]}>
                     <Icon name="Plus" size={16} color={theme.colors.primary} />
                     <Typography variant="bodySmall" color="primary" weight="700" style={{ marginLeft: 4 }}>DODAJ ZDJĘCIE</Typography>
                 </TouchableOpacity>
@@ -64,7 +67,6 @@ const styles = StyleSheet.create({
     addButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.6)',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
