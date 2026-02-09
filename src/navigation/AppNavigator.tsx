@@ -22,8 +22,16 @@ export default function AppNavigator() {
 
   useEffect(() => {
     // Ukrywa dolny pasek nawigacji systemowej (Android)
-    NavigationBar.setVisibilityAsync("hidden");
-    NavigationBar.setBehaviorAsync("inset-swipe");
+    const hideNavigationBar = async () => {
+      try {
+        await NavigationBar.setVisibilityAsync("hidden");
+      } catch (e) {
+        // Ignore specific unsupported errors
+      }
+    };
+
+    // Small delay to ensure it applies after mount
+    setTimeout(hideNavigationBar, 100);
   }, []);
 
   const hiddenTabBarStyle = { display: 'none' as const };
