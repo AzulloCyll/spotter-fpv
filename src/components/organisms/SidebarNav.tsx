@@ -5,7 +5,10 @@ import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
-const NAV_ITEMS = [
+import { RootTabParamList } from '../../navigation/types';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
+const NAV_ITEMS: { name: keyof RootTabParamList; icon: any; label: string }[] = [
     { name: 'Start', icon: 'House' as const, label: 'Start' },
     { name: 'Mapa', icon: 'Map' as const, label: 'Mapa' },
     { name: 'Pogoda', icon: 'CloudSun' as const, label: 'Pogoda' },
@@ -14,7 +17,7 @@ const NAV_ITEMS = [
 
 export const SidebarNav: React.FC = () => {
     const { theme, isDark } = useTheme();
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
     const route = useRoute();
 
     return (

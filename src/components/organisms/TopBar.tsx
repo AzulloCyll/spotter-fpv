@@ -5,6 +5,7 @@ import { Typography } from '../atoms/Typography';
 import { Avatar } from '../atoms/Avatar';
 import { Icon } from '../atoms/Icon';
 import { useNavigation } from '@react-navigation/native';
+import { TelemetryStatus } from '../molecules/TelemetryStatus';
 
 export const TopBar: React.FC = () => {
     const navigation = useNavigation<any>();
@@ -24,6 +25,8 @@ export const TopBar: React.FC = () => {
             </View>
 
             <View style={dynamicStyles.rightSection}>
+                <TelemetryStatus />
+
                 <TouchableOpacity
                     style={dynamicStyles.iconButton}
                     activeOpacity={0.7}

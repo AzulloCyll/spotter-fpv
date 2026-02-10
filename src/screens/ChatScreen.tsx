@@ -9,9 +9,12 @@ import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { MOCK_MESSAGES } from '../constants/mockData';
 import { useNavigation } from '@react-navigation/native';
 
+import { RootTabParamList } from '../navigation/types';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
 export default function ChatScreen() {
   const { theme, isDark } = useTheme();
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const [message, setMessage] = useState('');
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;

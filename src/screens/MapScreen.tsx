@@ -21,7 +21,9 @@ const MAP_STYLES = [
   { id: 'dark', label: 'Ciemna', type: 'standard' as MapType, customStyle: true },
 ];
 
-export default function MapScreen({ navigation }: any) {
+import { RootTabScreenProps } from '../navigation/types';
+
+export default function MapScreen({ navigation, route }: RootTabScreenProps<'Mapa'>) {
   const { theme, isDark } = useTheme();
   const { spots, addSpot } = useSpots();
   const [activeStyleId, setActiveStyleId] = useState('hybrid');
@@ -108,7 +110,7 @@ export default function MapScreen({ navigation }: any) {
             style={{ flex: 1, height: '100%', maxWidth: 400 }}
             onNavigate={(screen) => {
               if (screen === 'Mapa') setShowSpotsModal(true);
-              else navigation.navigate(screen);
+              else navigation.navigate(screen as any);
             }}
           />
         )}

@@ -31,8 +31,13 @@ const WeatherStat: React.FC<WeatherStatProps> = ({ icon, label, value, desc, sty
   </View>
 );
 
+import { RootTabParamList } from '../navigation/types';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
+import { KpIndexChart } from '../components/molecules/KpIndexChart';
+
 export default function WeatherScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { theme, isDark } = useTheme();
   const weather = MOCK_WEATHER_DATA;
   const location = MOCK_LOCATION;
@@ -40,7 +45,7 @@ export default function WeatherScreen() {
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
 
   const dynamicStyles = getStyles(theme);
-  const numColumns = isTabletLandscape ? 3 : (windowWidth > 800 ? 4 : 2);
+  const numColumns = isTabletLandscape ? 3 : (windowWidth > 800 ? 5 : 2);
   const itemWidth = `${(100 / numColumns) - 2}%` as any;
 
   return (
@@ -65,9 +70,20 @@ export default function WeatherScreen() {
                 variant="ghost"
               />
             )}
-            <View style={dynamicStyles.locationInfo}>
-              <Typography variant="h3" color="textPrimary">{location.name}</Typography>
-              <Typography variant="caption" color="textSecondary">Szczegółowa prognoza lotnicza</Typography>
+            <View style={dynamicStyles.headerContent}>
+              <View style={dynamicStyles.locationRow}>
+                <View>
+                  <Typography variant="h3" color="textPrimary">{location.name}</Typography>
+                  <Typography variant="caption" color="textSecondary">Szczegółowa prognoza lotnicza</Typography>
+                </View>
+                <View style={dynamicStyles.headerTemp}>
+                  <Typography variant="h2" style={{ fontWeight: '800', marginRight: 8 }}>{weather.temp}°</Typography>
+                  <Badge
+                    label={`KP: ${weather.kpIndex}`}
+                    variant={weather.kpIndex < 4 ? "success" : "warning"}
+                  />
+                </View>
+              </View>
             </View>
           </View>
 
@@ -75,42 +91,21 @@ export default function WeatherScreen() {
             style={dynamicStyles.content}
             contentContainerStyle={dynamicStyles.scrollContent}
             showsVerticalScrollIndicator={false}
+            bounces={false}
           >
-            <Card style={dynamicStyles.mainCard}>
-              <View style={dynamicStyles.mainTemp}>
-                <View>
-                  <Typography variant="h1" style={{ fontSize: 52, fontWeight: '800' }}>{weather.temp}°</Typography>
-                  <Badge
-                    label={`KP-INDEX: ${weather.kpIndex}`}
-                    variant={weather.kpIndex < 4 ? "success" : "warning"}
-                    pulse={weather.kpIndex > 4}
-                  />
-                </View>
-                <View style={dynamicStyles.mainMeta}>
-                  <Typography variant="h3">{weather.condition}</Typography>
-                  <Typography variant="bodySmall" color="textSecondary">Odczuwalna: {weather.feelsLike}°C</Typography>
-                  <Typography variant="bodySmall" color="textSecondary">Opady: {weather.precipitation}%</Typography>
-                </View>
-              </View>
-            </Card>
-
-            <View style={dynamicStyles.sectionTitle}>
-              <Typography variant="label" color="textSecondary">Parametry Lotnicze</Typography>
-            </View>
-
             <View style={dynamicStyles.statsGrid}>
               <WeatherStat
                 dynamicStyles={dynamicStyles}
                 style={{ width: itemWidth }}
-                icon={<Icon name="Wind" size={20} color={theme.colors.primary} />}
+                icon={<Icon name="Wind" size={18} color={theme.colors.primary} />}
                 label="Wiatr"
                 value={`${weather.windSpeed} km/h`}
-                desc={`Porywy do ${weather.windGusts}`}
+                desc={`Porywy ${weather.windGusts}`}
               />
               <WeatherStat
                 dynamicStyles={dynamicStyles}
                 style={{ width: itemWidth }}
-                icon={<Icon name="Droplets" size={20} color={theme.colors.primary} />}
+                icon={<Icon name="Droplets" size={18} color={theme.colors.primary} />}
                 label="Wilgotność"
                 value={`${weather.precipitation}%`}
                 desc="Brak opadów"
@@ -118,7 +113,7 @@ export default function WeatherScreen() {
               <WeatherStat
                 dynamicStyles={dynamicStyles}
                 style={{ width: itemWidth }}
-                icon={<Icon name="Sun" size={20} color={theme.colors.primary} />}
+                icon={<Icon name="Sun" size={18} color={theme.colors.primary} />}
                 label="UV Index"
                 value={weather.uvIndex.toString()}
                 desc="Umiarkowany"
@@ -126,19 +121,31 @@ export default function WeatherScreen() {
               <WeatherStat
                 dynamicStyles={dynamicStyles}
                 style={{ width: itemWidth }}
-                icon={<Icon name="Navigation" size={20} color={theme.colors.primary} />}
+                icon={<Icon name="Navigation" size={18} color={theme.colors.primary} />}
                 label="Widoczność"
                 value={`${weather.visibility} km`}
                 desc="Bardzo dobra"
               />
+              <WeatherStat
+                dynamicStyles={dynamicStyles}
+                style={{ width: itemWidth }}
+                icon={<Icon name="Thermometer" size={18} color={theme.colors.primary} />}
+                label="Odczuwalna"
+                value={`${weather.feelsLike}°`}
+                desc={weather.condition}
+              />
             </View>
 
-            <Card style={dynamicStyles.tipCard}>
-              <Typography variant="h3" style={{ marginBottom: 6 }}>Wskazówka pilota</Typography>
-              <Typography variant="bodySmall" color="textSecondary">
-                Kp-Index jest stabilny. Warunki idealne na latanie przy samym gruncie (proxy), wiatr może znosić na większych wysokościach.
-              </Typography>
+            <Card style={dynamicStyles.chartCard}>
+              <KpIndexChart forecast={weather.kpForecast} />
             </Card>
+
+            <View style={dynamicStyles.tipBanner}>
+              <Icon name="Lightbulb" size={16} color={theme.colors.primary} />
+              <Typography variant="caption" color="textSecondary" style={{ marginLeft: 8, flex: 1 }}>
+                KP jest stabilne. Idealne na latanie przy gruncie.
+              </Typography>
+            </View>
           </ScrollView>
         </View>
       </View>
@@ -152,23 +159,35 @@ const getStyles = (theme: any) => StyleSheet.create({
     backgroundColor: theme.colors.background,
   },
   header: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingTop: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border + '33',
   },
-  locationInfo: {
+  headerContent: {
+    flex: 1,
     marginLeft: 10,
+  },
+  locationRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerTemp: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   content: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 20,
   },
   mainWrapper: {
     flex: 1,
@@ -181,48 +200,37 @@ const getStyles = (theme: any) => StyleSheet.create({
     borderRightColor: theme.colors.border,
     overflow: 'hidden',
   },
-  mainCard: {
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.surface,
-    ...theme.shadows.soft,
-  },
-  mainTemp: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  mainMeta: {
-    alignItems: 'flex-end',
-  },
-  sectionTitle: {
-    marginBottom: 16,
-    paddingHorizontal: 4,
-  },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    marginBottom: 4,
   },
   statItem: {
     backgroundColor: theme.colors.surface,
-    padding: 16,
+    padding: 12,
     borderRadius: theme.borderRadius.md,
-    marginBottom: 16,
+    marginBottom: 12,
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     ...theme.shadows.soft,
   },
   statIcon: {
-    marginRight: 10,
-    marginTop: 2,
+    marginRight: 8,
   },
-  tipCard: {
-    padding: theme.spacing.lg - 4,
-    backgroundColor: theme.colors.iconBg,
-    borderColor: theme.colors.border,
-    borderWidth: 1,
+  chartCard: {
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: theme.colors.surface,
+    ...theme.shadows.soft,
+  },
+  tipBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: theme.colors.primary + '10',
     borderRadius: theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: theme.colors.primary + '20',
   }
 });

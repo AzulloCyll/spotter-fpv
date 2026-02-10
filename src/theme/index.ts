@@ -13,6 +13,8 @@ export interface Theme {
     green: string;
     border: string;
     iconBg: string;
+    white: string;
+    black: string;
   };
   typography: {
     h1: any;
@@ -58,6 +60,8 @@ export const lightTheme: Theme = {
     green: "#22C55E",
     border: "#abcaebff",
     iconBg: "#73b9ff",
+    white: "#FFFFFF",
+    black: "#000000",
   },
   typography: {
     h1: {
@@ -144,6 +148,8 @@ export const darkTheme: Theme = {
     textSecondary: "#CBD5E1", // Jaśniejszy tekst pomocniczy
     border: "#334155",
     iconBg: "#1E293B",
+    white: "#FFFFFF",
+    black: "#000000",
   },
 };
 

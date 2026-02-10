@@ -13,7 +13,9 @@ import WeatherScreen from '../screens/WeatherScreen';
 import ChatScreen from '../screens/ChatScreen';
 import TelemetryScreen from '../screens/TelemetryScreen';
 
-const Tab = createBottomTabNavigator();
+import { RootTabParamList } from './types';
+
+const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function AppNavigator() {
   const { theme, isDark } = useTheme();
@@ -71,8 +73,8 @@ export default function AppNavigator() {
               fontSize: 10,
               fontWeight: '700',
             },
-            tabBarActiveTintColor: isDark ? '#FFFFFF' : theme.colors.primary,
-            tabBarInactiveTintColor: isDark ? '#FFFFFF40' : theme.colors.textSecondary,
+            tabBarActiveTintColor: isDark ? theme.colors.white : theme.colors.primary,
+            tabBarInactiveTintColor: isDark ? theme.colors.white + '40' : theme.colors.textSecondary,
           }}
         >
           <Tab.Screen
@@ -88,8 +90,8 @@ export default function AppNavigator() {
             options={{
               tabBarIcon: ({ color, size }) => <Icon name="Map" color={color} size={size} />,
               tabBarStyle: getTabBarStyle({
-                backgroundColor: isDark ? 'rgba(20, 20, 20, 0.85)' : 'rgba(255, 255, 255, 0.85)',
-                borderTopColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+                backgroundColor: isDark ? theme.colors.surface + 'D9' : theme.colors.white + 'D9',
+                borderTopColor: isDark ? theme.colors.white + '1A' : theme.colors.black + '0D',
                 borderTopWidth: 1,
               })
             }}

@@ -23,8 +23,11 @@ import {
     MOCK_CPU_RES
 } from '../constants/mockData';
 
+import { RootTabParamList } from '../navigation/types';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+
 export default function TelemetryScreen() {
-    const navigation = useNavigation<any>();
+    const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
     const { theme, isDark } = useTheme();
     const { width: windowWidth, height: windowHeight } = useWindowDimensions();
     const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
@@ -56,7 +59,7 @@ export default function TelemetryScreen() {
                             <View style={{ paddingHorizontal: 15 }}>
                                 <FlightStatus />
                                 <WeatherSummary />
-                                <QuickNavigation onNavigate={(screen) => navigation.navigate(screen)} />
+                                <QuickNavigation onNavigate={(screen) => navigation.navigate(screen as any)} />
                             </View>
                             <View style={{ height: 60 }} />
                         </ScrollView>

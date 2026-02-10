@@ -8,7 +8,9 @@ import { CommunityGallery } from '../components/organisms/CommunityGallery';
 import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
 
-export default function HomeScreen({ navigation }: any) {
+import { RootTabScreenProps } from '../navigation/types';
+
+export default function HomeScreen({ navigation }: RootTabScreenProps<'Start'>) {
   const { theme, isDark } = useTheme();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;

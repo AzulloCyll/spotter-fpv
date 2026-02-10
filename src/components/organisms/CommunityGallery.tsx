@@ -1,56 +1,174 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Image, TouchableOpacity, Modal, StatusBar, Pressable, ActivityIndicator, Alert, FlatList, ListRenderItem } from 'react-native';
+import { Skeleton } from '../atoms/Skeleton';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
+import { IconButton } from '../atoms/IconButton';
 
-const MOCK_PHOTOS = [
-    'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1473968512647-3e447244af8f?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1501854140801-50d01698950b?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1534067783941-51c9c23ecefd?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1506744038136-46273834b3fb?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1469474968028-56623f02e42e?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=400&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?q=80&w=400&auto=format&fit=crop',
-];
+import { useGalleryStorage, PhotoItem } from '../../hooks/useGalleryStorage';
 
 export const CommunityGallery: React.FC = () => {
     const { theme, isDark } = useTheme();
+    const { photos, isUploading, addPhoto, toggleLike, getFilesDebug } = useGalleryStorage();
+    const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
+
+    // Połącz prawdziwe zdjęcia z placeholderem ładowania
+    const displayData = isUploading
+        ? [...photos, { id: 'loading-placeholder', uri: '', likes: 0, isLiked: false } as PhotoItem]
+        : photos;
+
+    // Synchronizacja zaznaczonego zdjęcia z głównym stanem (dla lajków w modalu)
+    const activePhoto = selectedPhoto ? photos.find(p => p.id === selectedPhoto.id) || selectedPhoto : null;
+
+    const checkLocalStorage = async () => {
+        const files = await getFilesDebug();
+        if (files.length > 0) {
+            Alert.alert(
+                'Status Pamięci Lokalnej',
+                `Folder: /gallery/\nPlików: ${files.length}\n\nLista plików:\n${files.slice(0, 10).join('\n')}${files.length > 10 ? '\n...' : ''}`
+            );
+        } else {
+            Alert.alert('Status', 'Folder jest jeszcze pusty lub nie został utworzony.');
+        }
+    };
+
+    const dynamicStyles = getStyles(theme);
+
+    const renderPhotoItem: ListRenderItem<PhotoItem> = ({ item }) => {
+        if (item.id === 'loading-placeholder') {
+            return (
+                <View style={dynamicStyles.photoContainer}>
+                    <Skeleton width="100%" height="100%" borderRadius={16} />
+                    <View style={dynamicStyles.loadingOverlay}>
+                        <ActivityIndicator size="small" color={theme.colors.primary} />
+                    </View>
+                </View>
+            );
+        }
+
+        return (
+            <TouchableOpacity
+                activeOpacity={0.8}
+                style={dynamicStyles.photoContainer}
+                onPress={() => setSelectedPhoto(item)}
+            >
+                <Image source={{ uri: item.uri }} style={dynamicStyles.photo} />
+                <View style={dynamicStyles.photoOverlay}>
+                    <View style={dynamicStyles.likeBadge}>
+                        <Icon
+                            name="Heart"
+                            size={10}
+                            color={theme.colors.white}
+                            fill={item.isLiked ? theme.colors.error : theme.colors.white}
+                        />
+                        <Typography variant="caption" style={{ color: theme.colors.white, marginLeft: 4, fontSize: 10 }}>
+                            {item.likes}
+                        </Typography>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Typography variant="label" color="textSecondary" style={styles.label}>GALERIA SPOŁECZNOŚCI</Typography>
-                <TouchableOpacity style={[
-                    styles.addButton,
-                    { backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : 'rgba(59, 130, 246, 0.08)' }
-                ]}>
+        <View style={dynamicStyles.container}>
+            <View style={dynamicStyles.header}>
+                <Pressable onLongPress={checkLocalStorage} delayLongPress={2000}>
+                    <Typography variant="label" color="textSecondary" style={dynamicStyles.label}>GALERIA SPOŁECZNOŚCI</Typography>
+                </Pressable>
+                <TouchableOpacity
+                    style={[
+                        dynamicStyles.addButton,
+                        { backgroundColor: isDark ? theme.colors.primary + '25' : theme.colors.primary + '15' }
+                    ]}
+                    onPress={addPhoto}
+                    disabled={isUploading}
+                >
                     <Icon name="Plus" size={16} color={theme.colors.primary} />
-                    <Typography variant="bodySmall" color="primary" weight="700" style={{ marginLeft: 4 }}>DODAJ ZDJĘCIE</Typography>
+                    <Typography variant="bodySmall" color="primary" weight="700" style={{ marginLeft: 4 }}>
+                        {isUploading ? 'DODAWANIE...' : 'DODAJ ZDJĘCIE'}
+                    </Typography>
                 </TouchableOpacity>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.scroll}>
-                {MOCK_PHOTOS.map((uri, index) => (
-                    <TouchableOpacity key={index} activeOpacity={0.8} style={styles.photoContainer}>
-                        <Image source={{ uri }} style={styles.photo} />
-                        <View style={styles.photoOverlay}>
-                            <View style={styles.likeBadge}>
-                                <Icon name="Heart" size={10} color="#fff" fill="#fff" />
-                                <Typography variant="caption" style={{ color: '#fff', marginLeft: 4, fontSize: 10 }}>{Math.floor(Math.random() * 50) + 10}</Typography>
-                            </View>
+            <FlatList
+                data={displayData}
+                renderItem={renderPhotoItem}
+                keyExtractor={(item) => item.id}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={dynamicStyles.scrollContent}
+                ListEmptyComponent={!isUploading ? (
+                    <View style={[dynamicStyles.photoContainer, dynamicStyles.emptyContainer, { backgroundColor: isDark ? theme.colors.white + '08' : theme.colors.border + '33' }]}>
+                        <View style={{ opacity: 0.5 }}>
+                            <Icon name="Image" size={28} color={theme.colors.textSecondary} />
                         </View>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
+                        <Typography variant="caption" color="textSecondary" style={{ marginTop: 8, opacity: 0.7 }}>Brak zdjęć</Typography>
+                    </View>
+                ) : null}
+            />
+
+            <Modal
+                visible={!!selectedPhoto}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setSelectedPhoto(null)}
+            >
+                <StatusBar barStyle="light-content" backgroundColor={theme.colors.black} />
+                <View style={dynamicStyles.modalOverlay}>
+                    <Pressable
+                        style={dynamicStyles.modalBackground}
+                        onPress={() => setSelectedPhoto(null)}
+                    />
+
+                    <View style={dynamicStyles.modalContent}>
+                        {activePhoto && (
+                            <Image
+                                source={{ uri: activePhoto.uri }}
+                                style={dynamicStyles.fullPhoto}
+                                resizeMode="contain"
+                            />
+                        )}
+
+                        <View style={dynamicStyles.modalHeader}>
+                            <IconButton
+                                icon={<Icon name="X" color={theme.colors.white} />}
+                                onPress={() => setSelectedPhoto(null)}
+                                variant="glass"
+                                round
+                                size={40}
+                            />
+                        </View>
+
+                        <View style={dynamicStyles.modalFooter}>
+                            <TouchableOpacity
+                                style={[dynamicStyles.modalAction, activePhoto?.isLiked && { backgroundColor: theme.colors.error + '33' }]}
+                                onPress={() => activePhoto && toggleLike(activePhoto.id)}
+                            >
+                                <Icon
+                                    name="Heart"
+                                    size={24}
+                                    color={activePhoto?.isLiked ? theme.colors.error : theme.colors.white}
+                                    fill={activePhoto?.isLiked ? theme.colors.error : "transparent"}
+                                />
+                                <Typography variant="body" style={{ color: theme.colors.white, marginLeft: 8 }}>
+                                    {activePhoto?.isLiked ? 'Polubiono' : 'Lubię to'} ({activePhoto?.likes})
+                                </Typography>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={dynamicStyles.modalAction}>
+                                <Icon name="Share2" size={24} color={theme.colors.white} />
+                                <Typography variant="body" style={{ color: theme.colors.white, marginLeft: 8 }}>Udostępnij</Typography>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (theme: any) => StyleSheet.create({
     container: {
         marginTop: 20,
     },
@@ -71,8 +189,7 @@ const styles = StyleSheet.create({
         paddingVertical: 4,
         borderRadius: 8,
     },
-    scroll: {
-        marginHorizontal: -10,
+    scrollContent: {
         paddingHorizontal: 10,
     },
     photoContainer: {
@@ -81,7 +198,18 @@ const styles = StyleSheet.create({
         marginRight: 10,
         borderRadius: 16,
         overflow: 'hidden',
-        backgroundColor: '#eee',
+        backgroundColor: theme.colors.border,
+    },
+    emptyContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 0,
+        width: 140,
+    },
+    loadingOverlay: {
+        ...StyleSheet.absoluteFillObject,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     photo: {
         width: '100%',
@@ -99,5 +227,44 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
         paddingVertical: 2,
         borderRadius: 4,
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.95)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalBackground: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    modalContent: {
+        width: '100%',
+        height: '100%',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    fullPhoto: {
+        width: '100%',
+        height: '80%',
+    },
+    modalHeader: {
+        position: 'absolute',
+        top: 50,
+        right: 20,
+    },
+    modalFooter: {
+        position: 'absolute',
+        bottom: 50,
+        flexDirection: 'row',
+        width: '100%',
+        justifyContent: 'space-around',
+        paddingHorizontal: 40,
+    },
+    modalAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 12,
+        backgroundColor: 'rgba(255,255,255,0.1)',
+        borderRadius: 20,
     }
 });
