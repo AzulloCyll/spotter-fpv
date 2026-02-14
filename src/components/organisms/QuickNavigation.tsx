@@ -53,7 +53,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
 
     const navItems = [
         { title: "Eksploruj Spoty", description: "Mapa najlepszych miejsc w okolicy", icon: "Map" as IconName, color: theme.colors.primary, screen: 'Mapa' as keyof RootTabParamList },
-        { title: "Pogoda dla FPV", description: "Status Kp-Index i siła wiatru", icon: "CloudSun" as IconName, color: theme.colors.primary, screen: 'Pogoda' as keyof RootTabParamList },
+        { title: "Sprawdź warunki", description: "Prognoza wiatru, opadów i temperatury", icon: "CloudSun" as IconName, color: theme.colors.primary, screen: 'Pogoda' as keyof RootTabParamList },
         { title: "Czat Pilotów", description: "Ustaw się na latanie z ekipą", icon: "MessageCircle" as IconName, color: theme.colors.primary, screen: 'Czat' as keyof RootTabParamList },
     ];
 

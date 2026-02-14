@@ -20,14 +20,22 @@ export const WindChart: React.FC<WindChartProps> = ({ forecast }) => {
 
     return (
         <View style={styles.container}>
-            <View style={styles.chartHeader}>
+            <View style={[styles.chartHeader, {
+                borderBottomColor: theme.colors.border,
+                backgroundColor: theme.colors.primary + '15',
+                marginBottom: 12,
+                paddingHorizontal: 20,
+                paddingTop: 8,
+                paddingBottom: 8,
+                paddingRight: 25
+            }]}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                     <Icon name="Wind" size={18} color={theme.colors.primary} />
                     <Typography variant="h3" style={{ marginLeft: 8 }}>Wiatr</Typography>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                    <Typography variant="label" style={{ fontSize: 10, fontWeight: '800', lineHeight: 12 }}>Średnia</Typography>
-                    <Typography variant="caption" color="textSecondary" style={{ fontSize: 11, lineHeight: 12 }}>Porywy</Typography>
+                    <Typography variant="label" style={{ fontSize: 10, fontWeight: '800', lineHeight: 12 }}>Średnia [km/h]</Typography>
+                    <Typography variant="caption" color="textSecondary" style={{ fontSize: 11, lineHeight: 12 }}>Porywy [km/h]</Typography>
                 </View>
             </View>
 
@@ -73,18 +81,22 @@ export const WindChart: React.FC<WindChartProps> = ({ forecast }) => {
 
 const styles = StyleSheet.create({
     container: {
+        paddingTop: 0,
+        paddingBottom: 16,
     },
     chartHeader: {
-        marginBottom: 8,
+        marginBottom: 12,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
         paddingHorizontal: 12,
+        paddingBottom: 12,
+        borderBottomWidth: 0.5,
     },
     chartContainer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingHorizontal: 12,
+        paddingHorizontal: 20,
         paddingBottom: 0
     },
     column: {

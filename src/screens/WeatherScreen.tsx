@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { Typography } from '../components/atoms/Typography';
 import { Card } from '../components/atoms/Card';
 import { Badge } from '../components/atoms/Badge';
@@ -9,25 +9,20 @@ import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../theme/ThemeContext';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { LinearGradient } from 'expo-linear-gradient';
-import { MOCK_WEATHER_DATA, MOCK_LOCATION } from '../constants/mockData';
+import { useWeather } from '../hooks/useWeather';
 
 interface WeatherStatProps {
   icon: React.ReactNode;
   label: string;
   value: string;
-  desc: string;
   style?: any;
   dynamicStyles: any;
 }
 
-const WeatherStat: React.FC<WeatherStatProps> = ({ icon, label, value, desc, style, dynamicStyles }) => (
-  <View style={[dynamicStyles.statItem, style]}>
+const StatPill: React.FC<WeatherStatProps> = ({ icon, label, value, style, dynamicStyles }) => (
+  <View style={[dynamicStyles.statPill, style]}>
     <View style={dynamicStyles.statIcon}>{icon}</View>
-    <View>
-      <Typography variant="label" color="textSecondary">{label}</Typography>
-      <Typography variant="h3">{value}</Typography>
-      <Typography variant="caption" color="textSecondary">{desc}</Typography>
-    </View>
+    <Typography variant="label" style={{ fontSize: 11, fontWeight: '700' }}>{value}</Typography>
   </View>
 );
 
@@ -38,17 +33,53 @@ import { KpIndexChart } from '../components/molecules/KpIndexChart';
 import { PrecipitationChart } from '../components/molecules/PrecipitationChart';
 import { WindChart } from '../components/molecules/WindChart';
 
+import { TemperatureChart } from '../components/molecules/TemperatureChart';
+
 export default function WeatherScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { theme, isDark } = useTheme();
-  const weather = MOCK_WEATHER_DATA;
-  const location = MOCK_LOCATION;
+
+  const { weather, location, loading, error, refetch } = useWeather();
+
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
 
   const dynamicStyles = getStyles(theme);
   const numColumns = isTabletLandscape ? 3 : (windowWidth > 800 ? 5 : 2);
   const itemWidth = `${(100 / numColumns) - 2}%` as any;
+
+  if (loading) {
+    return (
+      <View style={[dynamicStyles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+        <Typography variant="body" color="textSecondary" style={{ marginTop: 16 }}>
+          Pobieranie danych pogodowych...
+        </Typography>
+      </View>
+    );
+  }
+
+  if (error || !weather || !location) {
+    return (
+      <View style={[dynamicStyles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Icon name="AlertTriangle" size={48} color={theme.colors.error} />
+        <Typography variant="h3" style={{ marginTop: 16, textAlign: 'center' }}>
+          Błąd pobierania pogody
+        </Typography>
+        <Typography variant="body" color="textSecondary" style={{ marginTop: 8, textAlign: 'center', marginBottom: 24 }}>
+          {error || "Nie udało się pobrać danych locally."}
+        </Typography>
+        <IconButton
+          icon={<Icon name="RefreshCw" />}
+          onPress={refetch}
+          variant="primary"
+        />
+        <Typography variant="label" color="primary" style={{ marginTop: 8 }}>
+          Spróbuj ponownie
+        </Typography>
+      </View>
+    );
+  }
 
   return (
     <View style={dynamicStyles.container}>
@@ -67,25 +98,63 @@ export default function WeatherScreen() {
           <View style={dynamicStyles.header}>
             {!isTabletLandscape && (
               <IconButton
-                icon={<Icon name="ArrowLeft" />}
+                icon={<Icon name="ArrowLeft" color={theme.colors.primary} />}
                 onPress={() => navigation.goBack()}
                 variant="ghost"
               />
             )}
             <View style={dynamicStyles.headerContent}>
-              <View style={dynamicStyles.locationRow}>
-                <View>
-                  <Typography variant="h3" color="textPrimary">{location.name}</Typography>
-                  <Typography variant="caption" color="textSecondary">Szczegółowa prognoza lotnicza</Typography>
-                </View>
-                <View style={dynamicStyles.headerTemp}>
-                  <Typography variant="h2" style={{ fontWeight: '800', marginRight: 8 }}>{weather.temp}°</Typography>
-                  <Badge
-                    label={`KP: ${weather.kpIndex}`}
-                    variant={weather.kpIndex < 4 ? "success" : "warning"}
-                  />
-                </View>
+              <View style={dynamicStyles.locationContainer}>
+                <Typography variant="h3" color="primary">{location.name}</Typography>
               </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={dynamicStyles.headerStatsRow}
+                contentContainerStyle={dynamicStyles.headerStatsRowContent}
+              >
+                {/* 1. Temp */}
+                {/* 1. Temp */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Thermometer" size={12} color={theme.colors.primary} />}
+                  label="Temp"
+                  value={`${weather.temp}°C`}
+                />
+
+                {/* 2. Odczuwalna */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Thermometer" size={12} color={theme.colors.text} />}
+                  label="Odczuwalna"
+                  value={`Odcz. ${weather.feelsLike}°C`}
+                />
+
+                {/* 3. Opady */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="CloudRain" size={12} color={theme.colors.text} />}
+                  label="Opady"
+                  value={`${weather.precipitation} mm`}
+                />
+
+                {/* 4. Wilgotność */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Droplets" size={12} color={theme.colors.text} />}
+                  label="Wilgotność"
+                  value={`${weather.humidity}%`}
+                />
+
+                {/* 5. Wiatr */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Wind" size={12} color={theme.colors.text} />}
+                  label="Wiatr"
+                  value={`${weather.windSpeed} km/h`}
+                />
+              </ScrollView>
             </View>
           </View>
 
@@ -95,65 +164,24 @@ export default function WeatherScreen() {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            <View style={dynamicStyles.statsGrid}>
-              <WeatherStat
-                dynamicStyles={dynamicStyles}
-                style={{ width: itemWidth }}
-                icon={<Icon name="Wind" size={18} color={theme.colors.primary} />}
-                label="Wiatr"
-                value={`${weather.windSpeed} km/h`}
-                desc={`Porywy ${weather.windGusts}`}
-              />
-              <WeatherStat
-                dynamicStyles={dynamicStyles}
-                style={{ width: itemWidth }}
-                icon={<Icon name="Droplets" size={18} color={theme.colors.primary} />}
-                label="Wilgotność"
-                value={`${weather.precipitation}%`}
-                desc="Brak opadów"
-              />
-              <WeatherStat
-                dynamicStyles={dynamicStyles}
-                style={{ width: itemWidth }}
-                icon={<Icon name="Sun" size={18} color={theme.colors.primary} />}
-                label="UV Index"
-                value={weather.uvIndex.toString()}
-                desc="Umiarkowany"
-              />
-              <WeatherStat
-                dynamicStyles={dynamicStyles}
-                style={{ width: itemWidth }}
-                icon={<Icon name="Navigation" size={18} color={theme.colors.primary} />}
-                label="Widoczność"
-                value={`${weather.visibility} km`}
-                desc="Bardzo dobra"
-              />
-              <WeatherStat
-                dynamicStyles={dynamicStyles}
-                style={{ width: itemWidth }}
-                icon={<Icon name="Thermometer" size={18} color={theme.colors.primary} />}
-                label="Odczuwalna"
-                value={`${weather.feelsLike}°`}
-                desc={weather.condition}
-              />
-            </View>
+
+            <Typography variant="h2" style={{ paddingHorizontal: 20, marginBottom: 12, marginTop: 20, textAlign: 'center' }}>Prognoza godzinowa</Typography>
 
 
 
-            <Card style={dynamicStyles.chartCard}>
+            <View style={{ marginBottom: 40 }}>
               <WindChart forecast={weather.windForecast} />
-            </Card>
-
-            <Card style={dynamicStyles.chartCard}>
-              <PrecipitationChart forecast={weather.precipitationForecast} />
-            </Card>
-
-            <View style={dynamicStyles.tipBanner}>
-              <Icon name="Lightbulb" size={16} color={theme.colors.primary} />
-              <Typography variant="caption" color="textSecondary" style={{ marginLeft: 8, flex: 1 }}>
-                KP jest stabilne. Idealne na latanie przy gruncie.
-              </Typography>
             </View>
+
+
+            <View style={{ marginBottom: 40 }}>
+              <PrecipitationChart forecast={weather.precipitationForecast} />
+            </View>
+
+            <View style={{ marginBottom: 40 }}>
+              <TemperatureChart forecast={weather.tempForecast} />
+            </View>
+
           </ScrollView>
         </View>
       </View>
@@ -172,28 +200,26 @@ const getStyles = (theme: any) => StyleSheet.create({
     paddingBottom: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.surface,
+    backgroundColor: theme.colors.primary + '08',
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border + '33',
+    borderBottomColor: theme.colors.primary + '20',
+    gap: 8,
   },
   headerContent: {
     flex: 1,
-    marginLeft: 10,
-  },
-  locationRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    overflow: 'hidden',
   },
-  headerTemp: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  locationContainer: {
+    marginRight: 12,
+    justifyContent: 'center',
   },
   content: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
     paddingTop: 12,
     paddingBottom: 20,
   },
@@ -208,23 +234,31 @@ const getStyles = (theme: any) => StyleSheet.create({
     borderRightColor: theme.colors.border,
     overflow: 'hidden',
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 4,
+  headerStatsRow: {
+    flexGrow: 0,
+    marginTop: 0,
+    marginHorizontal: 0,
+    marginLeft: 'auto', // Push to right
   },
-  statItem: {
+  headerStatsRowContent: {
+    paddingHorizontal: 0,
+    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'flex-end', // Align items to right
+  },
+  statPill: {
     backgroundColor: theme.colors.surface,
-    padding: 12,
-    borderRadius: theme.borderRadius.md,
-    marginBottom: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 50, // Full rounded pill
     flexDirection: 'row',
     alignItems: 'center',
-    ...theme.shadows.soft,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    height: 28, // Fixed height for consistent look
   },
   statIcon: {
-    marginRight: 8,
+    marginRight: 6,
   },
   chartCard: {
     padding: 12,
