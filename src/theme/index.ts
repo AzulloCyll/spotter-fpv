@@ -42,6 +42,7 @@ export interface Theme {
   shadows: {
     soft: any;
     medium: any;
+    card: any;
   };
 }
 
@@ -58,7 +59,7 @@ export const lightTheme: Theme = {
     success: "#0284C7",
     warning: "#F59E0B",
     green: "#22C55E",
-    border: "#abcaebff",
+    border: "#dde9f5ff",
     iconBg: "#73b9ff",
     white: "#FFFFFF",
     black: "#000000",
@@ -132,6 +133,16 @@ export const lightTheme: Theme = {
       shadowOpacity: 0.08,
       shadowRadius: 16,
       elevation: 4,
+    },
+    card: {
+      shadowColor: "#000",
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.22,
+      shadowRadius: 2.22,
+      elevation: 3,
     },
   },
 };

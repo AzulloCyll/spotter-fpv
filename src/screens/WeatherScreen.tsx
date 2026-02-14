@@ -35,6 +35,8 @@ import { RootTabParamList } from '../navigation/types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 import { KpIndexChart } from '../components/molecules/KpIndexChart';
+import { PrecipitationChart } from '../components/molecules/PrecipitationChart';
+import { WindChart } from '../components/molecules/WindChart';
 
 export default function WeatherScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
@@ -136,8 +138,14 @@ export default function WeatherScreen() {
               />
             </View>
 
+
+
             <Card style={dynamicStyles.chartCard}>
-              <KpIndexChart forecast={weather.kpForecast} />
+              <WindChart forecast={weather.windForecast} />
+            </Card>
+
+            <Card style={dynamicStyles.chartCard}>
+              <PrecipitationChart forecast={weather.precipitationForecast} />
             </Card>
 
             <View style={dynamicStyles.tipBanner}>
@@ -222,7 +230,9 @@ const getStyles = (theme: any) => StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     backgroundColor: theme.colors.surface,
-    ...theme.shadows.soft,
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 0,
+    ...theme.shadows.card,
   },
   tipBanner: {
     flexDirection: 'row',

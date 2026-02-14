@@ -42,6 +42,24 @@ export const MOCK_WEATHER_DATA = {
   visibility: 12,
   precipitation: 5,
   uvIndex: 3,
+  precipitationForecast: [
+    { time: "14:30", amount: 0, probability: 0, type: "none" },
+    { time: "14:45", amount: 0.1, probability: 10, type: "rain" },
+    { time: "15:00", amount: 0.5, probability: 30, type: "rain" },
+    { time: "15:15", amount: 1.2, probability: 60, type: "rain" },
+    { time: "15:30", amount: 0.8, probability: 45, type: "rain" },
+    { time: "15:45", amount: 0.2, probability: 15, type: "rain" },
+    { time: "16:00", amount: 0, probability: 5, type: "none" },
+  ] as any[],
+  windForecast: [
+    { time: "14:30", speed: 12, gust: 18, direction: 120 },
+    { time: "14:45", speed: 14, gust: 20, direction: 125 },
+    { time: "15:00", speed: 15, gust: 22, direction: 130 },
+    { time: "15:15", speed: 18, gust: 28, direction: 135 },
+    { time: "15:30", speed: 16, gust: 25, direction: 130 },
+    { time: "15:45", speed: 14, gust: 20, direction: 125 },
+    { time: "16:00", speed: 12, gust: 18, direction: 120 },
+  ],
 };
 
 export const MOCK_LOCATION = {
