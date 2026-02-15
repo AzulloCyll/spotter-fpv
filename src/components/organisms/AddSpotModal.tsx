@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Modal, StyleSheet, TouchableWithoutFeedback, TextInput } from 'react-native';
+import { View, Modal, StyleSheet, TouchableWithoutFeedback, TextInput, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { IconButton } from '../atoms/IconButton';
@@ -48,7 +48,9 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
                         <View style={styles.modalContent}>
                             <View style={styles.header}>
                                 <Typography variant="h3">Dodaj Nowy Spot</Typography>
-                                <IconButton icon={<Icon name="X" size={24} />} onPress={onClose} variant="ghost" />
+                                <TouchableOpacity onPress={onClose} style={{ padding: 4 }}>
+                                    <Icon name="X" size={24} color={theme.colors.textSecondary} />
+                                </TouchableOpacity>
                             </View>
 
                             <Typography variant="label" style={styles.label}>Nazwa miejsca</Typography>
@@ -114,20 +116,23 @@ const getStyles = (theme: any) => StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
-        justifyContent: 'flex-end',
+        justifyContent: 'center', // Center vertically
+        alignItems: 'center', // Center horizontally
+        padding: 20, // Add padding to float
     },
     modalContent: {
+        width: '100%',
+        maxWidth: 340, // Constrain width
         backgroundColor: theme.colors.surface,
-        borderTopLeftRadius: theme.borderRadius.lg,
-        borderTopRightRadius: theme.borderRadius.lg,
+        borderRadius: theme.borderRadius.lg, // Rounded all corners
         padding: theme.spacing.lg,
-        paddingBottom: theme.spacing.xl + 20,
+        ...theme.shadows.strong, // Add elevation for floating effect
     },
     header: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: theme.spacing.lg,
+        marginBottom: theme.spacing.md,
     },
     label: {
         marginBottom: theme.spacing.xs,
@@ -136,9 +141,11 @@ const getStyles = (theme: any) => StyleSheet.create({
     input: {
         backgroundColor: theme.colors.background,
         borderRadius: theme.borderRadius.md,
-        padding: theme.spacing.md,
+        padding: theme.spacing.sm, // Reduced padding
+        paddingHorizontal: theme.spacing.md,
+        fontSize: 14, // Slightly smaller font
         color: theme.colors.text,
-        marginBottom: theme.spacing.md,
+        marginBottom: theme.spacing.sm, // Reduced margin
         ...theme.typography.body,
     },
     textArea: {
@@ -152,9 +159,9 @@ const getStyles = (theme: any) => StyleSheet.create({
         marginBottom: theme.spacing.md,
     },
     chip: {
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
+        paddingHorizontal: 10, // Reduced
+        paddingVertical: 4, // Reduced
+        borderRadius: 16,
         borderWidth: 1,
         borderColor: theme.colors.border,
         backgroundColor: theme.colors.surface,
@@ -166,8 +173,8 @@ const getStyles = (theme: any) => StyleSheet.create({
     saveButton: {
         backgroundColor: theme.colors.primary,
         borderRadius: theme.borderRadius.md,
-        paddingVertical: 14,
+        paddingVertical: 12, // Reduced padding
         alignItems: 'center',
-        marginTop: theme.spacing.md,
+        marginTop: theme.spacing.sm, // Reduced margin
     },
 });

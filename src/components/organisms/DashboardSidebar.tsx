@@ -14,7 +14,7 @@ import { RootTabParamList } from '../../navigation/types';
 interface DashboardSidebarProps {
     navigation: any; // navigation.navigate(screen) still needs to be flexible or we cast it
     isTabletLandscape: boolean;
-    onNavigate?: (screen: keyof RootTabParamList) => void;
+    onNavigate?: (screen: keyof RootTabParamList, params?: any) => void;
     style?: any;
 }
 
@@ -27,11 +27,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     const { theme, isDark } = useTheme();
     const dynamicStyles = getStyles(theme);
 
-    const handleNavigate = (screen: keyof RootTabParamList) => {
+    const handleNavigate = (screen: keyof RootTabParamList, params?: any) => {
         if (onNavigate) {
-            onNavigate(screen);
+            onNavigate(screen, params);
         } else {
-            navigation.navigate(screen);
+            navigation.navigate(screen, params);
         }
     };
 
@@ -40,6 +40,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             dynamicStyles.dashboardColumn,
             isTabletLandscape ? { width: '30%', maxWidth: 400, flex: 0 } : { flex: 1 },
             isDark && { backgroundColor: theme.colors.background, borderRightColor: theme.colors.border },
+            { zIndex: 100, elevation: 100 },
             style
         ]}>
             <LinearGradient

@@ -62,5 +62,8 @@ const getStyles = (theme: any) => StyleSheet.create({
     },
     ghost: {
         backgroundColor: 'transparent',
+        borderWidth: 0,
+        elevation: 0,
+        shadowOpacity: 0,
     }
 });

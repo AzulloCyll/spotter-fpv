@@ -3,7 +3,7 @@ import { CompositeScreenProps } from "@react-navigation/native";
 
 export type RootTabParamList = {
   Start: undefined;
-  Mapa: { spotId?: string } | undefined;
+  Mapa: { spotId?: string; openList?: boolean } | undefined;
   Pogoda: undefined;
   Czat: undefined;
   Telemetria: undefined;

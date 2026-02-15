@@ -25,7 +25,7 @@ export const Input: React.FC<InputProps> = ({
 }) => {
     const { theme } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
-    const dynamicStyles = getStyles(theme);
+    const dynamicStyles = React.useMemo(() => getStyles(theme), [theme]);
 
     return (
         <View style={[dynamicStyles.container, containerStyle]}>

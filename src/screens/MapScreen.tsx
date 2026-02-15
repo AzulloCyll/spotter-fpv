@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image, useWindowDimensions } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image, useWindowDimensions, Keyboard } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, MapType } from 'react-native-maps';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
 import { useTheme } from '../theme/ThemeContext';
@@ -11,6 +12,10 @@ import { Icon } from '../components/atoms/Icon';
 import { MOCK_SPOTS, Spot } from '../data/mockSpots';
 import { SpotMarker } from '../components/molecules/SpotMarker';
 import { useSpots } from '../context/SpotsContext';
+import { SpotsSidebarPanel } from '../components/organisms/SpotsSidebarPanel';
+
+// Memoize the Panel to prevent re-renders on keyboard open
+const MemoizedSpotsSidebarPanel = memo(SpotsSidebarPanel);
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 
@@ -29,14 +34,19 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const [activeStyleId, setActiveStyleId] = useState('hybrid');
   const [showMenu, setShowMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
+  const [searchQuery, setSearchQuery] = useState(''); // Used for Spots Modal (Explore)
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
+  // Simplified check to avoid keyboard flickering issues (keyboard reduces height, potentially breaking W > H logic if unstable)
+  // We assume if width > 800, it's a tablet-like width (or landscape phone). 
+  // We keep W > H check but maybe rely on width being determining factor for "Sidebar" mode.
+  // Actually, let's just use width for stability during keyboard events.
+  const isTabletLandscape = windowWidth > 800;
   const mapRef = useRef<MapView>(null);
   const [showSpotsModal, setShowSpotsModal] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const activeStyleConfig = MAP_STYLES.find(s => s.id === activeStyleId) || MAP_STYLES[0];
   const mapType = activeStyleConfig.type;
@@ -59,6 +69,15 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
       setUserLocation(location);
     })();
   }, []);
+
+  useEffect(() => {
+    if (route.params?.openList) {
+      setShowSpotsModal(true);
+      // Clear param so it doesn't reopen on every focus if we don't want to?
+      // Actually standard behavior is fine, or we can setParams({ openList: undefined })
+      navigation.setParams({ openList: undefined });
+    }
+  }, [route.params?.openList]);
 
   const handleSaveSpot = (spotData: Omit<Spot, 'id' | 'coordinates' | 'rating'>) => {
     const newLocation = userLocation ? {
@@ -89,9 +108,20 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     setShowMenu(false);
   };
 
-  const handleSpotPress = (spot: Spot) => {
+  const handleSpotPress = useCallback((spot: Spot) => {
     setSelectedSpot(spot);
-  };
+  }, []);
+
+  const handlePanelSpotSelect = useCallback((spot: Spot) => {
+    handleSpotPress(spot);
+    mapRef.current?.animateToRegion({
+      ...spot.coordinates,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
+  }, [handleSpotPress]);
+
+  const handlePanelClose = useCallback(() => setShowSpotsModal(false), []);
 
   const closeSpotDetails = () => {
     setSelectedSpot(null);
@@ -115,12 +145,11 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
           />
         )}
 
-        {/* Obszar Mapy */}
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, position: 'relative' }}>
           <MapView
             ref={mapRef}
             provider={PROVIDER_GOOGLE}
-            style={dynamicStyles.map}
+            style={StyleSheet.absoluteFill}
             mapType={mapType}
             initialRegion={{
               latitude: 52.2297,
@@ -141,16 +170,103 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
               />
             ))}
           </MapView>
+          {isTabletLandscape && (
+            <MemoizedSpotsSidebarPanel
+              key="spots-panel"
+              visible={showSpotsModal}
+              onClose={handlePanelClose}
+              spots={spots}
+              onSpotSelect={handlePanelSpotSelect}
+            />
+          )}
 
-          {!isTabletLandscape && (
-            <View style={dynamicStyles.topContainer}>
-              <Input
-                placeholder="Szukaj spotów..."
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                icon={<Icon name="Search" color={theme.colors.textSecondary} size={20} />}
-                containerStyle={dynamicStyles.searchBarContainer}
-              />
+          {!showSpotsModal && (
+            <View
+              style={{
+                position: 'absolute',
+                top: (insets.top || 40) + 10,
+                left: 16,
+                right: 16,
+                zIndex: 10,
+              }}
+              pointerEvents="box-none"
+            >
+              <View
+                style={{
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: theme.borderRadius.md,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5,
+                }}
+                pointerEvents="auto"
+              >
+                <Input
+                  placeholder="Szukaj spotów..."
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  icon={<Icon name="Search" color={theme.colors.textSecondary} size={20} />}
+                  containerStyle={{ marginBottom: 0, height: 50, borderRadius: theme.borderRadius.md, borderBottomWidth: 0 }}
+                />
+              </View>
+
+              {searchQuery.length > 0 && (
+                <View style={{
+                  marginTop: 4,
+                  backgroundColor: theme.colors.surface,
+                  borderRadius: theme.borderRadius.md,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5,
+                  overflow: 'hidden',
+                }}>
+                  <ScrollView style={{ maxHeight: 200 }} keyboardShouldPersistTaps="handled">
+                    {spots
+                      .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                      .map((spot, index, array) => (
+                        <TouchableOpacity
+                          key={spot.id}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            padding: 12,
+                            borderBottomWidth: index === array.length - 1 ? 0 : 1,
+                            borderBottomColor: theme.colors.border,
+                          }}
+                          onPress={() => {
+                            setSelectedSpot(spot);
+                            setSearchQuery('');
+                            Keyboard.dismiss();
+                            mapRef.current?.animateToRegion({
+                              ...spot.coordinates,
+                              latitudeDelta: 0.01,
+                              longitudeDelta: 0.01,
+                            }, 1000);
+                          }}
+                        >
+                          <View style={{ marginRight: 8 }}>
+                            <Icon name="MapPin" size={16} color={theme.colors.textSecondary} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Typography variant="bodySmall" style={{ fontWeight: '600' }}>{spot.name}</Typography>
+                            <Typography variant="caption" color="textSecondary" numberOfLines={1}>
+                              {spot.type.toUpperCase()} • {spot.difficulty}
+                            </Typography>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    {spots.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
+                      <View style={{ padding: 12, alignItems: 'center' }}>
+                        <Typography variant="caption" color="textSecondary">Brak wyników</Typography>
+                      </View>
+                    )}
+                  </ScrollView>
+                </View>
+              )}
             </View>
           )}
 
@@ -179,7 +295,15 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             />
           </View>
 
-          <View style={[dynamicStyles.fabContainer, isTabletLandscape && { right: 20, bottom: 40 }]}>
+          <View style={[dynamicStyles.fabContainer, isTabletLandscape && { right: 20, bottom: 40 }, { flexDirection: 'row', alignItems: 'center' }]}>
+            <TouchableOpacity
+              onPress={() => setShowSpotsModal(!showSpotsModal)}
+              style={[dynamicStyles.fab, { backgroundColor: theme.colors.surface, marginRight: 16 }]}
+              activeOpacity={0.8}
+            >
+              <Icon name="List" size={24} color={theme.colors.text} />
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={() => setShowAddModal(true)}
               style={dynamicStyles.fab}
@@ -258,110 +382,67 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
       )
       }
 
-      {/* Menu wyboru stylu */}
-      <Modal
-        visible={showMenu}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowMenu(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowMenu(false)}>
-          <View style={dynamicStyles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={dynamicStyles.menuContent}>
-                <Typography variant="h3" style={dynamicStyles.menuTitle}>Styl mapy</Typography>
-                {MAP_STYLES.map((style) => (
-                  <TouchableOpacity
-                    key={style.id}
-                    style={dynamicStyles.menuItem}
-                    onPress={() => handleStyleSelect(style)}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <View style={{ marginRight: 12 }}>
-                        <Icon name={style.id === 'dark' ? 'Moon' : style.id === 'satellite' ? 'Globe' : 'Map'} size={20} color={theme.colors.textSecondary} />
-                      </View>
-                      <Typography
-                        color={activeStyleId === style.id ? "primary" : "text"}
-                        style={dynamicStyles.menuItemText}
-                      >
-                        {style.label}
-                      </Typography>
-                    </View>
-                    {activeStyleId === style.id && (
-                      <Icon name="Check" color={theme.colors.primary} size={20} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
+      {/* Menu wyboru stylu - Popover */}
+      {showMenu && (
+        <>
+          {/* Backdrop to close menu on outside click */}
+          <TouchableWithoutFeedback onPress={() => setShowMenu(false)}>
+            <View style={StyleSheet.absoluteFill} />
+          </TouchableWithoutFeedback>
 
-      {/* Modal listy spotów (Eksploruj) */}
-      <Modal
-        visible={showSpotsModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowSpotsModal(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setShowSpotsModal(false)}>
-          <View style={dynamicStyles.modalOverlay}>
-            <TouchableWithoutFeedback>
-              <View style={[dynamicStyles.menuContent, { maxHeight: '80%', padding: 20 }]}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                  <Typography variant="h2">Eksploruj Spoty</Typography>
-                  <IconButton icon={<Icon name="X" />} onPress={() => setShowSpotsModal(false)} variant="ghost" />
+          {/* Popover Menu */}
+          <View style={{
+            position: 'absolute',
+            top: 100 + theme.spacing.md, // Aligned with the second button (Layers)
+            right: theme.spacing.lg + 50, // To the left of the button
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.md,
+            padding: 8,
+            minWidth: 150,
+            ...theme.shadows.medium,
+            zIndex: 1000,
+          }}>
+            <Typography variant="label" color="textSecondary" style={{ marginBottom: 8, paddingHorizontal: 8 }}>Styl mapy</Typography>
+            {MAP_STYLES.map((style) => (
+              <TouchableOpacity
+                key={style.id}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 8,
+                  paddingHorizontal: 8,
+                  borderRadius: theme.borderRadius.sm,
+                  backgroundColor: activeStyleId === style.id ? theme.colors.primary + '10' : 'transparent',
+                }}
+                onPress={() => handleStyleSelect(style)}
+              >
+                <View style={{ marginRight: 8 }}>
+                  <Icon
+                    name={style.id === 'dark' ? 'Moon' : style.id === 'satellite' ? 'Globe' : 'Map'}
+                    size={16}
+                    color={activeStyleId === style.id ? theme.colors.primary : theme.colors.textSecondary}
+                  />
                 </View>
-
-                <Input
-                  placeholder="Szukaj spotów..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  icon={<Icon name="Search" color={theme.colors.textSecondary} size={20} />}
-                  containerStyle={{ marginBottom: 15 }}
-                />
-
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  {spots.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).map((spot) => (
-                    <TouchableOpacity
-                      key={spot.id}
-                      style={[
-                        dynamicStyles.sidebarItem,
-                        { paddingHorizontal: 10, marginHorizontal: -10 },
-                        selectedSpot?.id === spot.id && { backgroundColor: theme.colors.primary + '10', borderLeftColor: theme.colors.primary }
-                      ]}
-                      onPress={() => {
-                        setSelectedSpot(spot);
-                        mapRef.current?.animateToRegion({
-                          ...spot.coordinates,
-                          latitudeDelta: 0.01,
-                          longitudeDelta: 0.01,
-                        }, 1000);
-                        setShowSpotsModal(false);
-                      }}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Typography variant="body" style={{ fontWeight: '700' }}>{spot.name}</Typography>
-                        <Typography variant="label" color="textSecondary" style={{ marginTop: 2 }}>
-                          {spot.type.toUpperCase()} • {spot.difficulty}
-                        </Typography>
-                      </View>
-                      <Icon name="ChevronRight" size={20} color={theme.colors.textSecondary} />
-                    </TouchableOpacity>
-                  ))}
-                  {spots.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                    <View style={{ padding: 40, alignItems: 'center' }}>
-                      <Typography color="textSecondary">Nie znaleziono żadnych spotów</Typography>
-                    </View>
-                  )}
-                </ScrollView>
-              </View>
-            </TouchableWithoutFeedback>
+                <Typography
+                  variant="caption"
+                  color={activeStyleId === style.id ? "primary" : "text"}
+                  style={{ fontWeight: activeStyleId === style.id ? '600' : '400' }}
+                >
+                  {style.label}
+                </Typography>
+                {activeStyleId === style.id && (
+                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                    <Icon name="Check" color={theme.colors.primary} size={14} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            ))}
           </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-    </View >
+        </>
+      )}
+    </View>
+
+
   );
 }
 
@@ -375,9 +456,10 @@ const getStyles = (theme: any) => StyleSheet.create({
   },
   topContainer: {
     position: 'absolute',
-    top: theme.spacing.xl + 18,
+    // top handles via style prop with insets
     left: theme.spacing.lg - 4,
     right: theme.spacing.lg - 4,
+    zIndex: 100,
   },
   searchBarContainer: {
     marginBottom: 0,

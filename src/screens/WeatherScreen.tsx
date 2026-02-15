@@ -43,7 +43,6 @@ export default function WeatherScreen() {
 
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
-
   const dynamicStyles = getStyles(theme);
   const numColumns = isTabletLandscape ? 3 : (windowWidth > 800 ? 5 : 2);
   const itemWidth = `${(100 / numColumns) - 2}%` as any;
@@ -114,7 +113,6 @@ export default function WeatherScreen() {
                 style={dynamicStyles.headerStatsRow}
                 contentContainerStyle={dynamicStyles.headerStatsRowContent}
               >
-                {/* 1. Temp */}
                 {/* 1. Temp */}
                 <StatPill
                   dynamicStyles={dynamicStyles}

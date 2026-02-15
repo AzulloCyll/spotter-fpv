@@ -44,7 +44,7 @@ const NavCard: React.FC<ActionCardProps & { styles: any; dark?: boolean }> = ({ 
 import { RootTabParamList } from '../../navigation/types';
 
 interface QuickNavigationProps {
-    onNavigate: (screen: keyof RootTabParamList) => void;
+    onNavigate: (screen: keyof RootTabParamList, params?: any) => void;
 }
 
 export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) => {
@@ -52,7 +52,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
     const dynamicStyles = getStyles(theme);
 
     const navItems = [
-        { title: "Eksploruj Spoty", description: "Mapa najlepszych miejsc w okolicy", icon: "Map" as IconName, color: theme.colors.primary, screen: 'Mapa' as keyof RootTabParamList },
+        { title: "Eksploruj Spoty", description: "Mapa najlepszych miejsc w okolicy", icon: "Map" as IconName, color: theme.colors.primary, screen: 'Mapa' as keyof RootTabParamList, params: { openList: true } },
         { title: "Sprawdź warunki", description: "Prognoza wiatru, opadów i temperatury", icon: "CloudSun" as IconName, color: theme.colors.primary, screen: 'Pogoda' as keyof RootTabParamList },
         { title: "Czat Pilotów", description: "Ustaw się na latanie z ekipą", icon: "MessageCircle" as IconName, color: theme.colors.primary, screen: 'Czat' as keyof RootTabParamList },
     ];
@@ -70,7 +70,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
                     description={item.description}
                     icon={item.icon}
                     color={item.color}
-                    onPress={() => onNavigate(item.screen)}
+                    onPress={() => onNavigate(item.screen, (item as any).params)}
                     styles={dynamicStyles}
                     dark={isDark}
                 />
