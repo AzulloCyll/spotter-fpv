@@ -49,22 +49,31 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, o
                 toValue: 0,
                 duration: 300,
                 useNativeDriver: true,
-            }).start();
+            }).start(() => {
+                // Slower delay for keyboard to ensure UI is ready
+                setTimeout(() => {
+                    inputRef.current?.focus();
+                }, 100);
+            });
         } else {
             Animated.timing(slideAnim, {
-                toValue: -320, // Match the panel width
+                toValue: -320,
                 duration: 250,
                 useNativeDriver: true,
             }).start();
-
             Keyboard.dismiss();
         }
     }, [visible, slideAnim]);
 
-    const filteredSpots = spots.filter(s =>
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.type.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredSpots = spots.filter(s => {
+        const query = searchQuery.toLowerCase().trim();
+        if (!query) return true;
+        return (
+            s.name.toLowerCase().includes(query) ||
+            s.type.toLowerCase().includes(query) ||
+            s.difficulty.toLowerCase().includes(query)
+        );
+    });
 
     const renderItem = ({ item }: { item: Spot }) => {
         const iconName = getIconName(item.type);
@@ -143,18 +152,48 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, o
                 </TouchableOpacity>
             </View>
 
-            <View style={[styles.searchContainer, { zIndex: 2000, elevation: 2000 }]} pointerEvents="auto">
-                <Input
-                    key={visible ? 'search-visible' : 'search-hidden'}
-                    ref={inputRef}
-                    autoFocus={visible}
-                    placeholder="Szukaj..."
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    icon={<Icon name="Search" size={20} color={theme.colors.textSecondary} />}
-                    containerStyle={{ marginBottom: 0, height: 50, borderRadius: 12, backgroundColor: theme.colors.surface, zIndex: 5000 }}
-                    style={{ zIndex: 5001 }} // Extremely high to avoid any overlap blocking
-                />
+            <View style={[styles.searchContainer, { zIndex: 50 }]} pointerEvents="auto">
+                <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    height: 48,
+                    borderWidth: 1,
+                    borderColor: theme.colors.border
+                }}>
+                    <Icon name="Search" size={18} color={theme.colors.textSecondary} />
+                    <TextInput
+                        ref={inputRef}
+                        style={{
+                            flex: 1,
+                            marginLeft: 8,
+                            color: theme.colors.text,
+                            fontSize: 16,
+                            height: '100%',
+                        }}
+                        placeholder="Szukaj..."
+                        placeholderTextColor={theme.colors.textSecondary}
+                        value={searchQuery}
+                        onChangeText={(text) => {
+                            console.log('Search query changed:', text);
+                            setSearchQuery(text);
+                        }}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        spellCheck={false}
+                        underlineColorAndroid="transparent"
+                        keyboardType="default"
+                        returnKeyType="search"
+                        onSubmitEditing={() => Keyboard.dismiss()}
+                    />
+                    {searchQuery.length > 0 && (
+                        <TouchableOpacity onPress={() => setSearchQuery('')}>
+                            <Icon name="X" size={16} color={theme.colors.textSecondary} />
+                        </TouchableOpacity>
+                    )}
+                </View>
             </View>
 
             <FlatList

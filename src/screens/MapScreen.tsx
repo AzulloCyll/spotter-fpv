@@ -14,10 +14,11 @@ import { SpotMarker } from '../components/molecules/SpotMarker';
 import { useSpots } from '../context/SpotsContext';
 import { SpotsSidebarPanel } from '../components/organisms/SpotsSidebarPanel';
 
-// Memoize the Panel to prevent re-renders on keyboard open
-const MemoizedSpotsSidebarPanel = memo(SpotsSidebarPanel);
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
+
+// Memoize the Panel to prevent re-renders on keyboard open
+const MemoizedSpotsSidebarPanel = React.memo(SpotsSidebarPanel);
 
 const MAP_STYLES = [
   { id: 'standard', label: 'Standardowa', type: 'standard' as MapType, icon: 'Map' as const },
@@ -32,7 +33,12 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const { theme, isDark } = useTheme();
   const { spots, addSpot } = useSpots();
   const [activeStyleId, setActiveStyleId] = useState('hybrid');
-  const [mapHeading, setMapHeading] = useState(0);
+
+  // Smooth Unwrapped Heading Tracking
+  const mapHeading = useRef(new Animated.Value(0)).current;
+  const internalHeading = useRef(0);
+  const lastRawHeading = useRef(0);
+
   const [showMenu, setShowMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
@@ -135,6 +141,27 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     setSelectedSpot(null);
   };
 
+  const updateHeading = useCallback((raw: number) => {
+    if (typeof raw !== 'number') return;
+
+    // Unwrap rotation to prevent 360->0 jumps
+    let diff = raw - (internalHeading.current % 360);
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+
+    internalHeading.current += diff;
+
+    // Use spring with high tension for "attached" feel but smooth motion
+    Animated.spring(mapHeading, {
+      toValue: internalHeading.current,
+      useNativeDriver: true,
+      tension: 200,
+      friction: 25,
+      restSpeedThreshold: 0.1,
+      restDisplacementThreshold: 0.1
+    }).start();
+  }, [mapHeading]);
+
   return (
     <View style={dynamicStyles.container}>
       {/* Main Layout Wrapper: Sidebar + Map area */}
@@ -143,7 +170,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
           <DashboardSidebar
             navigation={navigation}
             isTabletLandscape={isTabletLandscape}
-            style={{ height: '100%', width: sidebarWidth, zIndex: 1500 }}
+            style={{ height: '100%', width: sidebarWidth, zIndex: 2000 }}
             onNavigate={(screen) => {
               if (screen === 'Mapa') setShowSpotsModal(!showSpotsModal);
               else navigation.navigate(screen as any);
@@ -169,18 +196,18 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             showsMyLocationButton={false}
             showsCompass={false}
             // @ts-ignore - capture heading for smooth rotation
-            onCameraChange={async (e: any) => {
-              const h = e.nativeEvent?.camera?.heading ?? e.nativeEvent?.heading ?? e.heading;
-              if (typeof h === 'number') {
-                setMapHeading(h);
-              } else {
-                const camera = await mapRef.current?.getCamera();
-                if (camera) setMapHeading(camera.heading);
-              }
+            onCameraChange={(e: any) => {
+              const heading = e.nativeEvent?.camera?.heading ?? e.nativeEvent?.heading ?? e.heading;
+              if (typeof heading === 'number') updateHeading(heading);
+            }}
+            onRegionChange={(region) => {
+              // Some providers might hide heading in region, but let's try
             }}
             onRegionChangeComplete={async () => {
               const camera = await mapRef.current?.getCamera();
-              if (camera) setMapHeading(camera.heading);
+              if (camera && typeof camera.heading === 'number') {
+                updateHeading(camera.heading);
+              }
             }}
             onUserLocationChange={(e) => {
               // optional: track user heading if needed, but map heading is camera based
@@ -252,12 +279,22 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             }]}
             onPress={() => {
               mapRef.current?.animateCamera({ heading: 0 });
-              setMapHeading(0);
+              // Reset to nearest zero point
+              const currentVal = internalHeading.current;
+              const target = Math.round(currentVal / 360) * 360;
+              internalHeading.current = target;
+              lastRawHeading.current = 0;
+              Animated.spring(mapHeading, { toValue: target, useNativeDriver: true }).start();
             }}
           >
-            <View
+            <Animated.View
               style={{
-                transform: [{ rotate: `${-mapHeading}deg` }]
+                transform: [{
+                  rotate: mapHeading.interpolate({
+                    inputRange: [-100000, 100000],
+                    outputRange: ['100000deg', '-100000deg']
+                  })
+                }]
               }}
               pointerEvents="none"
             >
@@ -265,7 +302,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
                 <View style={{ width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderBottomWidth: 24, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: '#f33a3a' }} />
                 <View style={{ width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderTopWidth: 24, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#e0e0e0' }} />
               </View>
-            </View>
+            </Animated.View>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -319,7 +356,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
               {selectedSpot.images && selectedSpot.images.length > 0 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 12 }}>
-                  {selectedSpot.images.map((img, index) => (
+                  {selectedSpot.images.map((img: string, index: number) => (
                     <Image key={index} source={{ uri: img }} style={{ width: 120, height: 80, borderRadius: 8, marginRight: 8 }} />
                   ))}
                 </ScrollView>

@@ -3,8 +3,8 @@ import {
     View,
     TextInput,
     StyleSheet,
-    type ViewStyle,
-    type TextInputProps
+    ViewStyle,
+    TextInputProps
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from './Typography';
@@ -16,7 +16,7 @@ interface InputProps extends TextInputProps {
     containerStyle?: ViewStyle;
 }
 
-export const Input = React.forwardRef<TextInput, InputProps>((props, ref) => {
+const InputComponent = (props: InputProps, ref: React.ForwardedRef<TextInput>) => {
     const {
         label,
         error,
@@ -47,15 +47,15 @@ export const Input = React.forwardRef<TextInput, InputProps>((props, ref) => {
                 {icon && <View style={dynamicStyles.iconContainer}>{icon}</View>}
                 <TextInput
                     ref={ref}
-                    style={dynamicStyles.input}
+                    style={[dynamicStyles.input, style]}
                     placeholderTextColor={theme.colors.textSecondary}
                     onFocus={(e) => {
                         setIsFocused(true);
-                        onFocus && onFocus(e);
+                        if (onFocus) onFocus(e);
                     }}
                     onBlur={(e) => {
                         setIsFocused(false);
-                        onBlur && onBlur(e);
+                        if (onBlur) onBlur(e);
                     }}
                     {...inputProps}
                 />
@@ -67,7 +67,9 @@ export const Input = React.forwardRef<TextInput, InputProps>((props, ref) => {
             )}
         </View>
     );
-});
+};
+
+export const Input = React.forwardRef<TextInput, InputProps>(InputComponent);
 
 Input.displayName = 'Input';
 
