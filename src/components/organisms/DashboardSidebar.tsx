@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
@@ -40,7 +41,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
             dynamicStyles.dashboardColumn,
             isTabletLandscape ? { width: '30%', maxWidth: 400, flex: 0 } : { flex: 1 },
             isDark && { backgroundColor: theme.colors.background, borderRightColor: theme.colors.border },
-            { zIndex: 100, elevation: 100 },
+            { zIndex: 1500, elevation: 1500 },
             style
         ]}>
             <LinearGradient

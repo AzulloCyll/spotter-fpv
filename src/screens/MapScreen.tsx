@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image, useWindowDimensions, Keyboard } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image, useWindowDimensions, Keyboard, Animated } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, MapType } from 'react-native-maps';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
@@ -20,10 +20,10 @@ import { AddSpotModal } from '../components/organisms/AddSpotModal';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 
 const MAP_STYLES = [
-  { id: 'standard', label: 'Standardowa', type: 'standard' as MapType },
-  { id: 'satellite', label: 'Satelita', type: 'satellite' as MapType },
-  { id: 'hybrid', label: 'Hybrydowa', type: 'hybrid' as MapType },
-  { id: 'dark', label: 'Ciemna', type: 'standard' as MapType, customStyle: true },
+  { id: 'standard', label: 'Standardowa', type: 'standard' as MapType, icon: 'Map' as const },
+  { id: 'satellite', label: 'Satelita', type: 'satellite' as MapType, icon: 'Globe' as const },
+  { id: 'hybrid', label: 'Hybrydowa', type: 'hybrid' as MapType, icon: 'Layers' as const },
+  { id: 'dark', label: 'Ciemna', type: 'standard' as MapType, customStyle: true, icon: 'Moon' as const },
 ];
 
 import { RootTabScreenProps } from '../navigation/types';
@@ -32,10 +32,10 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const { theme, isDark } = useTheme();
   const { spots, addSpot } = useSpots();
   const [activeStyleId, setActiveStyleId] = useState('hybrid');
+  const [mapHeading, setMapHeading] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
-  const [searchQuery, setSearchQuery] = useState(''); // Used for Spots Modal (Explore)
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
@@ -56,6 +56,8 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     : lightMapStyle;
 
   const dynamicStyles = getStyles(theme);
+  const sidebarWidth = isTabletLandscape ? Math.min(windowWidth * 0.3, 400) : 0;
+  const mapCenterRelativeToScreen = sidebarWidth + (windowWidth - sidebarWidth) / 2;
 
   useEffect(() => {
     (async () => {
@@ -110,6 +112,12 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
   const handleSpotPress = useCallback((spot: Spot) => {
     setSelectedSpot(spot);
+    // Center map on spot so popup can be positioned relative to center
+    mapRef.current?.animateToRegion({
+      ...spot.coordinates,
+      latitudeDelta: 0.01,
+      longitudeDelta: 0.01,
+    });
   }, []);
 
   const handlePanelSpotSelect = useCallback((spot: Spot) => {
@@ -129,23 +137,21 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
   return (
     <View style={dynamicStyles.container}>
-      {/* Split View Content */}
+      {/* Main Layout Wrapper: Sidebar + Map area */}
       <View style={[dynamicStyles.contentWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
-
-        {/* Lewy Panel (Dashboard style z SG) */}
         {isTabletLandscape && (
           <DashboardSidebar
             navigation={navigation}
             isTabletLandscape={isTabletLandscape}
-            style={{ flex: 1, height: '100%', maxWidth: 400 }}
+            style={{ height: '100%', width: sidebarWidth, zIndex: 1500 }}
             onNavigate={(screen) => {
-              if (screen === 'Mapa') setShowSpotsModal(true);
+              if (screen === 'Mapa') setShowSpotsModal(!showSpotsModal);
               else navigation.navigate(screen as any);
             }}
           />
         )}
 
-        <View style={{ flex: 1, position: 'relative' }}>
+        <View style={{ flex: 1, position: 'relative', zIndex: 1 }}>
           <MapView
             ref={mapRef}
             provider={PROVIDER_GOOGLE}
@@ -161,6 +167,24 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             zoomControlEnabled={false}
             showsUserLocation={locationPermission}
             showsMyLocationButton={false}
+            showsCompass={false}
+            // @ts-ignore - capture heading for smooth rotation
+            onCameraChange={async (e: any) => {
+              const h = e.nativeEvent?.camera?.heading ?? e.nativeEvent?.heading ?? e.heading;
+              if (typeof h === 'number') {
+                setMapHeading(h);
+              } else {
+                const camera = await mapRef.current?.getCamera();
+                if (camera) setMapHeading(camera.heading);
+              }
+            }}
+            onRegionChangeComplete={async () => {
+              const camera = await mapRef.current?.getCamera();
+              if (camera) setMapHeading(camera.heading);
+            }}
+            onUserLocationChange={(e) => {
+              // optional: track user heading if needed, but map heading is camera based
+            }}
           >
             {spots.map((spot) => (
               <SpotMarker
@@ -170,151 +194,104 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
               />
             ))}
           </MapView>
-          {isTabletLandscape && (
-            <MemoizedSpotsSidebarPanel
-              key="spots-panel"
-              visible={showSpotsModal}
-              onClose={handlePanelClose}
-              spots={spots}
-              onSpotSelect={handlePanelSpotSelect}
-            />
-          )}
+        </View>
 
-          {!showSpotsModal && (
+        {isTabletLandscape && (
+          <MemoizedSpotsSidebarPanel
+            key="spots-panel"
+            visible={showSpotsModal}
+            onClose={handlePanelClose}
+            spots={spots}
+            onSpotSelect={handlePanelSpotSelect}
+            style={{ left: sidebarWidth, zIndex: 1000 }}
+          />
+        )}
+      </View>
+
+      {/* Floating Buttons Group (Left: Add/Compass) */}
+      <View style={{
+        position: 'absolute',
+        bottom: isTabletLandscape ? 40 : theme.spacing.xl + 90,
+        left: isTabletLandscape ? sidebarWidth + 20 : 16,
+        alignItems: 'center',
+        zIndex: 10,
+        elevation: 10,
+      }}>
+        <TouchableOpacity
+          onPress={() => setShowAddModal(true)}
+          style={[dynamicStyles.fab, { backgroundColor: theme.colors.primary + 'D9' }]}
+        >
+          <Icon name="Plus" size={32} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Floating Buttons Group (Right: Layers/Location) */}
+      <View style={[dynamicStyles.fabContainer, isTabletLandscape && { right: 20, bottom: 40 }, { flexDirection: 'row', alignItems: 'flex-end', zIndex: 10 }]}>
+        <TouchableOpacity
+          onPress={() => setShowMenu(!showMenu)}
+          style={[dynamicStyles.fab, {
+            backgroundColor: showMenu
+              ? theme.colors.primary
+              : (isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)'),
+            marginRight: 16,
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+          }]}
+        >
+          <Icon name="Layers" size={26} color={showMenu ? "#FFFFFF" : theme.colors.primary} />
+        </TouchableOpacity>
+
+        {/* Location + Compass Column */}
+        <View style={{ alignItems: 'center' }}>
+          <TouchableOpacity
+            style={[dynamicStyles.fab, {
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.3)' : 'rgba(255, 255, 255, 0.3)',
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+            }]}
+            onPress={() => {
+              mapRef.current?.animateCamera({ heading: 0 });
+              setMapHeading(0);
+            }}
+          >
             <View
               style={{
-                position: 'absolute',
-                top: (insets.top || 40) + 10,
-                left: 16,
-                right: 16,
-                zIndex: 10,
+                transform: [{ rotate: `${-mapHeading}deg` }]
               }}
-              pointerEvents="box-none"
+              pointerEvents="none"
             >
-              <View
-                style={{
-                  backgroundColor: theme.colors.surface,
-                  borderRadius: theme.borderRadius.md,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 3.84,
-                  elevation: 5,
-                }}
-                pointerEvents="auto"
-              >
-                <Input
-                  placeholder="Szukaj spotów..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  icon={<Icon name="Search" color={theme.colors.textSecondary} size={20} />}
-                  containerStyle={{ marginBottom: 0, height: 50, borderRadius: theme.borderRadius.md, borderBottomWidth: 0 }}
-                />
+              <View style={{ width: 9, height: 48, alignItems: 'center' }}>
+                <View style={{ width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderBottomWidth: 24, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: '#f33a3a' }} />
+                <View style={{ width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderTopWidth: 24, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#e0e0e0' }} />
               </View>
-
-              {searchQuery.length > 0 && (
-                <View style={{
-                  marginTop: 4,
-                  backgroundColor: theme.colors.surface,
-                  borderRadius: theme.borderRadius.md,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.25,
-                  shadowRadius: 3.84,
-                  elevation: 5,
-                  overflow: 'hidden',
-                }}>
-                  <ScrollView style={{ maxHeight: 200 }} keyboardShouldPersistTaps="handled">
-                    {spots
-                      .filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase()))
-                      .map((spot, index, array) => (
-                        <TouchableOpacity
-                          key={spot.id}
-                          style={{
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            padding: 12,
-                            borderBottomWidth: index === array.length - 1 ? 0 : 1,
-                            borderBottomColor: theme.colors.border,
-                          }}
-                          onPress={() => {
-                            setSelectedSpot(spot);
-                            setSearchQuery('');
-                            Keyboard.dismiss();
-                            mapRef.current?.animateToRegion({
-                              ...spot.coordinates,
-                              latitudeDelta: 0.01,
-                              longitudeDelta: 0.01,
-                            }, 1000);
-                          }}
-                        >
-                          <View style={{ marginRight: 8 }}>
-                            <Icon name="MapPin" size={16} color={theme.colors.textSecondary} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Typography variant="bodySmall" style={{ fontWeight: '600' }}>{spot.name}</Typography>
-                            <Typography variant="caption" color="textSecondary" numberOfLines={1}>
-                              {spot.type.toUpperCase()} • {spot.difficulty}
-                            </Typography>
-                          </View>
-                        </TouchableOpacity>
-                      ))}
-                    {spots.filter(s => s.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 && (
-                      <View style={{ padding: 12, alignItems: 'center' }}>
-                        <Typography variant="caption" color="textSecondary">Brak wyników</Typography>
-                      </View>
-                    )}
-                  </ScrollView>
-                </View>
-              )}
             </View>
-          )}
+          </TouchableOpacity>
 
-          <View style={[dynamicStyles.sideButtons, isTabletLandscape && { right: 20 }]}>
-            <IconButton
-              icon={<Icon name="Navigation" size={24} />}
-              onPress={async () => {
-                if (locationPermission) {
-                  const location = await Location.getCurrentPositionAsync({});
-                  mapRef.current?.animateToRegion({
-                    latitude: location.coords.latitude,
-                    longitude: location.coords.longitude,
-                    latitudeDelta: 0.05,
-                    longitudeDelta: 0.05,
-                  });
-                } else {
-                  Alert.alert('Brak uprawnień', 'Włącz lokalizację w ustawieniach.');
-                }
-              }}
-              style={dynamicStyles.sideButton}
-            />
-            <IconButton
-              icon={<Icon name="Layers" size={24} />}
-              onPress={() => setShowMenu(true)}
-              style={[dynamicStyles.sideButton, { marginTop: theme.spacing.md }]}
-            />
-          </View>
-
-          <View style={[dynamicStyles.fabContainer, isTabletLandscape && { right: 20, bottom: 40 }, { flexDirection: 'row', alignItems: 'center' }]}>
-            <TouchableOpacity
-              onPress={() => setShowSpotsModal(!showSpotsModal)}
-              style={[dynamicStyles.fab, { backgroundColor: theme.colors.surface, marginRight: 16 }]}
-              activeOpacity={0.8}
-            >
-              <Icon name="List" size={24} color={theme.colors.text} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={() => setShowAddModal(true)}
-              style={dynamicStyles.fab}
-              activeOpacity={0.8}
-            >
-              <Icon name="Plus" size={32} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            onPress={async () => {
+              if (locationPermission) {
+                const location = await Location.getCurrentPositionAsync({});
+                mapRef.current?.animateToRegion({
+                  latitude: location.coords.latitude,
+                  longitude: location.coords.longitude,
+                  latitudeDelta: 0.05,
+                  longitudeDelta: 0.05,
+                });
+              }
+            }}
+            style={[dynamicStyles.fab, {
+              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+              borderWidth: 1,
+              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+            }]}
+          >
+            <Icon name="Navigation" size={28} color={theme.colors.primary} />
+          </TouchableOpacity>
         </View>
       </View>
 
+      {/* Overlays: Modals, Popovers, Details */}
       <AddSpotModal
         visible={showAddModal}
         onClose={() => setShowAddModal(false)}
@@ -322,54 +299,42 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
       />
 
       {selectedSpot && (
-        <View style={dynamicStyles.spotCardContainer}>
+        <View style={isTabletLandscape
+          ? [dynamicStyles.spotCardContainerTablet, { right: 20, left: 'auto' }]
+          : dynamicStyles.spotCardContainer
+        }>
           <TouchableWithoutFeedback onPress={closeSpotDetails}>
             <View style={dynamicStyles.spotCard}>
               <View style={[dynamicStyles.spotTypeBadge, { backgroundColor: theme.colors.primary }]}>
                 <Typography variant="caption" style={{ color: '#fff' }}>{selectedSpot.type.toUpperCase()}</Typography>
               </View>
               <View style={dynamicStyles.spotHeader}>
-                <Typography variant="h3">{selectedSpot.name}</Typography>
-                <TouchableOpacity onPress={closeSpotDetails}>
+                <View style={{ flex: 1, marginRight: 10 }}>
+                  <Typography variant="h3" numberOfLines={1} ellipsizeMode="tail">{selectedSpot.name}</Typography>
+                </View>
+                <TouchableOpacity onPress={closeSpotDetails} style={{ padding: 4 }}>
                   <Icon name="X" size={20} color={theme.colors.textSecondary} />
                 </TouchableOpacity>
               </View>
 
               {selectedSpot.images && selectedSpot.images.length > 0 && (
-                <ScrollView
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                  style={{ marginVertical: 12 }}
-                  contentContainerStyle={{ paddingRight: 20 }}
-                >
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 12 }}>
                   {selectedSpot.images.map((img, index) => (
-                    <Image
-                      key={index}
-                      source={{ uri: img }}
-                      style={{
-                        width: 120,
-                        height: 80,
-                        borderRadius: 8,
-                        marginRight: 8,
-                        backgroundColor: theme.colors.background
-                      }}
-                    />
+                    <Image key={index} source={{ uri: img }} style={{ width: 120, height: 80, borderRadius: 8, marginRight: 8 }} />
                   ))}
                 </ScrollView>
               )}
 
-              <Typography variant="body" color="textSecondary" style={{ marginTop: 4 }}>
-                {selectedSpot.description}
-              </Typography>
+              <Typography variant="body" color="textSecondary">{selectedSpot.description}</Typography>
 
               <View style={dynamicStyles.spotMeasures}>
                 <View style={dynamicStyles.measureItem}>
                   <Icon name="Activity" size={16} color={theme.colors.warning} />
-                  <Typography variant="caption" style={{ marginLeft: 4 }}>Trudność: {selectedSpot.difficulty}</Typography>
+                  <Typography variant="caption">Trudność: {selectedSpot.difficulty}</Typography>
                 </View>
                 <View style={dynamicStyles.measureItem}>
                   <Icon name="Star" size={16} color={theme.colors.secondary} />
-                  <Typography variant="caption" style={{ marginLeft: 4 }}>Ocena: {selectedSpot.rating}</Typography>
+                  <Typography variant="caption">Ocena: {selectedSpot.rating}</Typography>
                 </View>
               </View>
 
@@ -379,52 +344,49 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             </View>
           </TouchableWithoutFeedback>
         </View>
-      )
-      }
+      )}
 
-      {/* Menu wyboru stylu - Popover */}
       {showMenu && (
         <>
-          {/* Backdrop to close menu on outside click */}
           <TouchableWithoutFeedback onPress={() => setShowMenu(false)}>
             <View style={StyleSheet.absoluteFill} />
           </TouchableWithoutFeedback>
-
-          {/* Popover Menu */}
           <View style={{
             position: 'absolute',
-            top: 100 + theme.spacing.md, // Aligned with the second button (Layers)
-            right: theme.spacing.lg + 50, // To the left of the button
+            bottom: isTabletLandscape ? 105 : theme.spacing.xl + 155,
+            right: isTabletLandscape ? 20 : 20, // Align with FABs
+            width: 220,
             backgroundColor: theme.colors.surface,
-            borderRadius: theme.borderRadius.md,
+            borderRadius: 16,
             padding: 8,
-            minWidth: 150,
+            zIndex: 2000,
+            borderWidth: 1,
+            borderColor: theme.colors.border,
             ...theme.shadows.medium,
-            zIndex: 1000,
           }}>
-            <Typography variant="label" color="textSecondary" style={{ marginBottom: 8, paddingHorizontal: 8 }}>Styl mapy</Typography>
+            <Typography variant="label" style={{ padding: 8 }}>Styl mapy</Typography>
             {MAP_STYLES.map((style) => (
               <TouchableOpacity
                 key={style.id}
+                onPress={() => handleStyleSelect(style)}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  paddingVertical: 8,
-                  paddingHorizontal: 8,
-                  borderRadius: theme.borderRadius.sm,
-                  backgroundColor: activeStyleId === style.id ? theme.colors.primary + '10' : 'transparent',
+                  padding: 12,
+                  borderRadius: 10,
+                  backgroundColor: activeStyleId === style.id ? (isDark ? 'rgba(79, 70, 229, 0.2)' : 'rgba(79, 70, 229, 0.1)') : 'transparent',
+                  marginBottom: 4,
                 }}
-                onPress={() => handleStyleSelect(style)}
               >
-                <View style={{ marginRight: 8 }}>
+                <View style={{ marginRight: 12, opacity: activeStyleId === style.id ? 1 : 0.6 }}>
                   <Icon
-                    name={style.id === 'dark' ? 'Moon' : style.id === 'satellite' ? 'Globe' : 'Map'}
-                    size={16}
-                    color={activeStyleId === style.id ? theme.colors.primary : theme.colors.textSecondary}
+                    name={style.icon}
+                    size={20}
+                    color={activeStyleId === style.id ? theme.colors.primary : theme.colors.text}
                   />
                 </View>
                 <Typography
-                  variant="caption"
+                  variant="body"
                   color={activeStyleId === style.id ? "primary" : "text"}
                   style={{ fontWeight: activeStyleId === style.id ? '600' : '400' }}
                 >
@@ -432,7 +394,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
                 </Typography>
                 {activeStyleId === style.id && (
                   <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                    <Icon name="Check" color={theme.colors.primary} size={14} />
+                    <Icon name="Check" size={16} color={theme.colors.primary} />
                   </View>
                 )}
               </TouchableOpacity>
@@ -441,8 +403,6 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
         </>
       )}
     </View>
-
-
   );
 }
 
@@ -544,7 +504,16 @@ const getStyles = (theme: any) => StyleSheet.create({
     position: 'absolute',
     bottom: theme.spacing.xl + 60,
     left: theme.spacing.md,
-    right: theme.spacing.md,
+    maxWidth: 380,
+    zIndex: 1000,
+  },
+  spotCardContainerTablet: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: 360,
+    justifyContent: 'center',
+    zIndex: 1000,
   },
   spotCard: {
     backgroundColor: theme.colors.surface,

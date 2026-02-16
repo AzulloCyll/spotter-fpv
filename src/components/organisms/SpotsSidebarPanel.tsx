@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, FlatList, Keyboard, Animated, Dimensions, TextInput, PixelRatio } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, FlatList, Keyboard, Animated, Dimensions, TextInput, InteractionManager } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
@@ -33,13 +33,15 @@ interface SpotsSidebarPanelProps {
     onClose: () => void;
     spots: Spot[];
     onSpotSelect: (spot: Spot) => void;
+    style?: any;
 }
 
-export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, onClose, spots, onSpotSelect }) => {
+export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, onClose, spots, onSpotSelect, style }) => {
     const { theme, isDark } = useTheme();
     const insets = useSafeAreaInsets();
     const [searchQuery, setSearchQuery] = useState('');
-    const slideAnim = useRef(new Animated.Value(-350)).current; // Start hidden (off-screen left)
+    const inputRef = useRef<TextInput>(null);
+    const slideAnim = useRef(new Animated.Value(-320)).current; // Start hidden (off-screen left) - matching 320 width
 
     useEffect(() => {
         if (visible) {
@@ -50,12 +52,14 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, o
             }).start();
         } else {
             Animated.timing(slideAnim, {
-                toValue: -350,
+                toValue: -320, // Match the panel width
                 duration: 250,
                 useNativeDriver: true,
             }).start();
+
+            Keyboard.dismiss();
         }
-    }, [visible]);
+    }, [visible, slideAnim]);
 
     const filteredSpots = spots.filter(s =>
         s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,7 +94,7 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, o
                         {item.type.toUpperCase()} • {item.difficulty} • {item.rating}★
                     </Typography>
                 </View>
-                <Icon name="ChevronRight" size={16} color={theme.colors.border} />
+                <Icon name="ChevronRight" size={16} color={theme.colors.textSecondary} />
             </TouchableOpacity>
         );
     };
@@ -100,14 +104,17 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, o
 
     return (
         <Animated.View
+            pointerEvents={visible ? "auto" : "none"}
             style={[
                 styles.panel,
                 {
                     backgroundColor: theme.colors.background,
                     borderRightColor: theme.colors.border,
                     transform: [{ translateX: slideAnim }],
-                    zIndex: 20,
-                }
+                    zIndex: 1001, // Ensure it's above the map container itself
+                    elevation: 1001,
+                },
+                style
             ]}
         >
             <View style={[styles.header, {
@@ -136,13 +143,17 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({ visible, o
                 </TouchableOpacity>
             </View>
 
-            <View style={styles.searchContainer}>
+            <View style={[styles.searchContainer, { zIndex: 2000, elevation: 2000 }]} pointerEvents="auto">
                 <Input
+                    key={visible ? 'search-visible' : 'search-hidden'}
+                    ref={inputRef}
+                    autoFocus={visible}
                     placeholder="Szukaj..."
                     value={searchQuery}
                     onChangeText={setSearchQuery}
                     icon={<Icon name="Search" size={20} color={theme.colors.textSecondary} />}
-                    containerStyle={{ marginBottom: 0, height: 50, borderRadius: 12, backgroundColor: theme.colors.surface }}
+                    containerStyle={{ marginBottom: 0, height: 50, borderRadius: 12, backgroundColor: theme.colors.surface, zIndex: 5000 }}
+                    style={{ zIndex: 5001 }} // Extremely high to avoid any overlap blocking
                 />
             </View>
 

@@ -53,8 +53,9 @@ export const SpotMarker = ({ spot, onPress }: SpotMarkerProps) => {
             tracksViewChanges={tracksViewChanges}
         >
             <View style={[styles.container, {
-                backgroundColor: theme.colors.surface, // Solid background for map visibility
-                // No border
+                backgroundColor: theme.colors.surface,
+                borderWidth: 2,
+                borderColor: iconColor,
             }]}>
                 <Icon
                     name={getIconName(spot.type)}

@@ -5,6 +5,8 @@ import { Typography } from '../atoms/Typography';
 import { IconButton } from '../atoms/IconButton';
 import { Icon } from '../atoms/Icon';
 import { Spot, SpotType } from '../../data/mockSpots';
+import * as ImagePicker from 'expo-image-picker';
+import { Image, ScrollView } from 'react-native';
 
 interface AddSpotModalProps {
     visible: boolean;
@@ -23,6 +25,24 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
     const [description, setDescription] = useState('');
     const [type, setType] = useState<SpotType>('park');
     const [difficulty, setDifficulty] = useState<typeof DIFFICULTIES[number]>('easy');
+    const [images, setImages] = useState<string[]>([]);
+
+    const pickImage = async () => {
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.8,
+        });
+
+        if (!result.canceled) {
+            setImages([...images, result.assets[0].uri]);
+        }
+    };
+
+    const removeImage = (index: number) => {
+        setImages(images.filter((_, i) => i !== index));
+    };
 
     const handleSave = () => {
         if (!name || !description) return; // Simple validation
@@ -31,12 +51,14 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
             description,
             type,
             difficulty,
+            images,
         });
         // Reset form
         setName('');
         setDescription('');
         setType('park');
         setDifficulty('easy');
+        setImages([]);
         onClose();
     };
 
@@ -98,6 +120,32 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
                                 ))}
                             </View>
 
+                            <Typography variant="label" style={styles.label}>Zdjęcia</Typography>
+                            <View style={{ marginBottom: 16 }}>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 4, paddingVertical: 8, gap: 12 }}>
+                                    <TouchableOpacity
+                                        style={styles.addImageButton}
+                                        onPress={pickImage}
+                                    >
+                                        <Icon name="Plus" size={24} color={theme.colors.textSecondary} />
+                                        <Typography variant="caption" color="textSecondary">Dodaj</Typography>
+                                    </TouchableOpacity>
+
+                                    {images.map((uri, index) => (
+                                        <View key={index} style={styles.imageContainer}>
+                                            <Image source={{ uri }} style={styles.imagePreview} />
+                                            <TouchableOpacity
+                                                style={styles.removeImageBadge}
+                                                onPress={() => removeImage(index)}
+                                                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                                            >
+                                                <Icon name="X" size={10} color="#fff" />
+                                            </TouchableOpacity>
+                                        </View>
+                                    ))}
+                                </ScrollView>
+                            </View>
+
                             <TouchableWithoutFeedback onPress={handleSave}>
                                 <View style={styles.saveButton}>
                                     <Typography variant="label" style={{ color: '#fff', fontSize: 14 }}>ZAPISZ SPOT</Typography>
@@ -122,11 +170,11 @@ const getStyles = (theme: any) => StyleSheet.create({
     },
     modalContent: {
         width: '100%',
-        maxWidth: 340, // Constrain width
+        maxWidth: 500, // Increased from 340 to fit chips in one line
         backgroundColor: theme.colors.surface,
-        borderRadius: theme.borderRadius.lg, // Rounded all corners
+        borderRadius: theme.borderRadius.lg,
         padding: theme.spacing.lg,
-        ...theme.shadows.strong, // Add elevation for floating effect
+        ...theme.shadows.strong,
     },
     header: {
         flexDirection: 'row',
@@ -141,11 +189,11 @@ const getStyles = (theme: any) => StyleSheet.create({
     input: {
         backgroundColor: theme.colors.background,
         borderRadius: theme.borderRadius.md,
-        padding: theme.spacing.sm, // Reduced padding
+        padding: theme.spacing.sm,
         paddingHorizontal: theme.spacing.md,
-        fontSize: 14, // Slightly smaller font
+        fontSize: 14,
         color: theme.colors.text,
-        marginBottom: theme.spacing.sm, // Reduced margin
+        marginBottom: theme.spacing.sm,
         ...theme.typography.body,
     },
     textArea: {
@@ -154,13 +202,16 @@ const getStyles = (theme: any) => StyleSheet.create({
     },
     chipsContainer: {
         flexDirection: 'row',
-        flexWrap: 'wrap',
+        flexWrap: 'nowrap', // Force single line
         gap: 8,
         marginBottom: theme.spacing.md,
+        justifyContent: 'space-between', // Distribute chips
     },
     chip: {
-        paddingHorizontal: 10, // Reduced
-        paddingVertical: 4, // Reduced
+        flex: 1, // Make all chips equal width
+        alignItems: 'center',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: theme.colors.border,
@@ -173,8 +224,44 @@ const getStyles = (theme: any) => StyleSheet.create({
     saveButton: {
         backgroundColor: theme.colors.primary,
         borderRadius: theme.borderRadius.md,
-        paddingVertical: 12, // Reduced padding
+        paddingVertical: 12,
         alignItems: 'center',
-        marginTop: theme.spacing.sm, // Reduced margin
+        marginTop: theme.spacing.sm,
+    },
+    addImageButton: {
+        width: 80,
+        height: 80,
+        borderRadius: theme.borderRadius.md,
+        backgroundColor: theme.colors.background,
+        borderWidth: 1,
+        borderStyle: 'dashed',
+        borderColor: theme.colors.border,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    imageContainer: {
+        width: 80,
+        height: 80,
+        position: 'relative',
+        overflow: 'visible', // Ensure badge isn't clipped
+    },
+    imagePreview: {
+        width: 80,
+        height: 80,
+        borderRadius: theme.borderRadius.md,
+    },
+    removeImageBadge: {
+        position: 'absolute',
+        top: -6,
+        right: -6,
+        backgroundColor: theme.colors.error,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 2,
+        borderColor: theme.colors.surface,
+        zIndex: 10, // Ensure it's above other elements
     },
 });

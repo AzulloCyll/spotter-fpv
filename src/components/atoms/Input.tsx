@@ -16,13 +16,18 @@ interface InputProps extends TextInputProps {
     containerStyle?: ViewStyle;
 }
 
-export const Input: React.FC<InputProps> = ({
-    label,
-    error,
-    icon,
-    containerStyle,
-    ...props
-}) => {
+export const Input = React.forwardRef<TextInput, InputProps>((props, ref) => {
+    const {
+        label,
+        error,
+        icon,
+        containerStyle,
+        style,
+        onFocus,
+        onBlur,
+        ...inputProps
+    } = props;
+
     const { theme } = useTheme();
     const [isFocused, setIsFocused] = useState(false);
     const dynamicStyles = React.useMemo(() => getStyles(theme), [theme]);
@@ -41,11 +46,18 @@ export const Input: React.FC<InputProps> = ({
             ]}>
                 {icon && <View style={dynamicStyles.iconContainer}>{icon}</View>}
                 <TextInput
+                    ref={ref}
                     style={dynamicStyles.input}
                     placeholderTextColor={theme.colors.textSecondary}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    {...props}
+                    onFocus={(e) => {
+                        setIsFocused(true);
+                        onFocus && onFocus(e);
+                    }}
+                    onBlur={(e) => {
+                        setIsFocused(false);
+                        onBlur && onBlur(e);
+                    }}
+                    {...inputProps}
                 />
             </View>
             {error && (
@@ -55,7 +67,9 @@ export const Input: React.FC<InputProps> = ({
             )}
         </View>
     );
-};
+});
+
+Input.displayName = 'Input';
 
 const getStyles = (theme: any) => StyleSheet.create({
     container: {
