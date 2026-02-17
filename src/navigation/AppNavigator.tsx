@@ -23,18 +23,21 @@ export default function AppNavigator() {
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
 
   useEffect(() => {
-    // Ukrywa dolny pasek nawigacji systemowej (Android)
-    const hideNavigationBar = async () => {
+    const setupSystemUI = async () => {
       try {
         await NavigationBar.setVisibilityAsync("hidden");
+        await NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
       } catch (e) {
-        // Ignore specific unsupported errors
+        // Ignore errors
       }
     };
 
-    // Small delay to ensure it applies after mount
-    setTimeout(hideNavigationBar, 100);
-  }, []);
+    setupSystemUI();
+
+    // Re-enforce periodically if needed (handles some system UI popups)
+    const interval = setInterval(setupSystemUI, 5000);
+    return () => clearInterval(interval);
+  }, [isDark]);
 
   const hiddenTabBarStyle = { display: 'none' as const };
 

@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Marker } from 'react-native-maps';
-import { Icon } from '../atoms/Icon'; // Assuming Icon component exists and handles vector icons
+import { Icon } from '../atoms/Icon';
 import { Spot } from '../../data/mockSpots';
 import { useTheme } from '../../theme/ThemeContext';
 
@@ -22,62 +22,74 @@ const getIconName = (type: Spot['type']) => {
 
 const getIconColor = (type: Spot['type'], theme: any) => {
     switch (type) {
-        case 'bando': return theme.colors.error; // Red for danger/bando
-        case 'nature': return theme.colors.green; // Green for nature
-        case 'park': return theme.colors.warning; // Yellow/Orange for parks
-        case 'urban': return theme.colors.accent; // Blue for urban
+        case 'bando': return theme.colors.error;
+        case 'nature': return theme.colors.green;
+        case 'park': return theme.colors.warning;
+        case 'urban': return theme.colors.accent;
         default: return theme.colors.primary;
     }
 };
 
 export const SpotMarker = ({ spot, onPress }: SpotMarkerProps) => {
     const { theme } = useTheme();
+    const { width: windowWidth } = useWindowDimensions();
     const [tracksViewChanges, setTracksViewChanges] = React.useState(true);
 
     React.useEffect(() => {
-        // Stop tracking after initial render to optimize performance
-        // This delay ensures the icon font is loaded and rendered
+        // Stabilize rendering for 5 seconds to ensure Android captures the full view
+        // after layout and icon loading are complete.
         const timer = setTimeout(() => {
             setTracksViewChanges(false);
-        }, 100);
+        }, 5000);
         return () => clearTimeout(timer);
     }, []);
 
+    const isPhone = windowWidth < 800;
+
+    // Slightly enlarged sizes based on user feedback
+    const markerSize = isPhone ? 30 : 42;
+    const iconSize = isPhone ? 16 : 24;
     const iconColor = getIconColor(spot.type, theme);
 
     return (
         <Marker
             coordinate={spot.coordinates}
-
             onPress={() => onPress(spot)}
             tracksViewChanges={tracksViewChanges}
+            anchor={{ x: 0.5, y: 0.5 }}
         >
-            <View style={[styles.container, {
-                backgroundColor: theme.colors.surface,
-                borderWidth: 2,
-                borderColor: iconColor,
-            }]}>
-                <Icon
-                    name={getIconName(spot.type)}
-                    size={20}
-                    color={iconColor}
-                />
+            <View
+                collapsable={false}
+                style={{
+                    width: markerSize + 10, // Small buffer space
+                    height: markerSize + 10,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: 'transparent',
+                }}
+            >
+                <View style={{
+                    width: markerSize,
+                    height: markerSize,
+                    borderRadius: markerSize / 2,
+                    backgroundColor: theme.colors.surface || '#FFFFFF',
+                    borderWidth: isPhone ? 1.5 : 2.5,
+                    borderColor: iconColor,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    // Hardware layer forcing to fix clipping
+                    opacity: 0.99,
+                    overflow: 'visible',
+                }}>
+                    <Icon
+                        name={getIconName(spot.type)}
+                        size={iconSize}
+                        color={iconColor}
+                    />
+                </View>
             </View>
         </Marker>
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        elevation: 4,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.84,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-});
+const styles = StyleSheet.create({});
