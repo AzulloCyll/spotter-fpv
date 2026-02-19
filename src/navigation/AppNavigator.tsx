@@ -25,7 +25,7 @@ export default function AppNavigator() {
   useEffect(() => {
     const setupSystemUI = async () => {
       try {
-        await NavigationBar.setVisibilityAsync("hidden");
+        await NavigationBar.setVisibilityAsync('hidden');
         await NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
       } catch (e) {
         // Ignore errors
@@ -77,7 +77,9 @@ export default function AppNavigator() {
               fontWeight: '700',
             },
             tabBarActiveTintColor: isDark ? theme.colors.white : theme.colors.primary,
-            tabBarInactiveTintColor: isDark ? theme.colors.white + '40' : theme.colors.textSecondary,
+            tabBarInactiveTintColor: isDark
+              ? theme.colors.white + '40'
+              : theme.colors.textSecondary,
           }}
         >
           <Tab.Screen
@@ -96,7 +98,7 @@ export default function AppNavigator() {
                 backgroundColor: isDark ? theme.colors.surface + 'D9' : theme.colors.white + 'D9',
                 borderTopColor: isDark ? theme.colors.white + '1A' : theme.colors.black + '0D',
                 borderTopWidth: 1,
-              })
+              }),
             }}
           />
           <Tab.Screen
@@ -110,7 +112,9 @@ export default function AppNavigator() {
             name="Czat"
             component={ChatScreen}
             options={{
-              tabBarIcon: ({ color, size }) => <Icon name="MessageCircle" color={color} size={size} />,
+              tabBarIcon: ({ color, size }) => (
+                <Icon name="MessageCircle" color={color} size={size} />
+              ),
             }}
           />
           <Tab.Screen

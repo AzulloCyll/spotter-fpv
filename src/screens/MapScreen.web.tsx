@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, useWindowDimensions, TouchableWithoutFeedback, ScrollView, Image } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  TouchableOpacity,
+  useWindowDimensions,
+  TouchableWithoutFeedback,
+  ScrollView,
+  Image,
+} from 'react-native';
 import { Map as MapView, Marker } from 'pigeon-maps';
 import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
 import { useTheme } from '../theme/ThemeContext';
@@ -43,7 +51,8 @@ export default function MapScreen() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
 
-  const activeProvider = WEB_STYLES.find(s => s.id === activeStyleId)?.provider || providers.light;
+  const activeProvider =
+    WEB_STYLES.find((s) => s.id === activeStyleId)?.provider || providers.light;
 
   const dynamicStyles = getStyles(theme);
 
@@ -99,7 +108,7 @@ export default function MapScreen() {
                   alignItems: 'center',
                   cursor: 'pointer',
                   // @ts-ignore
-                  pointerEvents: 'auto'
+                  pointerEvents: 'auto',
                 }}
               >
                 <Icon name="MapPin" color={theme.colors.error} size={32} />
@@ -126,10 +135,7 @@ export default function MapScreen() {
           <Icon name="List" color={theme.colors.primary} size={24} />
         </TouchableOpacity>
         <View style={{ height: 10 }} />
-        <TouchableOpacity
-          style={dynamicStyles.sideButton}
-          onPress={() => setShowMenu(!showMenu)}
-        >
+        <TouchableOpacity style={dynamicStyles.sideButton} onPress={() => setShowMenu(!showMenu)}>
           <Icon name="Layers" color={theme.colors.primary} size={24} />
         </TouchableOpacity>
       </View>
@@ -146,7 +152,9 @@ export default function MapScreen() {
       {/* Menu wyboru stylu (Web specific overlay) */}
       {showMenu && (
         <View style={dynamicStyles.webMenu}>
-          <Typography variant="h3" style={dynamicStyles.menuTitle}>Styl mapy</Typography>
+          <Typography variant="h3" style={dynamicStyles.menuTitle}>
+            Styl mapy
+          </Typography>
           {WEB_STYLES.map((style) => (
             <TouchableOpacity
               key={style.id}
@@ -157,7 +165,7 @@ export default function MapScreen() {
               }}
             >
               <Typography
-                color={activeStyleId === style.id ? "primary" : "text"}
+                color={activeStyleId === style.id ? 'primary' : 'text'}
                 style={dynamicStyles.menuItemText}
               >
                 {style.label}
@@ -165,8 +173,6 @@ export default function MapScreen() {
               {activeStyleId === style.id && (
                 <Icon name="Check" color={theme.colors.primary} size={20} />
               )}
-
-
             </TouchableOpacity>
           ))}
         </View>
@@ -194,8 +200,12 @@ export default function MapScreen() {
                 }}
               >
                 <View style={dynamicStyles.spotListItemContent}>
-                  <Typography variant="body" style={{ fontWeight: 'bold' }}>{spot.name}</Typography>
-                  <Typography variant="caption" color="textSecondary">{spot.type.toUpperCase()} • {spot.difficulty}</Typography>
+                  <Typography variant="body" style={{ fontWeight: 'bold' }}>
+                    {spot.name}
+                  </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {spot.type.toUpperCase()} • {spot.difficulty}
+                  </Typography>
                 </View>
                 <Icon name="ChevronRight" size={20} color={theme.colors.textSecondary} />
               </TouchableOpacity>
@@ -213,8 +223,6 @@ export default function MapScreen() {
               <Icon name="X" size={24} color={theme.colors.textSecondary} />
             </TouchableOpacity>
           </View>
-
-
 
           {/* Galeria zdjęć (Web) */}
           {selectedSpot.images && selectedSpot.images.length > 0 && (
@@ -234,15 +242,19 @@ export default function MapScreen() {
                     height: 80,
                     borderRadius: 8,
                     marginRight: 8,
-                    backgroundColor: theme.colors.background
+                    backgroundColor: theme.colors.background,
                   }}
                 />
               ))}
             </ScrollView>
           )}
 
-          <Typography variant="body" style={{ marginTop: 8 }}>{selectedSpot.description}</Typography>
-          <Typography variant="caption" style={{ marginTop: 8, color: theme.colors.textSecondary }}>Typ: {selectedSpot.type.toUpperCase()}</Typography>
+          <Typography variant="body" style={{ marginTop: 8 }}>
+            {selectedSpot.description}
+          </Typography>
+          <Typography variant="caption" style={{ marginTop: 8, color: theme.colors.textSecondary }}>
+            Typ: {selectedSpot.type.toUpperCase()}
+          </Typography>
         </View>
       )}
 
@@ -263,171 +275,172 @@ export default function MapScreen() {
   );
 }
 
-const getStyles = (theme: any) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  mapContainer: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#f5f5f5',
-    overflow: 'hidden',
-    zIndex: -1,
-  },
-  searchBar: {
-    position: 'absolute',
-    top: theme.spacing.xl + 8,
-    left: theme.spacing.lg - 4,
-    right: theme.spacing.lg - 4,
-    backgroundColor: theme.colors.surface,
-    padding: theme.spacing.md - 1,
-    borderRadius: theme.borderRadius.md + 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    ...theme.shadows.medium,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  searchPlaceholder: {
-    marginLeft: 10,
-  },
-  sideButtons: {
-    position: 'absolute',
-    right: 20,
-    top: 120,
-    zIndex: 10,
-  },
-  sideButton: {
-    backgroundColor: theme.colors.surface,
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  fab: {
-    position: 'absolute',
-    bottom: theme.spacing.xl + 90,
-    right: theme.spacing.md,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 9999,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
-    cursor: 'pointer', // Web specific
-  },
-  webMenu: {
-    position: 'absolute',
-    right: 80,
-    top: 120,
-    backgroundColor: theme.colors.surface,
-    padding: 20,
-    borderRadius: 16,
-    width: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.1,
-    shadowRadius: 20,
-    elevation: 10,
-    zIndex: 20,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  webSpotCard: {
-    position: 'absolute',
-    bottom: 100,
-    left: 20,
-    right: 20,
-    backgroundColor: theme.colors.surface,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
-    zIndex: 20,
-  },
-  menuTitle: {
-    marginBottom: 15,
-    fontSize: 18,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  },
-  menuItemText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  fullScreenOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    zIndex: 5,
-  },
-  spotListContainer: {
-    position: 'absolute',
-    left: 20,
-    top: 100,
-    bottom: 100,
-    width: 300,
-    backgroundColor: theme.colors.surface + 'CC', // 80% opacity
-    // @ts-ignore
-    backdropFilter: 'blur(10px)', // Web specific
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10,
-    zIndex: 30,
-    display: 'flex',
-    flexDirection: 'column',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  spotListHeader: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  spotListContent: {
-    flex: 1,
-  },
-  spotListItem: {
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    cursor: 'pointer',
-  },
-  spotListItemContent: {
-    flex: 1,
-  },
-});
+const getStyles = (theme: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    mapContainer: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: '#f5f5f5',
+      overflow: 'hidden',
+      zIndex: -1,
+    },
+    searchBar: {
+      position: 'absolute',
+      top: theme.spacing.xl + 8,
+      left: theme.spacing.lg - 4,
+      right: theme.spacing.lg - 4,
+      backgroundColor: theme.colors.surface,
+      padding: theme.spacing.md - 1,
+      borderRadius: theme.borderRadius.md + 2,
+      flexDirection: 'row',
+      alignItems: 'center',
+      ...theme.shadows.medium,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    searchPlaceholder: {
+      marginLeft: 10,
+    },
+    sideButtons: {
+      position: 'absolute',
+      right: 20,
+      top: 120,
+      zIndex: 10,
+    },
+    sideButton: {
+      backgroundColor: theme.colors.surface,
+      width: 50,
+      height: 50,
+      borderRadius: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 5,
+      elevation: 3,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    fab: {
+      position: 'absolute',
+      bottom: theme.spacing.xl + 90,
+      right: theme.spacing.md,
+      width: 56,
+      height: 56,
+      borderRadius: 28,
+      backgroundColor: theme.colors.primary,
+      justifyContent: 'center',
+      alignItems: 'center',
+      zIndex: 9999,
+      elevation: 8,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 4.65,
+      cursor: 'pointer', // Web specific
+    },
+    webMenu: {
+      position: 'absolute',
+      right: 80,
+      top: 120,
+      backgroundColor: theme.colors.surface,
+      padding: 20,
+      borderRadius: 16,
+      width: 200,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 20,
+      elevation: 10,
+      zIndex: 20,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    webSpotCard: {
+      position: 'absolute',
+      bottom: 100,
+      left: 20,
+      right: 20,
+      backgroundColor: theme.colors.surface,
+      padding: 20,
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      elevation: 10,
+      zIndex: 20,
+    },
+    menuTitle: {
+      marginBottom: 15,
+      fontSize: 18,
+    },
+    menuItem: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingVertical: 10,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    menuItemText: {
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    fullScreenOverlay: {
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      zIndex: 5,
+    },
+    spotListContainer: {
+      position: 'absolute',
+      left: 20,
+      top: 100,
+      bottom: 100,
+      width: 300,
+      backgroundColor: theme.colors.surface + 'CC', // 80% opacity
+      // @ts-ignore
+      backdropFilter: 'blur(10px)', // Web specific
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 10,
+      elevation: 10,
+      zIndex: 30,
+      display: 'flex',
+      flexDirection: 'column',
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+    },
+    spotListHeader: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    spotListContent: {
+      flex: 1,
+    },
+    spotListItem: {
+      padding: 16,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      cursor: 'pointer',
+    },
+    spotListItemContent: {
+      flex: 1,
+    },
+  });

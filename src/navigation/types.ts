@@ -1,5 +1,5 @@
-import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
-import { CompositeScreenProps } from "@react-navigation/native";
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { CompositeScreenProps } from '@react-navigation/native';
 
 export type RootTabParamList = {
   Start: undefined;
@@ -9,8 +9,10 @@ export type RootTabParamList = {
   Telemetria: undefined;
 };
 
-export type RootTabScreenProps<T extends keyof RootTabParamList> =
-  BottomTabScreenProps<RootTabParamList, T>;
+export type RootTabScreenProps<T extends keyof RootTabParamList> = BottomTabScreenProps<
+  RootTabParamList,
+  T
+>;
 
 // W przyszłości, gdy dodamy Stack Navigatora (np. dla detali profilu),
 // będziemy mogli tu zdefiniować CompositeScreenProps.

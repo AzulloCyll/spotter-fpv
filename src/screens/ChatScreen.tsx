@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  useWindowDimensions,
+} from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
 import { IconButton } from '../components/atoms/IconButton';
@@ -24,7 +31,6 @@ export default function ChatScreen() {
   return (
     <View style={dynamicStyles.container}>
       <View style={[dynamicStyles.mainWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
-
         {isTabletLandscape && (
           <DashboardSidebar
             navigation={navigation}
@@ -49,7 +55,9 @@ export default function ChatScreen() {
             )}
             <View style={dynamicStyles.groupInfo}>
               <Typography variant="h3">Warszawa FPV Team</Typography>
-              <Typography variant="caption" color="textSecondary">12 pilotów aktywnych</Typography>
+              <Typography variant="caption" color="textSecondary">
+                12 pilotów aktywnych
+              </Typography>
             </View>
           </View>
 
@@ -63,11 +71,16 @@ export default function ChatScreen() {
                 key={msg.id}
                 style={[
                   dynamicStyles.messageBubble,
-                  msg.sender === 'Ty' ? dynamicStyles.myMessage : dynamicStyles.othersMessage
+                  msg.sender === 'Ty' ? dynamicStyles.myMessage : dynamicStyles.othersMessage,
                 ]}
               >
                 {msg.sender !== 'Ty' && (
-                  <Typography variant="label" style={{ marginBottom: 2, color: theme.colors.primary }}>{msg.sender}</Typography>
+                  <Typography
+                    variant="label"
+                    style={{ marginBottom: 2, color: theme.colors.primary }}
+                  >
+                    {msg.sender}
+                  </Typography>
                 )}
                 <Typography variant="body">{msg.text}</Typography>
                 <Typography variant="caption" color="textSecondary" style={dynamicStyles.timestamp}>
@@ -96,75 +109,76 @@ export default function ChatScreen() {
   );
 }
 
-const getStyles = (theme: any) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  mainWrapper: {
-    flex: 1,
-  },
-  sidebar: {
-    width: '30%',
-    maxWidth: 400,
-    backgroundColor: theme.colors.background,
-    borderRightWidth: 1,
-    borderRightColor: theme.colors.border,
-    overflow: 'hidden',
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: theme.colors.surface,
-    ...theme.shadows.soft,
-  },
-  groupInfo: {
-    marginLeft: 10,
-  },
-  chatArea: {
-    flex: 1,
-  },
-  messagesList: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  messageBubble: {
-    maxWidth: '80%',
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 12,
-    ...theme.shadows.soft,
-  },
-  myMessage: {
-    alignSelf: 'flex-end',
-    backgroundColor: theme.colors.primary + '20',
-    borderTopRightRadius: 4,
-  },
-  othersMessage: {
-    alignSelf: 'flex-start',
-    backgroundColor: theme.colors.surface,
-    borderTopLeftRadius: 4,
-  },
-  timestamp: {
-    fontSize: 10,
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
-  inputArea: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 15,
-    backgroundColor: theme.colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  sendButton: {
-    backgroundColor: theme.colors.primary,
-    marginLeft: 10,
-    borderRadius: 12,
-  }
-});
+const getStyles = (theme: any) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    mainWrapper: {
+      flex: 1,
+    },
+    sidebar: {
+      width: '30%',
+      maxWidth: 400,
+      backgroundColor: theme.colors.background,
+      borderRightWidth: 1,
+      borderRightColor: theme.colors.border,
+      overflow: 'hidden',
+    },
+    header: {
+      paddingTop: 60,
+      paddingHorizontal: 24,
+      paddingBottom: 24,
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.surface,
+      ...theme.shadows.soft,
+    },
+    groupInfo: {
+      marginLeft: 10,
+    },
+    chatArea: {
+      flex: 1,
+    },
+    messagesList: {
+      padding: 20,
+      paddingBottom: 40,
+    },
+    messageBubble: {
+      maxWidth: '80%',
+      padding: 12,
+      borderRadius: 16,
+      marginBottom: 12,
+      ...theme.shadows.soft,
+    },
+    myMessage: {
+      alignSelf: 'flex-end',
+      backgroundColor: theme.colors.primary + '20',
+      borderTopRightRadius: 4,
+    },
+    othersMessage: {
+      alignSelf: 'flex-start',
+      backgroundColor: theme.colors.surface,
+      borderTopLeftRadius: 4,
+    },
+    timestamp: {
+      fontSize: 10,
+      marginTop: 4,
+      alignSelf: 'flex-end',
+    },
+    inputArea: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 15,
+      paddingBottom: Platform.OS === 'ios' ? 40 : 15,
+      backgroundColor: theme.colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: theme.colors.border,
+    },
+    sendButton: {
+      backgroundColor: theme.colors.primary,
+      marginLeft: 10,
+      borderRadius: 12,
+    },
+  });

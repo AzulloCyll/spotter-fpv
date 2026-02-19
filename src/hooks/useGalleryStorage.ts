@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Alert } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as FileSystem from "expo-file-system/legacy";
+import { useState, useEffect } from 'react';
+import { Alert } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 
 export interface PhotoItem {
   id: string;
@@ -11,7 +11,7 @@ export interface PhotoItem {
   isLiked: boolean;
 }
 
-const STORAGE_KEY = "@spotter_gallery_photos";
+const STORAGE_KEY = '@spotter_gallery_photos';
 const GALLERY_DIR = `${FileSystem.documentDirectory}gallery/`;
 
 export const useGalleryStorage = () => {
@@ -34,15 +34,13 @@ export const useGalleryStorage = () => {
         if (saved) {
           const parsedPhotos = JSON.parse(saved) as PhotoItem[];
           // Usuwamy stare mockowane zdjęcia z listy (sprzątanie po refaktorze)
-          const userPhotosOnly = parsedPhotos.filter(
-            (p) => !p.id.startsWith("mock-"),
-          );
+          const userPhotosOnly = parsedPhotos.filter((p) => !p.id.startsWith('mock-'));
           setPhotos(userPhotosOnly);
 
           // Fizycznie usuwamy pliki mocków jeśli istnieją na dysku
           const files = await FileSystem.readDirectoryAsync(GALLERY_DIR);
           for (const file of files) {
-            if (file.startsWith("mock_")) {
+            if (file.startsWith('mock_')) {
               await FileSystem.deleteAsync(`${GALLERY_DIR}${file}`, {
                 idempotent: true,
               });
@@ -50,7 +48,7 @@ export const useGalleryStorage = () => {
           }
         }
       } catch (e) {
-        console.error("Failed to load photos", e);
+        console.error('Failed to load photos', e);
       }
     };
     loadPhotos();
@@ -62,7 +60,7 @@ export const useGalleryStorage = () => {
       try {
         await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(photos));
       } catch (e) {
-        console.error("Failed to save photos", e);
+        console.error('Failed to save photos', e);
       }
     };
     if (photos.length > 0) {
@@ -72,16 +70,13 @@ export const useGalleryStorage = () => {
 
   const addPhoto = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Brak uprawnień",
-        "Potrzebujemy dostępu do galerii, abyś mógł dodać zdjęcie.",
-      );
+    if (status !== 'granted') {
+      Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do galerii, abyś mógł dodać zdjęcie.');
       return;
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ["images"],
+      mediaTypes: ['images'],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.8,
@@ -91,8 +86,7 @@ export const useGalleryStorage = () => {
       setIsUploading(true);
       try {
         const pickedUri = result.assets[0].uri;
-        const fileName =
-          pickedUri.split("/").pop() || `photo_${Date.now()}.jpg`;
+        const fileName = pickedUri.split('/').pop() || `photo_${Date.now()}.jpg`;
         const permanentUri = `${GALLERY_DIR}${fileName}`;
 
         await FileSystem.copyAsync({
@@ -112,8 +106,8 @@ export const useGalleryStorage = () => {
           setIsUploading(false);
         }, 1000);
       } catch (error) {
-        console.error("Error saving image:", error);
-        Alert.alert("Błąd", "Nie udało się zapisać zdjęcia.");
+        console.error('Error saving image:', error);
+        Alert.alert('Błąd', 'Nie udało się zapisać zdjęcia.');
         setIsUploading(false);
       }
     }

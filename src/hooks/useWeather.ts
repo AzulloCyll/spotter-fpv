@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import * as Location from "expo-location";
+import { useState, useEffect } from 'react';
+import * as Location from 'expo-location';
 
 export interface WeatherData {
   temp: number;
@@ -37,15 +37,15 @@ export const useWeather = () => {
     // 45, 48: Fog and depositing rime fog
     // 51, 53, 55: Drizzle: Light, moderate, and dense intensity
     // ...
-    if (code === 0) return "Czyste niebo";
-    if (code <= 3) return "Częściowe zachmurzenie";
-    if (code <= 48) return "Mgła";
-    if (code <= 55) return "Mżawka";
-    if (code <= 65) return "Deszcz";
-    if (code <= 75) return "Śnieg";
-    if (code <= 82) return "Ulewa";
-    if (code <= 99) return "Burza";
-    return "Nieznane";
+    if (code === 0) return 'Czyste niebo';
+    if (code <= 3) return 'Częściowe zachmurzenie';
+    if (code <= 48) return 'Mgła';
+    if (code <= 55) return 'Mżawka';
+    if (code <= 65) return 'Deszcz';
+    if (code <= 75) return 'Śnieg';
+    if (code <= 82) return 'Ulewa';
+    if (code <= 99) return 'Burza';
+    return 'Nieznane';
   };
 
   const mapData = (weatherRaw: any, spaceRaw: any): WeatherData => {
@@ -56,8 +56,7 @@ export const useWeather = () => {
     const targetNow = new Date(Date.now() + offsetSeconds * 1000);
     const currentHourIndex = targetNow.getUTCHours();
     const currentMinuteShifted = targetNow.getUTCMinutes();
-    const current15MinIndex =
-      currentHourIndex * 4 + Math.floor(currentMinuteShifted / 15);
+    const current15MinIndex = currentHourIndex * 4 + Math.floor(currentMinuteShifted / 15);
 
     // Wind: Show next 2.5 hours (10 points)
     const windForecast = weatherRaw.minutely_15.time
@@ -65,11 +64,10 @@ export const useWeather = () => {
       .map((t: string, i: number) => {
         const d = new Date(t);
         return {
-          time: `${d.getUTCHours()}:${d.getUTCMinutes().toString().padStart(2, "0")}`,
+          time: `${d.getUTCHours()}:${d.getUTCMinutes().toString().padStart(2, '0')}`,
           speed: weatherRaw.minutely_15.wind_speed_10m[current15MinIndex + i],
           gust: weatherRaw.minutely_15.wind_gusts_10m[current15MinIndex + i],
-          direction:
-            weatherRaw.minutely_15.wind_direction_10m[current15MinIndex + i],
+          direction: weatherRaw.minutely_15.wind_direction_10m[current15MinIndex + i],
         };
       });
 
@@ -77,20 +75,15 @@ export const useWeather = () => {
     const precipitationForecast = weatherRaw.minutely_15.time
       .slice(current15MinIndex, current15MinIndex + 10)
       .map((t: string, i: number) => {
-        const timeStr = t.split("T")[1];
+        const timeStr = t.split('T')[1];
         return {
           time: timeStr,
-          amount:
-            weatherRaw.minutely_15.precipitation[current15MinIndex + i] ?? 0,
-          probability:
-            weatherRaw.minutely_15.precipitation_probability[
-              current15MinIndex + i
-            ] ?? 0,
+          amount: weatherRaw.minutely_15.precipitation[current15MinIndex + i] ?? 0,
+          probability: weatherRaw.minutely_15.precipitation_probability[current15MinIndex + i] ?? 0,
           type:
-            (weatherRaw.minutely_15.precipitation[current15MinIndex + i] ?? 0) >
-            0
-              ? "rain"
-              : "none",
+            (weatherRaw.minutely_15.precipitation[current15MinIndex + i] ?? 0) > 0
+              ? 'rain'
+              : 'none',
         };
       });
 
@@ -98,15 +91,11 @@ export const useWeather = () => {
     const tempForecast = weatherRaw.minutely_15.time
       .slice(current15MinIndex, current15MinIndex + 10)
       .map((t: string, i: number) => {
-        const timeStr = t.split("T")[1];
+        const timeStr = t.split('T')[1];
         return {
           time: timeStr,
-          temp:
-            weatherRaw.minutely_15.temperature_2m[current15MinIndex + i] ?? 0,
-          feelsLike:
-            weatherRaw.minutely_15.apparent_temperature[
-              current15MinIndex + i
-            ] ?? 0,
+          temp: weatherRaw.minutely_15.temperature_2m[current15MinIndex + i] ?? 0,
+          feelsLike: weatherRaw.minutely_15.apparent_temperature[current15MinIndex + i] ?? 0,
         };
       });
 
@@ -114,15 +103,14 @@ export const useWeather = () => {
     let kpForecast: { hour: string; value: number }[] = [];
     if (Array.isArray(spaceRaw) && spaceRaw.length > 1) {
       const rows = spaceRaw.slice(1);
-      const parseNoaaDate = (dateStr: string) => new Date(dateStr + "Z");
-      let currentIndex =
-        rows.findIndex((row) => parseNoaaDate(row[0]) > new Date()) - 1;
+      const parseNoaaDate = (dateStr: string) => new Date(dateStr + 'Z');
+      let currentIndex = rows.findIndex((row) => parseNoaaDate(row[0]) > new Date()) - 1;
       if (currentIndex < 0 && rows.length > 0) currentIndex = rows.length - 1;
 
       if (currentIndex !== -1) {
         currentKp = parseFloat(rows[currentIndex][1]);
         kpForecast = rows.slice(currentIndex, currentIndex + 5).map((row) => ({
-          hour: parseNoaaDate(row[0]).getHours() + ":00",
+          hour: parseNoaaDate(row[0]).getHours() + ':00',
           value: parseFloat(row[1]),
         }));
       }
@@ -136,8 +124,7 @@ export const useWeather = () => {
       windGusts: current.wind_gusts_10m,
       kpIndex: currentKp,
       kpForecast,
-      visibility:
-        (weatherRaw.hourly.visibility[currentHourIndex] || 10000) / 1000,
+      visibility: (weatherRaw.hourly.visibility[currentHourIndex] || 10000) / 1000,
       precipitation: current.precipitation,
       humidity: current.relative_humidity_2m,
       uvIndex: weatherRaw.daily.uv_index_max[0] || 0,
@@ -154,8 +141,8 @@ export const useWeather = () => {
         setError(null);
 
         let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== "granted") {
-          setError("Permission to access location was denied");
+        if (status !== 'granted') {
+          setError('Permission to access location was denied');
           setLoading(false);
           return;
         }
@@ -182,8 +169,8 @@ export const useWeather = () => {
         ]);
 
         const placeName = reverseGeocode[0]
-          ? `${reverseGeocode[0].city || reverseGeocode[0].district}, ${reverseGeocode[0].region || ""}`
-          : "Moja lokalizacja";
+          ? `${reverseGeocode[0].city || reverseGeocode[0].district}, ${reverseGeocode[0].region || ''}`
+          : 'Moja lokalizacja';
 
         setLocation({ name: placeName, lat: latitude, lng: longitude });
 
@@ -207,7 +194,7 @@ export const useWeather = () => {
 
         setWeather(mapped);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Unknown error");
+        setError(err instanceof Error ? err.message : 'Unknown error');
       } finally {
         setLoading(false);
       }

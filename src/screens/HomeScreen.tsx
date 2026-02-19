@@ -19,7 +19,6 @@ export default function HomeScreen({ navigation }: RootTabScreenProps<'Start'>) 
   return (
     <View style={dynamicStyles.safeArea}>
       <View style={[dynamicStyles.mainWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
-
         {/* DASHBOARD COLUMN (30%) */}
         <DashboardSidebar
           navigation={navigation}
@@ -32,8 +31,12 @@ export default function HomeScreen({ navigation }: RootTabScreenProps<'Start'>) 
           <View style={[dynamicStyles.rightPanel, { backgroundColor: theme.colors.background }]}>
             <View style={dynamicStyles.rightContent}>
               <View style={styles.welcomeHeader}>
-                <Typography variant="h1" style={{ fontSize: 26, color: theme.colors.text }}>Centrum Dowodzenia</Typography>
-                <Typography variant="bodySmall" color="textSecondary">Wszystko czego potrzebujesz przed dzisiejszym lotem</Typography>
+                <Typography variant="h1" style={{ fontSize: 26, color: theme.colors.text }}>
+                  Centrum Dowodzenia
+                </Typography>
+                <Typography variant="bodySmall" color="textSecondary">
+                  Wszystko czego potrzebujesz przed dzisiejszym lotem
+                </Typography>
               </View>
 
               <View style={[styles.mainGrid, { flex: 1 }]}>
@@ -45,25 +48,48 @@ export default function HomeScreen({ navigation }: RootTabScreenProps<'Start'>) 
                     <View style={[styles.quickStat, isDark && styles.quickStatDark]}>
                       <Icon name="Activity" size={18} color={theme.colors.primary} />
                       <View style={{ marginLeft: 10 }}>
-                        <Typography variant="h3" style={{ fontSize: 16, color: theme.colors.text }}>12.5h</Typography>
-                        <Typography variant="label" color="textSecondary" style={{ fontSize: 8 }}>Czas lotu</Typography>
+                        <Typography variant="h3" style={{ fontSize: 16, color: theme.colors.text }}>
+                          12.5h
+                        </Typography>
+                        <Typography variant="label" color="textSecondary" style={{ fontSize: 8 }}>
+                          Czas lotu
+                        </Typography>
                       </View>
                     </View>
                     <View style={[styles.quickStat, isDark && styles.quickStatDark]}>
                       <Icon name="MapPin" size={18} color={theme.colors.primary} />
                       <View style={{ marginLeft: 10 }}>
-                        <Typography variant="h3" style={{ fontSize: 16, color: theme.colors.text }}>8</Typography>
-                        <Typography variant="label" color="textSecondary" style={{ fontSize: 8 }}>Spoty</Typography>
+                        <Typography variant="h3" style={{ fontSize: 16, color: theme.colors.text }}>
+                          8
+                        </Typography>
+                        <Typography variant="label" color="textSecondary" style={{ fontSize: 8 }}>
+                          Spoty
+                        </Typography>
                       </View>
                     </View>
                   </View>
 
-                  <View style={[styles.notamCard, isDark && styles.notamCardDark, { marginTop: 12 }]}>
+                  <View
+                    style={[styles.notamCard, isDark && styles.notamCardDark, { marginTop: 12 }]}
+                  >
                     <View style={styles.notamHeader}>
                       <Icon name="AlertTriangle" size={16} color={theme.colors.warning} />
-                      <Typography variant="h3" style={{ marginLeft: 8, fontSize: 14, color: isDark ? theme.colors.warning : '#B45309' }}>NOTAM: Bemowo</Typography>
+                      <Typography
+                        variant="h3"
+                        style={{
+                          marginLeft: 8,
+                          fontSize: 14,
+                          color: isDark ? theme.colors.warning : '#B45309',
+                        }}
+                      >
+                        NOTAM: Bemowo
+                      </Typography>
                     </View>
-                    <Typography variant="bodySmall" style={{ color: isDark ? theme.colors.textSecondary : '#92400E' }} numberOfLines={1}>
+                    <Typography
+                      variant="bodySmall"
+                      style={{ color: isDark ? theme.colors.textSecondary : '#92400E' }}
+                      numberOfLines={1}
+                    >
                       Wzmożona aktywność lotnictwa ogólnego. Zachowaj ostrożność.
                     </Typography>
                   </View>
@@ -141,36 +167,37 @@ const styles = StyleSheet.create({
   },
   batteryCell: {
     flex: 1,
-  }
+  },
 });
 
-const getStyles = (theme: any) => StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  container: {
-    flex: 1,
-  },
-  mainWrapper: {
-    flex: 1,
-  },
-  dashboardColumn: {
-    backgroundColor: '#F8FAFC',
-    borderRightWidth: 1,
-    borderRightColor: 'rgba(0,0,0,0.05)',
-    overflow: 'hidden',
-  },
-  topSpacer: {
-    height: 60,
-  },
-  rightPanel: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  rightContent: {
-    flex: 1,
-    padding: 15,
-    paddingTop: 25,
-  }
-});
+const getStyles = (theme: any) =>
+  StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    container: {
+      flex: 1,
+    },
+    mainWrapper: {
+      flex: 1,
+    },
+    dashboardColumn: {
+      backgroundColor: '#F8FAFC',
+      borderRightWidth: 1,
+      borderRightColor: 'rgba(0,0,0,0.05)',
+      overflow: 'hidden',
+    },
+    topSpacer: {
+      height: 60,
+    },
+    rightPanel: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    rightContent: {
+      flex: 1,
+      padding: 15,
+      paddingTop: 25,
+    },
+  });

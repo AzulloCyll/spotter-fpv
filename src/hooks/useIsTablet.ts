@@ -1,4 +1,4 @@
-import { useWindowDimensions } from "react-native";
+import { useWindowDimensions } from 'react-native';
 
 /**
  * Hook to determine if the device is currently in tablet landscape mode

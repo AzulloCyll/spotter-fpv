@@ -2,55 +2,64 @@ import React, { useRef, useEffect, useMemo, useImperativeHandle, forwardRef } fr
 import { StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Spot } from '../../data/mockSpots';
-import { OFM_TILE_URL, WEATHER_API_WIND_URL, WEATHER_API_RAIN_URL } from '../../constants/mapStyles';
+import {
+  OFM_TILE_URL,
+  WEATHER_API_WIND_URL,
+  WEATHER_API_RAIN_URL,
+} from '../../constants/mapStyles';
 
 export interface LeafletMapRef {
-    animateToByBounds: (sw: { lat: number, lng: number }, ne: { lat: number, lng: number }) => void;
-    animateTo: (lat: number, lng: number, zoom?: number) => void;
+  animateToByBounds: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => void;
+  animateTo: (lat: number, lng: number, zoom?: number) => void;
 }
 
 interface LeafletMapProps {
-    initialRegion: {
-        latitude: number;
-        longitude: number;
-        latitudeDelta: number;
-        longitudeDelta: number;
-    };
-    spots: Spot[];
-    activeStyleId: string;
-    showOFM: boolean;
-    showRain: boolean;
-    showWind: boolean;
-    isDark: boolean;
-    onMarkerPress: (spot: Spot) => void;
-    onMapMove?: (center: { lat: number; lng: number }, zoom: number) => void;
+  initialRegion: {
+    latitude: number;
+    longitude: number;
+    latitudeDelta: number;
+    longitudeDelta: number;
+  };
+  spots: Spot[];
+  activeStyleId: string;
+  showOFM: boolean;
+  showRain: boolean;
+  showWind: boolean;
+  isDark: boolean;
+  onMarkerPress: (spot: Spot) => void;
+  onMapMove?: (center: { lat: number; lng: number }, zoom: number) => void;
 }
 
-export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(({
-    initialRegion,
-    spots,
-    activeStyleId,
-    showOFM,
-    showRain,
-    showWind,
-    isDark,
-    onMarkerPress,
-    onMapMove
-}, ref) => {
+export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
+  (
+    {
+      initialRegion,
+      spots,
+      activeStyleId,
+      showOFM,
+      showRain,
+      showWind,
+      isDark,
+      onMarkerPress,
+      onMapMove,
+    },
+    ref,
+  ) => {
     const webViewRef = useRef<WebView>(null);
 
     useImperativeHandle(ref, () => ({
-        animateToByBounds: (sw: { lat: number, lng: number }, ne: { lat: number, lng: number }) => {
-            const js = `if (window.map) map.fitBounds([[${sw.lat}, ${sw.lng}], [${ne.lat}, ${ne.lng}]]);`;
-            webViewRef.current?.injectJavaScript(js);
-        },
-        animateTo: (lat: number, lng: number, zoom?: number) => {
-            const js = `if (window.map) map.setView([${lat}, ${lng}], ${zoom || 15});`;
-            webViewRef.current?.injectJavaScript(js);
-        }
+      animateToByBounds: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => {
+        const js = `if (window.map) map.fitBounds([[${sw.lat}, ${sw.lng}], [${ne.lat}, ${ne.lng}]]);`;
+        webViewRef.current?.injectJavaScript(js);
+      },
+      animateTo: (lat: number, lng: number, zoom?: number) => {
+        const js = `if (window.map) map.setView([${lat}, ${lng}], ${zoom || 15});`;
+        webViewRef.current?.injectJavaScript(js);
+      },
     }));
 
-    const leafletHtml = useMemo(() => `
+    const leafletHtml = useMemo(
+      () => `
     <!DOCTYPE html>
     <html>
     <head>
@@ -210,57 +219,70 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(({
       </script>
     </body>
     </html>
-  `, [isDark, initialRegion.latitude, initialRegion.longitude, showRain, OFM_TILE_URL, WEATHER_API_WIND_URL, WEATHER_API_RAIN_URL]);
+  `,
+      [
+        isDark,
+        initialRegion.latitude,
+        initialRegion.longitude,
+        showRain,
+        OFM_TILE_URL,
+        WEATHER_API_WIND_URL,
+        WEATHER_API_RAIN_URL,
+      ],
+    );
 
     const syncAll = () => {
-        const js = `
+      const js = `
             if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});
             if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain}, ${showWind});
         `;
-        webViewRef.current?.injectJavaScript(js);
+      webViewRef.current?.injectJavaScript(js);
     };
 
     useEffect(() => {
-        const js = `
+      const js = `
             if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain}, ${showWind});
             document.body.className = '${isDark ? 'dark-mode' : ''}';
             document.body.style.background = '${isDark ? '#111827' : '#f3f4f6'}';
         `;
-        webViewRef.current?.injectJavaScript(js);
+      webViewRef.current?.injectJavaScript(js);
     }, [activeStyleId, showOFM, showRain, showWind, isDark]);
 
     useEffect(() => {
-        const js = `if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});`;
-        webViewRef.current?.injectJavaScript(js);
+      const js = `if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});`;
+      webViewRef.current?.injectJavaScript(js);
     }, [spots]);
 
     const handleMessage = (event: WebViewMessageEvent) => {
-        try {
-            const { type, payload } = JSON.parse(event.nativeEvent.data);
-            if (type === 'MARKER_PRESS') onMarkerPress(payload);
-            else if (type === 'MAP_MOVE' && onMapMove) onMapMove(payload.center, payload.zoom);
-            else if (type === 'CONSOLE_LOG') console.log('[WebView]', payload);
-        } catch (e) { }
+      try {
+        const { type, payload } = JSON.parse(event.nativeEvent.data);
+        if (type === 'MARKER_PRESS') onMarkerPress(payload);
+        else if (type === 'MAP_MOVE' && onMapMove) onMapMove(payload.center, payload.zoom);
+        else if (type === 'CONSOLE_LOG') console.log('[WebView]', payload);
+      } catch {}
     };
 
     return (
-        <View style={styles.container}>
-            <WebView
-                ref={webViewRef}
-                originWhitelist={['*']}
-                source={{ html: leafletHtml, baseUrl: 'https://openflightmaps.org' }}
-                onMessage={handleMessage}
-                scrollEnabled={false}
-                style={styles.webview}
-                onLoadEnd={syncAll}
-                renderLoading={() => <View style={{ flex: 1, backgroundColor: isDark ? '#111827' : '#f3f4f6' }} />}
-                startInLoadingState={true}
-            />
-        </View>
+      <View style={styles.container}>
+        <WebView
+          ref={webViewRef}
+          originWhitelist={['*']}
+          source={{ html: leafletHtml, baseUrl: 'https://openflightmaps.org' }}
+          onMessage={handleMessage}
+          scrollEnabled={false}
+          style={styles.webview}
+          onLoadEnd={syncAll}
+          renderLoading={() => (
+            <View style={{ flex: 1, backgroundColor: isDark ? '#111827' : '#f3f4f6' }} />
+          )}
+          startInLoadingState
+        />
+      </View>
     );
-});
+  },
+);
 
 const styles = StyleSheet.create({
-    container: { flex: 1 },
-    webview: { backgroundColor: 'transparent' }
+  container: { flex: 1 },
+  webview: { backgroundColor: 'transparent' },
 });
