@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, useWindowDimensions, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Typography } from '../components/atoms/Typography';
 import { Card } from '../components/atoms/Card';
 import { Badge } from '../components/atoms/Badge';
@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useWeather } from '../hooks/useWeather';
+import { useIsTablet } from '../hooks/useIsTablet';
 
 interface WeatherStatProps {
   icon: React.ReactNode;
@@ -40,9 +41,8 @@ export default function WeatherScreen() {
   const { theme, isDark } = useTheme();
 
   const { weather, location, loading, error, refetch } = useWeather();
+  const { isTabletLandscape, width: windowWidth } = useIsTablet();
 
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
   const dynamicStyles = getStyles(theme);
   const numColumns = isTabletLandscape ? 3 : (windowWidth > 800 ? 5 : 2);
   const itemWidth = `${(100 / numColumns) - 2}%` as any;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
 import { Badge } from '../components/atoms/Badge';
@@ -14,6 +14,7 @@ import { WeatherSummary } from '../components/organisms/WeatherSummary';
 import { QuickNavigation } from '../components/organisms/QuickNavigation';
 import { TopBar } from '../components/organisms/TopBar';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useIsTablet } from '../hooks/useIsTablet';
 import {
     MOCK_BATTERY,
     MOCK_SIGNAL,
@@ -29,8 +30,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 export default function TelemetryScreen() {
     const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
     const { theme, isDark } = useTheme();
-    const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-    const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
+    const { isTabletLandscape } = useIsTablet();
     const dynamicStyles = getStyles(theme);
 
     // Mock Global State

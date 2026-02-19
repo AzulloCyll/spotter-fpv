@@ -7,15 +7,18 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "jsEngine": "hermes",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "jsEngine": "hermes",
       "supportsTablet": true
     },
     "android": {
+      "jsEngine": "hermes",
       "package": "com.azullocyll.spotterfpv",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",

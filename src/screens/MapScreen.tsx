@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
-import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image, useWindowDimensions, Keyboard, Animated } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, MapType } from 'react-native-maps';
+import { View, StyleSheet, TouchableOpacity, Modal, TouchableWithoutFeedback, Alert, ScrollView, Image, Keyboard, Animated } from 'react-native';
+import { LeafletMap, LeafletMapRef } from '../components/organisms/LeafletMap';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
 import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
@@ -10,7 +10,6 @@ import { IconButton } from '../components/atoms/IconButton';
 import { Input } from '../components/atoms/Input';
 import { Icon } from '../components/atoms/Icon';
 import { MOCK_SPOTS, Spot } from '../data/mockSpots';
-import { SpotMarker } from '../components/molecules/SpotMarker';
 import { useSpots } from '../context/SpotsContext';
 import { SpotsSidebarPanel } from '../components/organisms/SpotsSidebarPanel';
 
@@ -20,12 +19,9 @@ import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 // Memoize the Panel to prevent re-renders on keyboard open
 const MemoizedSpotsSidebarPanel = React.memo(SpotsSidebarPanel);
 
-const MAP_STYLES = [
-  { id: 'standard', label: 'Standardowa', type: 'standard' as MapType, icon: 'Map' as const },
-  { id: 'satellite', label: 'Satelita', type: 'satellite' as MapType, icon: 'Globe' as const },
-  { id: 'hybrid', label: 'Hybrydowa', type: 'hybrid' as MapType, icon: 'Layers' as const },
-  { id: 'dark', label: 'Ciemna', type: 'standard' as MapType, customStyle: true, icon: 'Moon' as const },
-];
+import { MAP_STYLES, MAP_LAYERS, lightMapStyle, darkMapStyle, OFM_TILE_URL, WEATHER_API_RAIN_URL, WEATHER_API_WIND_URL } from '../constants/mapStyles';
+import { useIsTablet } from '../hooks/useIsTablet';
+import { useMapHeading } from '../hooks/useMapHeading';
 
 import { RootTabScreenProps } from '../navigation/types';
 
@@ -33,24 +29,21 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const { theme, isDark } = useTheme();
   const { spots, addSpot } = useSpots();
   const [activeStyleId, setActiveStyleId] = useState('hybrid');
+  const [showOFM, setShowOFM] = useState(false);
+  const [showRain, setShowRain] = useState(false);
+  const [showWind, setShowWind] = useState(false);
 
-  // Smooth Unwrapped Heading Tracking
-  const mapHeading = useRef(new Animated.Value(0)).current;
-  const internalHeading = useRef(0);
-  const lastRawHeading = useRef(0);
+  const { isTabletLandscape, sidebarWidth, width: windowWidth } = useIsTablet();
+  const { mapHeading, internalHeading, updateHeading, resetHeading } = useMapHeading();
+
 
   const [showMenu, setShowMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  // Simplified check to avoid keyboard flickering issues (keyboard reduces height, potentially breaking W > H logic if unstable)
-  // We assume if width > 800, it's a tablet-like width (or landscape phone). 
-  // We keep W > H check but maybe rely on width being determining factor for "Sidebar" mode.
-  // Actually, let's just use width for stability during keyboard events.
-  const isTabletLandscape = windowWidth > 800;
-  const mapRef = useRef<MapView>(null);
+
+  const mapRef = useRef<LeafletMapRef>(null);
   const [showSpotsModal, setShowSpotsModal] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -62,7 +55,6 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     : lightMapStyle;
 
   const dynamicStyles = getStyles(theme);
-  const sidebarWidth = isTabletLandscape ? Math.min(windowWidth * 0.3, 400) : 0;
   const mapCenterRelativeToScreen = sidebarWidth + (windowWidth - sidebarWidth) / 2;
 
   useEffect(() => {
@@ -70,13 +62,15 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Brak uprawnień', 'Nie możemy pokazać Twojej lokalizacji bez zgody.');
+        console.log('Permission to access location was denied');
         return;
       }
       setLocationPermission(true);
-      const location = await Location.getCurrentPositionAsync({});
+      let location = await Location.getCurrentPositionAsync({});
       setUserLocation(location);
     })();
   }, []);
+
 
   useEffect(() => {
     if (route.params?.openList) {
@@ -104,35 +98,32 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     };
 
     addSpot(newSpot);
-    mapRef.current?.animateToRegion({
-      ...newLocation,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    });
+    mapRef.current?.animateTo(
+      newLocation.latitude,
+      newLocation.longitude,
+      15
+    );
   };
 
-  const handleStyleSelect = (style: typeof MAP_STYLES[0]) => {
-    setActiveStyleId(style.id);
-    setShowMenu(false);
-  };
+
 
   const handleSpotPress = useCallback((spot: Spot) => {
     setSelectedSpot(spot);
     // Center map on spot so popup can be positioned relative to center
-    mapRef.current?.animateToRegion({
-      ...spot.coordinates,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    });
+    mapRef.current?.animateTo(
+      spot.coordinates.latitude,
+      spot.coordinates.longitude,
+      15
+    );
   }, []);
 
   const handlePanelSpotSelect = useCallback((spot: Spot) => {
     handleSpotPress(spot);
-    mapRef.current?.animateToRegion({
-      ...spot.coordinates,
-      latitudeDelta: 0.01,
-      longitudeDelta: 0.01,
-    });
+    mapRef.current?.animateTo(
+      spot.coordinates.latitude,
+      spot.coordinates.longitude,
+      15
+    );
   }, [handleSpotPress]);
 
   const handlePanelClose = useCallback(() => setShowSpotsModal(false), []);
@@ -141,29 +132,12 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     setSelectedSpot(null);
   };
 
-  const updateHeading = useCallback((raw: number) => {
-    if (typeof raw !== 'number') return;
 
-    // Unwrap rotation to prevent 360->0 jumps
-    let diff = raw - (internalHeading.current % 360);
-    if (diff > 180) diff -= 360;
-    if (diff < -180) diff += 360;
-
-    internalHeading.current += diff;
-
-    // Use spring with high tension for "attached" feel but smooth motion
-    Animated.spring(mapHeading, {
-      toValue: internalHeading.current,
-      useNativeDriver: true,
-      tension: 200,
-      friction: 25,
-      restSpeedThreshold: 0.1,
-      restDisplacementThreshold: 0.1
-    }).start();
-  }, [mapHeading]);
 
   return (
     <View style={dynamicStyles.container}>
+
+
       {/* Main Layout Wrapper: Sidebar + Map area */}
       <View style={[dynamicStyles.contentWrapper, isTabletLandscape && { flexDirection: 'row' }]}>
         {isTabletLandscape && (
@@ -179,48 +153,26 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
         )}
 
         <View style={{ flex: 1, position: 'relative', zIndex: 1 }}>
-          <MapView
+          <LeafletMap
             ref={mapRef}
-            provider={PROVIDER_GOOGLE}
-            style={StyleSheet.absoluteFill}
-            mapType={mapType}
             initialRegion={{
               latitude: 52.2297,
               longitude: 21.0122,
               latitudeDelta: 0.15,
               longitudeDelta: 0.15,
             }}
-            customMapStyle={customStyle}
-            zoomControlEnabled={false}
-            showsUserLocation={locationPermission}
-            showsMyLocationButton={false}
-            showsCompass={false}
-            // @ts-ignore - capture heading for smooth rotation
-            onCameraChange={(e: any) => {
-              const heading = e.nativeEvent?.camera?.heading ?? e.nativeEvent?.heading ?? e.heading;
-              if (typeof heading === 'number') updateHeading(heading);
+            spots={spots}
+            activeStyleId={activeStyleId}
+            showOFM={showOFM}
+            showRain={showRain}
+            showWind={showWind}
+            isDark={isDark}
+            onMarkerPress={handleSpotPress}
+            onMapMove={(center, zoom) => {
+              // Update heading if needed, but Leaflet usually handles its own orientation
+              // For now, we keep it simple
             }}
-            onRegionChange={(region) => {
-              // Some providers might hide heading in region, but let's try
-            }}
-            onRegionChangeComplete={async () => {
-              const camera = await mapRef.current?.getCamera();
-              if (camera && typeof camera.heading === 'number') {
-                updateHeading(camera.heading);
-              }
-            }}
-            onUserLocationChange={(e) => {
-              // optional: track user heading if needed, but map heading is camera based
-            }}
-          >
-            {spots.map((spot) => (
-              <SpotMarker
-                key={spot.id}
-                spot={spot}
-                onPress={handleSpotPress}
-              />
-            ))}
-          </MapView>
+          />
         </View>
 
         {isTabletLandscape && (
@@ -270,51 +222,16 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
         {/* Location + Compass Column */}
         <View style={{ alignItems: 'center' }}>
-          <TouchableOpacity
-            style={[dynamicStyles.fab, {
-              backgroundColor: isDark ? 'rgba(30, 41, 59, 0.3)' : 'rgba(255, 255, 255, 0.3)',
-              marginBottom: 16,
-              borderWidth: 1,
-              borderColor: isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)',
-            }]}
-            onPress={() => {
-              mapRef.current?.animateCamera({ heading: 0 });
-              // Reset to nearest zero point
-              const currentVal = internalHeading.current;
-              const target = Math.round(currentVal / 360) * 360;
-              internalHeading.current = target;
-              lastRawHeading.current = 0;
-              Animated.spring(mapHeading, { toValue: target, useNativeDriver: true }).start();
-            }}
-          >
-            <Animated.View
-              style={{
-                transform: [{
-                  rotate: mapHeading.interpolate({
-                    inputRange: [-100000, 100000],
-                    outputRange: ['100000deg', '-100000deg']
-                  })
-                }]
-              }}
-              pointerEvents="none"
-            >
-              <View style={{ width: 9, height: 48, alignItems: 'center' }}>
-                <View style={{ width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderBottomWidth: 24, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderBottomColor: '#f33a3a' }} />
-                <View style={{ width: 0, height: 0, borderLeftWidth: 9, borderRightWidth: 9, borderTopWidth: 24, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#e0e0e0' }} />
-              </View>
-            </Animated.View>
-          </TouchableOpacity>
 
           <TouchableOpacity
             onPress={async () => {
               if (locationPermission) {
                 const location = await Location.getCurrentPositionAsync({});
-                mapRef.current?.animateToRegion({
-                  latitude: location.coords.latitude,
-                  longitude: location.coords.longitude,
-                  latitudeDelta: 0.05,
-                  longitudeDelta: 0.05,
-                });
+                mapRef.current?.animateTo(
+                  location.coords.latitude,
+                  location.coords.longitude,
+                  13
+                );
               }
             }}
             style={[dynamicStyles.fab, {
@@ -391,8 +308,8 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
           <View style={{
             position: 'absolute',
             bottom: isTabletLandscape ? 105 : theme.spacing.xl + 155,
-            right: isTabletLandscape ? 20 : 20, // Align with FABs
-            width: 220,
+            right: 20,
+            width: 240,
             backgroundColor: theme.colors.surface,
             borderRadius: 16,
             padding: 8,
@@ -401,44 +318,102 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             borderColor: theme.colors.border,
             ...theme.shadows.medium,
           }}>
-            <Typography variant="label" style={{ padding: 8 }}>Styl mapy</Typography>
+            <Typography variant="label" style={{ padding: 8, opacity: 0.6 }}>Styl bazowy</Typography>
             {MAP_STYLES.map((style) => (
               <TouchableOpacity
                 key={style.id}
-                onPress={() => handleStyleSelect(style)}
+                onPress={() => setActiveStyleId(style.id)}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 12,
+                  padding: 10,
                   borderRadius: 10,
                   backgroundColor: activeStyleId === style.id ? (isDark ? 'rgba(79, 70, 229, 0.2)' : 'rgba(79, 70, 229, 0.1)') : 'transparent',
-                  marginBottom: 4,
+                  marginBottom: 2,
                 }}
               >
-                <View style={{ marginRight: 12, opacity: activeStyleId === style.id ? 1 : 0.6 }}>
+                <View style={{ marginRight: 12 }}>
                   <Icon
                     name={style.icon}
-                    size={20}
-                    color={activeStyleId === style.id ? theme.colors.primary : theme.colors.text}
+                    size={18}
+                    color={activeStyleId === style.id ? theme.colors.primary : theme.colors.textSecondary}
                   />
                 </View>
                 <Typography
-                  variant="body"
-                  color={activeStyleId === style.id ? "primary" : "text"}
-                  style={{ fontWeight: activeStyleId === style.id ? '600' : '400' }}
+                  variant="bodySmall"
+                  style={{ fontWeight: activeStyleId === style.id ? '700' : '400', flex: 1 }}
                 >
                   {style.label}
                 </Typography>
-                {activeStyleId === style.id && (
-                  <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                    <Icon name="Check" size={16} color={theme.colors.primary} />
-                  </View>
-                )}
+                {activeStyleId === style.id && <Icon name="Check" size={14} color={theme.colors.primary} />}
               </TouchableOpacity>
             ))}
+
+            <View style={{ height: 1, backgroundColor: theme.colors.border, marginVertical: 8, marginHorizontal: 8 }} />
+
+            <Typography variant="label" style={{ padding: 8, opacity: 0.6 }}>Warstwy dodatkowe</Typography>
+            {MAP_LAYERS.map((layer) => {
+              const isActive = (layer.id === 'ofm' && showOFM) ||
+                (layer.id === 'rain' && showRain) ||
+                (layer.id === 'wind' && showWind);
+              const toggle = () => {
+                if (layer.id === 'ofm') setShowOFM(!showOFM);
+                if (layer.id === 'rain') setShowRain(!showRain);
+                if (layer.id === 'wind') setShowWind(!showWind);
+              };
+
+              return (
+                <TouchableOpacity
+                  key={layer.id}
+                  onPress={toggle}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 10,
+                    borderRadius: 10,
+                    backgroundColor: isActive ? (isDark ? 'rgba(34, 197, 94, 0.15)' : 'rgba(34, 197, 94, 0.1)') : 'transparent',
+                    marginBottom: 2,
+                  }}
+                >
+                  <View style={{ marginRight: 12 }}>
+                    <Icon
+                      name={layer.icon}
+                      size={18}
+                      color={isActive ? theme.colors.green : theme.colors.textSecondary}
+                    />
+                  </View>
+                  <Typography
+                    variant="bodySmall"
+                    style={{ fontWeight: isActive ? '700' : '400', flex: 1 }}
+                  >
+                    {layer.label}
+                  </Typography>
+                  <View style={{
+                    width: 34,
+                    height: 20,
+                    borderRadius: 10,
+                    backgroundColor: isActive ? theme.colors.green : theme.colors.border,
+                    padding: 2,
+                    justifyContent: 'center',
+                    alignItems: isActive ? 'flex-end' : 'flex-start'
+                  }}>
+                    <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff' }} />
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </>
       )}
+      {/* Search bar - floating above map */}
+      <View style={[dynamicStyles.topContainer, { top: isTabletLandscape ? 16 : insets.top + 8, left: isTabletLandscape ? sidebarWidth + 16 : 16, right: 16, zIndex: 1000, elevation: 1000 }]} pointerEvents="box-none">
+        <View style={dynamicStyles.searchBarContainer}>
+          <Input
+            placeholder="Szukaj spotów..."
+            icon={<Icon name="Search" size={20} color={theme.colors.textSecondary} />}
+          />
+        </View>
+      </View>
     </View>
   );
 }
@@ -603,25 +578,4 @@ const getStyles = (theme: any) => StyleSheet.create({
   }
 });
 
-const lightMapStyle = [
-  { "elementType": "geometry", "stylers": [{ "color": "#f5f5f5" }] },
-  { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
-  { "elementType": "labels.text.fill", "stylers": [{ "color": "#616161" }] },
-  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#f5f5f5" }] },
-  { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#eeeeee" }] },
-  { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#ffffff" }] },
-  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#c9c9c9" }] }
-];
 
-const darkMapStyle = [
-  { "elementType": "geometry", "stylers": [{ "color": "#212121" }] },
-  { "elementType": "labels.icon", "stylers": [{ "visibility": "off" }] },
-  { "elementType": "labels.text.fill", "stylers": [{ "color": "#757575" }] },
-  { "elementType": "labels.text.stroke", "stylers": [{ "color": "#212121" }] },
-  { "featureType": "administrative", "elementType": "geometry", "stylers": [{ "color": "#757575" }] },
-  { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#2c2c2c" }] },
-  { "featureType": "road", "elementType": "geometry.fill", "stylers": [{ "color": "#2c2c2c" }] },
-  { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#8a8a8a" }] },
-  { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] }
-];

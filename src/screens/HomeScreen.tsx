@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { FeaturedSpot } from '../components/organisms/FeaturedSpot';
@@ -7,13 +7,13 @@ import { PilotActivity } from '../components/organisms/PilotActivity';
 import { CommunityGallery } from '../components/organisms/CommunityGallery';
 import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
+import { useIsTablet } from '../hooks/useIsTablet';
 
 import { RootTabScreenProps } from '../navigation/types';
 
 export default function HomeScreen({ navigation }: RootTabScreenProps<'Start'>) {
   const { theme, isDark } = useTheme();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
+  const { isTabletLandscape } = useIsTablet();
   const dynamicStyles = getStyles(theme);
 
   return (
