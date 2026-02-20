@@ -37,8 +37,10 @@ export const MAP_LAYERS = [
   { id: 'wind', label: 'Wiatr', icon: 'Wind' as const },
 ];
 
-export const WEATHER_API_RAIN_URL = `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
-export const WEATHER_API_WIND_URL = `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${process.env.EXPO_PUBLIC_WEATHER_API_KEY}`;
+export const WEATHER_API_RAIN_URL =
+  'https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=***REMOVED***';
+export const WEATHER_API_WIND_URL =
+  'https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=***REMOVED***';
 
 export const lightMapStyle = [
   { elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
