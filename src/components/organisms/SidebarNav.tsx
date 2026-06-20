@@ -3,6 +3,7 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Icon } from '../atoms/Icon';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { useWindowDimensions } from 'react-native';
 
 import { RootTabParamList } from '../../navigation/types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -18,6 +19,10 @@ export const SidebarNav: React.FC = () => {
   const { theme, isDark } = useTheme();
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const route = useRoute();
+  const dimensions = useWindowDimensions();
+
+  // Dynamiczna wielkość ikony w zależności od dostępnej szerokości
+  const iconSize = dimensions.width < 80 ? 16 : dimensions.width < 100 ? 20 : dimensions.width < 130 ? 24 : 28;
 
   return (
     <View style={styles.container}>
@@ -37,7 +42,7 @@ export const SidebarNav: React.FC = () => {
             style={styles.navItem}
             onPress={() => navigation.navigate(item.name)}
           >
-            <Icon name={item.icon} color={color} size={32} strokeWidth={isActive ? 2 : 1.5} />
+            <Icon name={item.icon} color={color} size={iconSize} />
           </TouchableOpacity>
         );
       })}
@@ -50,11 +55,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingVertical: 15,
-    paddingHorizontal: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     width: '100%',
     backgroundColor: 'transparent',
-    marginTop: 'auto',
   },
   navItem: {
     justifyContent: 'center',

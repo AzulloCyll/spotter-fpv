@@ -23,7 +23,7 @@ export default function HomeScreen({ navigation }: RootTabScreenProps<'Start'>) 
         <DashboardSidebar
           navigation={navigation}
           isTabletLandscape={isTabletLandscape}
-          style={isTabletLandscape ? { width: '30%', maxWidth: 400, flex: 0 } : { flex: 1 }}
+          style={isTabletLandscape ? { width: '35%', maxWidth: 480, flex: 0 } : { flex: 1 }}
         />
 
         {/* PRAWA STRONA (CENTRUM DOWODZENIA) */}

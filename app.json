@@ -15,7 +15,8 @@
     },
     "ios": {
       "jsEngine": "hermes",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.azullocyll.spotterfpv"
     },
     "android": {
       "jsEngine": "hermes",

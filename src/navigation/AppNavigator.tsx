@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { useWindowDimensions } from 'react-native';
+import { useWindowDimensions, Platform } from 'react-native';
 import * as NavigationBar from 'expo-navigation-bar';
 import { Icon } from '../components/atoms/Icon';
 import { useTheme } from '../theme/ThemeContext';
@@ -24,6 +24,10 @@ export default function AppNavigator() {
 
   useEffect(() => {
     const setupSystemUI = async () => {
+      // NavigationBar API is Android-only; on iOS StatusBar handles the status bar
+      if (Platform.OS !== 'android') {
+        return;
+      }
       try {
         await NavigationBar.setVisibilityAsync('hidden');
         await NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');

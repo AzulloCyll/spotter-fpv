@@ -74,8 +74,8 @@ const getStyles = (theme: any) =>
   StyleSheet.create({
     wrapper: {
       paddingHorizontal: 8,
-      marginBottom: 32,
-      marginTop: 20,
+      marginBottom: 22,
+      marginTop: 14,
     },
     container: {
       alignItems: 'center',

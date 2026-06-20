@@ -132,10 +132,14 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           <QuickNavigation onNavigate={handleNavigate} />
         </View>
 
-        <View style={{ height: 60 }} />
+        <View style={{ height: 20 }} />
       </ScrollView>
 
-      {isTabletLandscape && <SidebarNav />}
+      {isTabletLandscape && (
+        <View style={{ paddingVertical: 4, paddingBottom: 8 }}>
+          <SidebarNav />
+        </View>
+      )}
     </View>
   );
 };
@@ -152,6 +156,6 @@ const getStyles = (theme: any) =>
       overflow: 'hidden',
     },
     topSpacer: {
-      height: 60,
+      height: 30,
     },
   });

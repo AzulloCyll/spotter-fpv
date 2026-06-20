@@ -39,17 +39,17 @@ const NavCard: React.FC<ActionCardProps & { styles: any; dark?: boolean }> = ({
     >
       <View
         style={{
-          width: 44,
-          height: 44,
-          borderRadius: 14,
+          width: 36,
+          height: 36,
+          borderRadius: 10,
           backgroundColor: color,
           justifyContent: 'center',
           alignItems: 'center',
-          marginRight: 16,
+          marginRight: 12,
           overflow: 'hidden',
         }}
       >
-        <Icon name={icon} size={24} color="#FFFFFF" />
+        <Icon name={icon} size={18} color="#FFFFFF" />
       </View>
       <View style={styles.content}>
         <Typography variant="h3" style={[styles.title, dark && { color: '#FFFFFF' }]}>
@@ -63,7 +63,7 @@ const NavCard: React.FC<ActionCardProps & { styles: any; dark?: boolean }> = ({
           {description}
         </Typography>
       </View>
-      <Icon name="ChevronRight" size={20} color={color} />
+      <Icon name="ChevronRight" size={16} color={color} />
     </TouchableOpacity>
   );
 };
@@ -127,7 +127,7 @@ const getStyles = (theme: any) =>
   StyleSheet.create({
     section: {
       paddingHorizontal: 0,
-      marginTop: -10,
+      marginTop: -7,
     },
     sectionTitle: {
       marginBottom: theme.spacing.md,
@@ -140,10 +140,10 @@ const getStyles = (theme: any) =>
     card: {
       flexDirection: 'row',
       alignItems: 'center',
-      padding: 16,
-      marginBottom: 12,
+      padding: 10,
+      marginBottom: 8,
       backgroundColor: '#FFFFFF',
-      borderRadius: 24,
+      borderRadius: 16,
       elevation: 0,
       shadowOpacity: 0,
     },
@@ -160,9 +160,9 @@ const getStyles = (theme: any) =>
       flex: 1,
     },
     title: {
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: '700',
       color: '#2C3E50',
-      marginBottom: 2,
+      marginBottom: 1,
     },
   });
