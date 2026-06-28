@@ -140,7 +140,7 @@ export const useWeather = () => {
         setLoading(true);
         setError(null);
 
-        let { status } = await Location.requestForegroundPermissionsAsync();
+        const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
           setError('Permission to access location was denied');
           setLoading(false);

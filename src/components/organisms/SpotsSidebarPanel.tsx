@@ -7,14 +7,11 @@ import {
   Keyboard,
   Animated,
   TextInput,
-  InteractionManager,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
-import { Input } from '../atoms/Input';
 import { Spot } from '../../data/mockSpots';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const getIconName = (type: Spot['type']) => {
   switch (type) {
@@ -62,7 +59,6 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({
   style,
 }) => {
   const { theme, isDark } = useTheme();
-  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<TextInput>(null);
   const slideAnim = useRef(new Animated.Value(-320)).current; // Start hidden (off-screen left) - matching 320 width

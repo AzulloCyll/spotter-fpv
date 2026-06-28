@@ -20,7 +20,7 @@ import { RootTabParamList } from '../navigation/types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 export default function ChatScreen() {
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const [message, setMessage] = useState('');
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();

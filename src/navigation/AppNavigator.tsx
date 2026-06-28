@@ -31,7 +31,7 @@ export default function AppNavigator() {
       try {
         await NavigationBar.setVisibilityAsync('hidden');
         await NavigationBar.setButtonStyleAsync(isDark ? 'light' : 'dark');
-      } catch (e) {
+      } catch {
         // Ignore errors
       }
     };

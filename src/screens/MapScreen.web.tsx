@@ -9,7 +9,6 @@ import {
   Image,
 } from 'react-native';
 import { Map as MapView, Marker } from 'pigeon-maps';
-import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
@@ -86,7 +85,7 @@ export default function MapScreen() {
             setZoom(zoom);
           }}
           provider={activeProvider}
-          metaWheelZoom={true}
+          metaWheelZoom
         >
           {spots.map((spot) => (
             <Marker
@@ -228,7 +227,7 @@ export default function MapScreen() {
           {selectedSpot.images && selectedSpot.images.length > 0 && (
             <ScrollView
               horizontal
-              showsHorizontalScrollIndicator={true}
+              showsHorizontalScrollIndicator
               style={{ marginVertical: 12 }}
               contentContainerStyle={{ paddingRight: 20 }}
             >

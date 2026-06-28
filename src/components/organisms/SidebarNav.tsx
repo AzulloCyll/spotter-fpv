@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Icon } from '../atoms/Icon';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { useWindowDimensions } from 'react-native';
 
 import { RootTabParamList } from '../../navigation/types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -22,7 +21,8 @@ export const SidebarNav: React.FC = () => {
   const dimensions = useWindowDimensions();
 
   // Dynamiczna wielkość ikony w zależności od dostępnej szerokości
-  const iconSize = dimensions.width < 80 ? 16 : dimensions.width < 100 ? 20 : dimensions.width < 130 ? 24 : 28;
+  const iconSize =
+    dimensions.width < 80 ? 16 : dimensions.width < 100 ? 20 : dimensions.width < 130 ? 24 : 28;
 
   return (
     <View style={styles.container}>

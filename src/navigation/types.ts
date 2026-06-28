@@ -1,5 +1,4 @@
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { CompositeScreenProps } from '@react-navigation/native';
 
 export type RootTabParamList = {
   Start: undefined;

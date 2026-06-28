@@ -133,7 +133,7 @@ export const useGalleryStorage = () => {
     try {
       const files = await FileSystem.readDirectoryAsync(GALLERY_DIR);
       return files;
-    } catch (e) {
+    } catch {
       return [];
     }
   };

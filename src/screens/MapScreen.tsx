@@ -1,46 +1,34 @@
-import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   StyleSheet,
   TouchableOpacity,
-  Modal,
   TouchableWithoutFeedback,
   Alert,
   ScrollView,
   Image,
-  Keyboard,
 } from 'react-native';
 import { LeafletMap, LeafletMapRef } from '../components/organisms/LeafletMap';
-import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Location from 'expo-location';
-import { MOCK_MAP_STYLE_ID } from '../constants/mockData';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
-import { IconButton } from '../components/atoms/IconButton';
 import { Input } from '../components/atoms/Input';
 import { Icon } from '../components/atoms/Icon';
-import { MOCK_SPOTS, Spot } from '../data/mockSpots';
+import { Spot } from '../data/mockSpots';
 import { useSpots } from '../context/SpotsContext';
 import { SpotsSidebarPanel } from '../components/organisms/SpotsSidebarPanel';
 
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 
-// Memoize the Panel to prevent re-renders on keyboard open
-const MemoizedSpotsSidebarPanel = React.memo(SpotsSidebarPanel);
-
-import {
-  MAP_STYLES,
-  MAP_LAYERS,
-  lightMapStyle,
-  darkMapStyle,
-  OFM_TILE_URL,
-  WEATHER_API_RAIN_URL,
-  WEATHER_API_WIND_URL,
-} from '../constants/mapStyles';
+import { MAP_STYLES, MAP_LAYERS } from '../constants/mapStyles';
 import { useIsTablet } from '../hooks/useIsTablet';
 
 import { RootTabScreenProps } from '../navigation/types';
+
+// Memoize the Panel to prevent re-renders on keyboard open
+const MemoizedSpotsSidebarPanel = React.memo(SpotsSidebarPanel);
 
 export default function MapScreen({ navigation, route }: RootTabScreenProps<'Mapa'>) {
   const { theme, isDark } = useTheme();
@@ -50,7 +38,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const [showRain, setShowRain] = useState(false);
   const [showWind, setShowWind] = useState(false);
 
-  const { isTabletLandscape, sidebarWidth, width: windowWidth } = useIsTablet();
+  const { isTabletLandscape, sidebarWidth } = useIsTablet();
 
   const [showMenu, setShowMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -76,14 +64,14 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
   useEffect(() => {
     (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
+      const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Brak uprawnień', 'Nie możemy pokazać Twojej lokalizacji bez zgody.');
         console.log('Permission to access location was denied');
         return;
       }
       setLocationPermission(true);
-      let location = await Location.getCurrentPositionAsync({});
+      const location = await Location.getCurrentPositionAsync({});
       setUserLocation(location);
     })();
   }, []);

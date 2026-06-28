@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { FeaturedSpot } from '../components/organisms/FeaturedSpot';

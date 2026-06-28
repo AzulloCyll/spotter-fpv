@@ -29,7 +29,7 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 export default function TelemetryScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
-  const { theme, isDark } = useTheme();
+  const { theme } = useTheme();
   const { isTabletLandscape } = useIsTablet();
   const dynamicStyles = getStyles(theme);
 
