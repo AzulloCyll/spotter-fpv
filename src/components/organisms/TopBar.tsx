@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, LayoutChangeEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Avatar } from '../atoms/Avatar';
@@ -7,15 +8,24 @@ import { Icon } from '../atoms/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { TelemetryStatus } from '../molecules/TelemetryStatus';
 
-export const TopBar: React.FC = () => {
+interface TopBarProps {
+  onHeightChange?: (height: number) => void;
+}
+
+export const TopBar: React.FC<TopBarProps> = ({ onHeightChange }) => {
   const navigation = useNavigation<any>();
   const { theme, isDark, toggleTheme } = useTheme();
+  const insets = useSafeAreaInsets();
   const dynamicStyles = getStyles(theme);
   const textColor = isDark ? '#FFFFFF' : theme.colors.text;
   const secondaryColor = isDark ? 'rgba(255,255,255,0.7)' : theme.colors.textSecondary;
 
+  const handleLayout = (e: LayoutChangeEvent) => {
+    onHeightChange?.(e.nativeEvent.layout.height);
+  };
+
   return (
-    <View style={dynamicStyles.container}>
+    <View style={[dynamicStyles.container, { paddingTop: insets.top + 4 }]} onLayout={handleLayout}>
       <View style={dynamicStyles.leftSection}>
         <Avatar size={48} />
         <View style={dynamicStyles.greeting}>
@@ -63,7 +73,6 @@ const getStyles = (theme: any) =>
       justifyContent: 'space-between',
       alignItems: 'center',
       paddingHorizontal: theme.spacing.md - 4,
-      paddingTop: 15,
       paddingBottom: theme.spacing.md - 1,
       backgroundColor: 'transparent',
     },

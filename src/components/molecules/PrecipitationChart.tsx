@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
@@ -70,7 +70,11 @@ export const PrecipitationChart: React.FC<PrecipitationChartProps> = ({ forecast
           })}
         </View>
 
-        <View style={styles.chartArea}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chartArea}
+        >
           {forecast.map((item, index) => {
             const barHeight = (item.amount / maxAmount) * chartHeight;
             const hasProbability = item.probability > 0;
@@ -115,21 +119,27 @@ export const PrecipitationChart: React.FC<PrecipitationChartProps> = ({ forecast
               </View>
             );
           })}
-        </View>
+        </ScrollView>
 
         <View style={styles.gridForeground} pointerEvents="none">
           {[0.5, 1.0, 2.0].map((level) => {
             const bottom = 17 + (level / maxAmount) * chartHeight;
             if (bottom > 135) return null;
             return (
-              <View key={level} style={[styles.gridLabelWrapper, { bottom: bottom - 3 }]}>
+              <View
+                key={level}
+                style={[
+                  styles.gridLabelWrapper,
+                  { bottom: bottom - 3, backgroundColor: theme.colors.surface },
+                ]}
+              >
                 <Typography
                   variant="caption"
                   style={{
                     color: theme.colors.textSecondary,
                     fontSize: 10,
                     fontWeight: '500',
-                    opacity: 0.5,
+                    opacity: 0.7,
                   }}
                 >
                   {level === 0.5 ? 'lekki' : level === 1.0 ? 'średni' : 'mocny'}
@@ -163,11 +173,10 @@ const styles = StyleSheet.create({
   },
   chartArea: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'flex-end',
     height: 135,
     paddingHorizontal: 20,
-    zIndex: 5,
+    gap: 12,
   },
   gridBackground: {
     ...StyleSheet.absoluteFillObject,
@@ -188,10 +197,12 @@ const styles = StyleSheet.create({
   gridLabelWrapper: {
     position: 'absolute',
     left: 10,
+    paddingHorizontal: 4,
+    borderRadius: 4,
   },
   barColumn: {
     alignItems: 'center',
-    flex: 1,
+    width: 56,
   },
   barContainer: {
     width: '100%',

@@ -53,10 +53,11 @@ export default function AppNavigator() {
     backgroundColor: 'transparent',
     borderTopColor: 'transparent',
     height: 70,
-    borderTopWidth: 0,
+    borderTopWidth: 1,
     elevation: 0,
     paddingBottom: 15,
     paddingTop: 10,
+    paddingHorizontal: 40,
   };
 
   const getTabBarStyle = (customStyle = {}) => {

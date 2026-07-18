@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
@@ -54,7 +54,11 @@ export const WindChart: React.FC<WindChartProps> = ({ forecast }) => {
         </View>
       </View>
 
-      <View style={styles.chartContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.chartContainer}
+      >
         {forecast.map((item, index) => {
           return (
             <View key={index} style={styles.column}>
@@ -101,7 +105,7 @@ export const WindChart: React.FC<WindChartProps> = ({ forecast }) => {
             </View>
           );
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 };
@@ -122,13 +126,13 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 0,
+    gap: 16,
   },
   column: {
     alignItems: 'center',
-    flex: 1,
+    width: 68,
   },
   valuesContainer: {
     alignItems: 'center',

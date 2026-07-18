@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Typography } from '../components/atoms/Typography';
 import { IconButton } from '../components/atoms/IconButton';
@@ -39,6 +40,7 @@ export default function WeatherScreen() {
 
   const { weather, location, loading, error, refetch } = useWeather();
   const { isTabletLandscape } = useIsTablet();
+  const insets = useSafeAreaInsets();
 
   const dynamicStyles = getStyles(theme);
 
@@ -93,7 +95,7 @@ export default function WeatherScreen() {
 
         {/* PRAWY PANEL (Pogoda) */}
         <View style={{ flex: 1 }}>
-          <View style={dynamicStyles.header}>
+          <View style={[dynamicStyles.header, { paddingTop: insets.top + 12 }]}>
             {!isTabletLandscape && (
               <IconButton
                 icon={<Icon name="ArrowLeft" color={theme.colors.primary} />}
@@ -167,23 +169,23 @@ export default function WeatherScreen() {
               variant="h2"
               style={{
                 paddingHorizontal: 20,
-                marginBottom: 12,
-                marginTop: 20,
+                marginBottom: 8,
+                marginTop: 12,
                 textAlign: 'center',
               }}
             >
               Prognoza godzinowa
             </Typography>
 
-            <View style={{ marginBottom: 40 }}>
+            <View style={{ marginBottom: 16 }}>
               <WindChart forecast={weather.windForecast} />
             </View>
 
-            <View style={{ marginBottom: 40 }}>
+            <View style={{ marginBottom: 16 }}>
               <PrecipitationChart forecast={weather.precipitationForecast} />
             </View>
 
-            <View style={{ marginBottom: 40 }}>
+            <View style={{ marginBottom: 16 }}>
               <TemperatureChart forecast={weather.tempForecast} />
             </View>
           </ScrollView>
@@ -200,11 +202,10 @@ const getStyles = (theme: any) =>
       backgroundColor: theme.colors.background,
     },
     header: {
-      paddingTop: 40,
       paddingHorizontal: 20,
       paddingBottom: 16,
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-start',
       backgroundColor: theme.colors.primary + '08',
       borderBottomWidth: 1,
       borderBottomColor: theme.colors.primary + '20',
@@ -212,13 +213,12 @@ const getStyles = (theme: any) =>
     },
     headerContent: {
       flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
       overflow: 'hidden',
     },
     locationContainer: {
-      marginRight: 12,
+      marginBottom: 8,
       justifyContent: 'center',
     },
     content: {
@@ -241,15 +241,15 @@ const getStyles = (theme: any) =>
     },
     headerStatsRow: {
       flexGrow: 0,
+      alignSelf: 'stretch',
       marginTop: 0,
       marginHorizontal: 0,
-      marginLeft: 'auto', // Push to right
     },
     headerStatsRowContent: {
       paddingHorizontal: 0,
       gap: 8,
       alignItems: 'center',
-      justifyContent: 'flex-end', // Align items to right
+      justifyContent: 'flex-start',
     },
     statPill: {
       backgroundColor: theme.colors.surface,

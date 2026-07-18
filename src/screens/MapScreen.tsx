@@ -147,8 +147,8 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
           <LeafletMap
             ref={mapRef}
             initialRegion={{
-              latitude: 52.2297,
-              longitude: 21.0122,
+              latitude: userLocation?.coords.latitude ?? 52.2297,
+              longitude: userLocation?.coords.longitude ?? 21.0122,
               latitudeDelta: 0.15,
               longitudeDelta: 0.15,
             }}

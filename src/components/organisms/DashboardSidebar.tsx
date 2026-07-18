@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
 import { TopBar } from './TopBar';
 import { FlightStatus } from './FlightStatus';
@@ -25,7 +26,9 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   style,
 }) => {
   const { theme, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const dynamicStyles = getStyles(theme);
+  const [topBarHeight, setTopBarHeight] = React.useState(insets.top + 78);
 
   const handleNavigate = (screen: keyof RootTabParamList, params?: any) => {
     if (onNavigate) {
@@ -123,8 +126,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         showsVerticalScrollIndicator={false}
         scrollEnabled={!isTabletLandscape}
       >
-        <View style={dynamicStyles.topSpacer} />
-        <TopBar />
+        <View style={{ height: topBarHeight }} />
+        <TopBar onHeightChange={setTopBarHeight} />
 
         <View style={{ paddingHorizontal: isTabletLandscape ? 15 : theme.spacing.lg }}>
           <FlightStatus />
@@ -154,8 +157,5 @@ const getStyles = (theme: any) =>
       borderRightWidth: 1,
       borderRightColor: theme.colors.border,
       overflow: 'hidden',
-    },
-    topSpacer: {
-      height: 30,
     },
   });

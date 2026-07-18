@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
@@ -15,10 +15,13 @@ interface TemperatureChartProps {
   forecast: TemperatureEntry[];
 }
 
+const COLUMN_WIDTH = 68;
+const VALUES_ROW_HEIGHT = 37; // valuesColumn height (35) + marginBottom (2)
+
 export const TemperatureChart: React.FC<TemperatureChartProps> = ({ forecast }) => {
   const { theme } = useTheme();
   const chartHeight = 80;
-  const [chartWidth, setChartWidth] = useState(0);
+  const chartWidth = forecast.length * COLUMN_WIDTH;
 
   // Dynamic scaling with buffer so lines don't touch header
   const temps = forecast.flatMap((f) => [f.temp, f.feelsLike]);
@@ -34,7 +37,7 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({ forecast }) 
   const gridLevels = Array.from({ length: gridSteps + 1 }, (_, i) => minVal + i * gridStepValue);
 
   const generatePath = (key: 'temp' | 'feelsLike') => {
-    if (forecast.length < 2 || chartWidth === 0) return '';
+    if (forecast.length < 2) return '';
     // Inset so the line starts/ends at center of first/last label column
     const colPad = chartWidth / (forecast.length * 2);
     const drawWidth = chartWidth - 2 * colPad;
@@ -49,13 +52,11 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({ forecast }) 
 
   const tempPath = generatePath('temp');
   const feelsLikePath = generatePath('feelsLike');
-  // Close fill path at the edges of the drawn area (colPad inset)
-  const colPad = chartWidth > 0 ? chartWidth / (forecast.length * 2) : 0;
+  const colPad = chartWidth / (forecast.length * 2);
   const drawWidth = chartWidth - 2 * colPad;
-  const fillPath =
-    chartWidth > 0
-      ? `${tempPath} L ${colPad + drawWidth},${chartHeight} L ${colPad},${chartHeight} Z`
-      : '';
+  const fillPath = tempPath
+    ? `${tempPath} L ${colPad + drawWidth},${chartHeight} L ${colPad},${chartHeight} Z`
+    : '';
 
   return (
     <View style={styles.container}>
@@ -94,71 +95,54 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({ forecast }) 
         </View>
       </View>
 
-      {/* Chart Content - column layout like WindChart */}
-      <View style={styles.chartContainer}>
-        {/* Values Row - styled like WindChart speed/gust */}
-        <View style={styles.valuesRow}>
-          {forecast.map((item, index) => (
-            <View key={index} style={styles.valuesColumn}>
-              {/* Temp - styled like wind speed (h3, 13, 800) */}
-              <Typography variant="h3" style={{ fontSize: 13, fontWeight: '800', lineHeight: 16 }}>
-                {item.temp.toFixed(1)}°
-              </Typography>
-              {/* FeelsLike - styled like wind gust (caption, textSecondary, 11) */}
-              <Typography
-                variant="caption"
-                color="textSecondary"
-                style={{ fontSize: 11, lineHeight: 12 }}
-              >
-                {item.feelsLike.toFixed(1)}°
-              </Typography>
-            </View>
-          ))}
+      {/* Chart wrapper: grid lines/labels stay fixed, only data scrolls (same as PrecipitationChart) */}
+      <View style={styles.chartWrapper}>
+        <View
+          style={[styles.gridOverlay, { top: VALUES_ROW_HEIGHT, height: chartHeight }]}
+          pointerEvents="none"
+        >
+          {gridLevels.map((level) => {
+            const norm = (level - minVal) / range;
+            const bottom = norm * chartHeight;
+            if (bottom < 0 || bottom > chartHeight) return null;
+            return (
+              <View
+                key={level}
+                style={[styles.gridLine, { bottom, borderColor: theme.colors.border }]}
+              />
+            );
+          })}
         </View>
-        {/* Chart area with full-width grid lines */}
-        <View style={[styles.chartAreaWrapper, { height: chartHeight }]}>
-          {/* Grid lines - full width like PrecipitationChart */}
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            {gridLevels.map((level) => {
-              const norm = (level - minVal) / range;
-              const bottom = norm * chartHeight;
-              if (bottom < 0 || bottom > chartHeight) return null;
-              return (
-                <View
-                  key={level}
-                  style={[styles.gridLine, { bottom, borderColor: theme.colors.border }]}
-                />
-              );
-            })}
-          </View>
 
-          {/* Grid labels - positioned at left like PrecipitationChart */}
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            {gridLevels.map((level) => {
-              const norm = (level - minVal) / range;
-              const bottom = norm * chartHeight;
-              if (bottom < 0 || bottom > chartHeight) return null;
-              return (
-                <View key={level} style={[styles.gridLabelWrapper, { bottom: bottom - 3 }]}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chartContainer}
+        >
+          <View style={{ width: chartWidth }}>
+            {/* Values Row - styled like WindChart speed/gust */}
+            <View style={styles.valuesRow}>
+              {forecast.map((item, index) => (
+                <View key={index} style={[styles.valuesColumn, { width: COLUMN_WIDTH }]}>
+                  <Typography
+                    variant="h3"
+                    style={{ fontSize: 13, fontWeight: '800', lineHeight: 16 }}
+                  >
+                    {item.temp.toFixed(1)}°
+                  </Typography>
                   <Typography
                     variant="caption"
-                    style={{
-                      color: theme.colors.textSecondary,
-                      fontSize: 10,
-                      fontWeight: '500',
-                      opacity: 0.5,
-                    }}
+                    color="textSecondary"
+                    style={{ fontSize: 11, lineHeight: 12 }}
                   >
-                    {Math.round(level)}°
+                    {item.feelsLike.toFixed(1)}°
                   </Typography>
                 </View>
-              );
-            })}
-          </View>
+              ))}
+            </View>
 
-          {/* SVG - inside padded area */}
-          <View style={styles.svgArea} onLayout={(e) => setChartWidth(e.nativeEvent.layout.width)}>
-            {chartWidth > 0 && (
+            {/* Chart area - data only, grid rendered as fixed overlay above */}
+            <View style={[styles.chartAreaWrapper, { height: chartHeight }]}>
               <Svg height={chartHeight} width={chartWidth} style={StyleSheet.absoluteFill}>
                 <Defs>
                   <LinearGradient id="tempGrad" x1="0" y1="0" x2="0" y2="1">
@@ -177,23 +161,55 @@ export const TemperatureChart: React.FC<TemperatureChartProps> = ({ forecast }) 
                 />
                 <Path d={tempPath} stroke={theme.colors.primary} strokeWidth={2} fill="none" />
               </Svg>
-            )}
-          </View>
-        </View>
-
-        {/* Time Row - styled like PrecipitationChart time */}
-        <View style={styles.timeRow}>
-          {forecast.map((item, index) => (
-            <View key={index} style={styles.timeColumn}>
-              <Typography
-                variant="label"
-                color="textSecondary"
-                style={{ fontSize: 13, marginTop: 4, fontWeight: '600' }}
-              >
-                {item.time}
-              </Typography>
             </View>
-          ))}
+
+            {/* Time Row - styled like PrecipitationChart time */}
+            <View style={styles.timeRow}>
+              {forecast.map((item, index) => (
+                <View key={index} style={[styles.timeColumn, { width: COLUMN_WIDTH }]}>
+                  <Typography
+                    variant="label"
+                    color="textSecondary"
+                    style={{ fontSize: 13, marginTop: 4, fontWeight: '600' }}
+                  >
+                    {item.time}
+                  </Typography>
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+
+        <View
+          style={[styles.gridOverlay, { top: VALUES_ROW_HEIGHT, height: chartHeight }]}
+          pointerEvents="none"
+        >
+          {gridLevels.map((level) => {
+            const norm = (level - minVal) / range;
+            const bottom = norm * chartHeight;
+            if (bottom < 0 || bottom > chartHeight) return null;
+            return (
+              <View
+                key={level}
+                style={[
+                  styles.gridLabelWrapper,
+                  { bottom: bottom - 3, backgroundColor: theme.colors.surface },
+                ]}
+              >
+                <Typography
+                  variant="caption"
+                  style={{
+                    color: theme.colors.textSecondary,
+                    fontSize: 10,
+                    fontWeight: '500',
+                    opacity: 0.7,
+                  }}
+                >
+                  {Math.round(level)}°
+                </Typography>
+              </View>
+            );
+          })}
         </View>
       </View>
     </View>
@@ -214,27 +230,28 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 0.5,
   },
+  chartWrapper: {
+    position: 'relative',
+  },
+  gridOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+  },
   chartContainer: {
     paddingHorizontal: 20,
   },
   valuesRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     marginBottom: 2,
   },
   valuesColumn: {
     alignItems: 'center',
-    flex: 1,
     height: 35, // Fixed height to align - same as WindChart
     justifyContent: 'flex-end',
   },
   chartAreaWrapper: {
     position: 'relative',
-    marginHorizontal: -20, // Extend grid lines to full width (cancel parent padding)
-  },
-  svgArea: {
-    flex: 1,
-    marginHorizontal: 20, // Re-add padding for SVG content
   },
   gridLine: {
     position: 'absolute',
@@ -247,13 +264,13 @@ const styles = StyleSheet.create({
   gridLabelWrapper: {
     position: 'absolute',
     left: 10,
+    paddingHorizontal: 4,
+    borderRadius: 4,
   },
   timeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   timeColumn: {
     alignItems: 'center',
-    flex: 1,
   },
 });
