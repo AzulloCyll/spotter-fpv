@@ -36,6 +36,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const [activeStyleId, setActiveStyleId] = useState('hybrid');
   const [showOFM, setShowOFM] = useState(false);
   const [showRain, setShowRain] = useState(false);
+  const [showWind, setShowWind] = useState(false);
 
   const { isTabletLandscape, sidebarWidth } = useIsTablet();
 
@@ -146,6 +147,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             activeStyleId={activeStyleId}
             showOFM={showOFM}
             showRain={showRain}
+            showWind={showWind}
             isDark={isDark}
             onMarkerPress={handleSpotPress}
             onMapMove={(center, zoom) => {
@@ -387,10 +389,14 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
               Warstwy dodatkowe
             </Typography>
             {MAP_LAYERS.map((layer) => {
-              const isActive = (layer.id === 'ofm' && showOFM) || (layer.id === 'rain' && showRain);
+              const isActive =
+                (layer.id === 'ofm' && showOFM) ||
+                (layer.id === 'rain' && showRain) ||
+                (layer.id === 'wind' && showWind);
               const toggle = () => {
                 if (layer.id === 'ofm') setShowOFM(!showOFM);
                 if (layer.id === 'rain') setShowRain(!showRain);
+                if (layer.id === 'wind') setShowWind(!showWind);
               };
 
               return (

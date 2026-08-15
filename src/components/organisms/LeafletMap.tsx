@@ -2,7 +2,11 @@ import React, { useRef, useEffect, useMemo, useImperativeHandle, forwardRef } fr
 import { StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Spot } from '../../data/mockSpots';
-import { OFM_TILE_URL, RAINVIEWER_INDEX_URL } from '../../constants/mapStyles';
+import {
+  OFM_TILE_URL,
+  WEATHER_API_WIND_URL,
+  RAINVIEWER_INDEX_URL,
+} from '../../constants/mapStyles';
 
 export interface LeafletMapRef {
   animateToByBounds: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => void;
@@ -20,6 +24,7 @@ interface LeafletMapProps {
   activeStyleId: string;
   showOFM: boolean;
   showRain: boolean;
+  showWind: boolean;
   isDark: boolean;
   onMarkerPress: (spot: Spot) => void;
   onMapMove?: (center: { lat: number; lng: number }, zoom: number) => void;
@@ -27,7 +32,17 @@ interface LeafletMapProps {
 
 export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
   (
-    { initialRegion, spots, activeStyleId, showOFM, showRain, isDark, onMarkerPress, onMapMove },
+    {
+      initialRegion,
+      spots,
+      activeStyleId,
+      showOFM,
+      showRain,
+      showWind,
+      isDark,
+      onMarkerPress,
+      onMapMove,
+    },
     ref,
   ) => {
     const webViewRef = useRef<WebView>(null);
@@ -57,6 +72,8 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
         body { margin: 0; padding: 0; overflow: hidden; background: ${isDark ? '#111827' : '#f3f4f6'}; }
         #map { height: 100vh; width: 100vw; }
         .leaflet-tile-container img { filter: brightness(1); will-change: transform; }
+        .leaflet-pane.leaflet-windPane-pane { mix-blend-mode: multiply; }
+        .leaflet-pane.leaflet-windPane-pane img { filter: contrast(2) saturate(3) !important; }
         .leaflet-pane.leaflet-rainPane-pane { mix-blend-mode: multiply; }
         .leaflet-pane.leaflet-rainPane-pane img { filter: contrast(2) saturate(3) !important; }
         .leaflet-tile { outline: 1px solid transparent; }
@@ -99,6 +116,9 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
         map.createPane('rainPane');
         map.getPane('rainPane').style.zIndex = 640;
         map.getPane('rainPane').style.pointerEvents = 'none';
+        map.createPane('windPane');
+        map.getPane('windPane').style.zIndex = 650;
+        map.getPane('windPane').style.pointerEvents = 'none';
 
         var tileOptions = {
           keepBuffer: 4, updateWhenZooming: true, updateWhenIdle: false,
@@ -124,7 +144,8 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
           ofm: L.tileLayer('${OFM_TILE_URL}', { opacity: 0.8, zIndex: 10, ...tileOptions }),
           // Dociągana asynchronicznie - RainViewer podaje ścieżkę do najnowszej
           // klatki radaru dopiero w odpowiedzi indeksu.
-          rain: null
+          rain: null,
+          wind: L.tileLayer('${WEATHER_API_WIND_URL}', { opacity: 1.0, pane: 'windPane', ...tileOptions })
         };
         var wantRain = false;
 
@@ -138,7 +159,6 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
               data.host + newest.path + '/256/{z}/{x}/{y}/2/1_1.png',
               { opacity: 0.6, pane: 'rainPane', ...tileOptions }
             );
-            // Użytkownik mógł włączyć opady, zanim indeks doszedł.
             if (wantRain) overlays.rain.addTo(map);
           })
           .catch(function() { /* brak radaru nie może przewrócić mapy */ });
@@ -185,7 +205,7 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
           if (window.lucide) lucide.createIcons();
         }
 
-        function updateLayers(activeStyleId, showOFM, showRain) {
+        function updateLayers(activeStyleId, showOFM, showRain, showWind) {
           if (activeStyleId !== currentStyleId) {
             map.removeLayer(currentBaseLayer);
             currentStyleId = activeStyleId;
@@ -195,9 +215,12 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
           if (showOFM) { if (!map.hasLayer(overlays.ofm)) overlays.ofm.addTo(map); }
           else { if (map.hasLayer(overlays.ofm)) map.removeLayer(overlays.ofm); }
           wantRain = showRain;
-          if (!overlays.rain) return;
-          if (showRain) { if (!map.hasLayer(overlays.rain)) overlays.rain.addTo(map); }
-          else { if (map.hasLayer(overlays.rain)) map.removeLayer(overlays.rain); }
+          if (overlays.rain) {
+            if (showRain) { if (!map.hasLayer(overlays.rain)) overlays.rain.addTo(map); }
+            else { if (map.hasLayer(overlays.rain)) map.removeLayer(overlays.rain); }
+          }
+          if (showWind) { if (!map.hasLayer(overlays.wind)) overlays.wind.addTo(map); }
+          else { if (map.hasLayer(overlays.wind)) map.removeLayer(overlays.wind); }
         }
 
 
@@ -217,25 +240,33 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
     </body>
     </html>
   `,
-      [isDark, initialRegion.latitude, initialRegion.longitude, showRain, OFM_TILE_URL],
+      [
+        isDark,
+        initialRegion.latitude,
+        initialRegion.longitude,
+        showRain,
+        OFM_TILE_URL,
+        WEATHER_API_WIND_URL,
+        RAINVIEWER_INDEX_URL,
+      ],
     );
 
     const syncAll = () => {
       const js = `
             if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});
-            if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain});
+            if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain}, ${showWind});
         `;
       webViewRef.current?.injectJavaScript(js);
     };
 
     useEffect(() => {
       const js = `
-            if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain});
+            if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain}, ${showWind});
             document.body.className = '${isDark ? 'dark-mode' : ''}';
             document.body.style.background = '${isDark ? '#111827' : '#f3f4f6'}';
         `;
       webViewRef.current?.injectJavaScript(js);
-    }, [activeStyleId, showOFM, showRain, isDark]);
+    }, [activeStyleId, showOFM, showRain, showWind, isDark]);
 
     useEffect(() => {
       const js = `if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});`;
