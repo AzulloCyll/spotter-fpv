@@ -4,15 +4,10 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 
-interface WindEntry {
-  time: string;
-  speed: number;
-  gust: number;
-  direction: number;
-}
+import type { WindForecastEntry } from '../../hooks/useWeather';
 
 interface WindChartProps {
-  forecast: WindEntry[];
+  forecast: WindForecastEntry[];
 }
 
 export const WindChart: React.FC<WindChartProps> = ({ forecast }) => {
