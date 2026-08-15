@@ -50,15 +50,6 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const [showSpotsModal, setShowSpotsModal] = useState(false);
   const insets = useSafeAreaInsets();
 
-  /* 
-  const activeStyleConfig = MAP_STYLES.find(s => s.id === activeStyleId) || MAP_STYLES[0];
-  const mapType = activeStyleConfig.type;
-
-  const customStyle = activeStyleId === 'dark' || (activeStyleId === 'standard' && isDark)
-    ? darkMapStyle
-    : lightMapStyle; 
-  */
-
   const dynamicStyles = getStyles(theme);
   // const mapCenterRelativeToScreen = sidebarWidth + (windowWidth - sidebarWidth) / 2;
 
