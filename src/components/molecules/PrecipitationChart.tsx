@@ -4,15 +4,10 @@ import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 
-interface PrecipitationEntry {
-  time: string;
-  amount: number;
-  probability: number;
-  type: 'rain' | 'snow' | 'none';
-}
+import type { PrecipitationForecastEntry } from '../../hooks/useWeather';
 
 interface PrecipitationChartProps {
-  forecast: PrecipitationEntry[];
+  forecast: PrecipitationForecastEntry[];
 }
 
 export const PrecipitationChart: React.FC<PrecipitationChartProps> = ({ forecast }) => {

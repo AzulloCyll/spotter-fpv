@@ -1,6 +1,27 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as Location from 'expo-location';
 
+/** Kolejne kwadranse prognozy - kształt, którego oczekują wykresy w molecules/. */
+export interface WindForecastEntry {
+  time: string;
+  speed: number;
+  gust: number;
+  direction: number;
+}
+
+export interface PrecipitationForecastEntry {
+  time: string;
+  amount: number;
+  probability: number;
+  type: 'rain' | 'snow' | 'none';
+}
+
+export interface TemperatureForecastEntry {
+  time: string;
+  temp: number;
+  feelsLike: number;
+}
+
 export interface WeatherData {
   temp: number;
   condition: string;
@@ -13,9 +34,9 @@ export interface WeatherData {
   precipitation: number;
   humidity: number;
   uvIndex: number;
-  precipitationForecast: any[]; // To be typed strictly
-  windForecast: any[]; // To be typed strictly
-  tempForecast: any[]; // To be typed strictly
+  precipitationForecast: PrecipitationForecastEntry[];
+  windForecast: WindForecastEntry[];
+  tempForecast: TemperatureForecastEntry[];
 }
 
 export interface LocationData {
@@ -61,7 +82,7 @@ export const useWeather = () => {
     // Wind: Show next 2.5 hours (10 points)
     const windForecast = weatherRaw.minutely_15.time
       .slice(current15MinIndex, current15MinIndex + 10)
-      .map((t: string, i: number) => {
+      .map((t: string, i: number): WindForecastEntry => {
         const d = new Date(t);
         return {
           time: `${d.getUTCHours()}:${d.getUTCMinutes().toString().padStart(2, '0')}`,
@@ -74,7 +95,7 @@ export const useWeather = () => {
     // Precipitation: Show next 2.5 hours (10 points)
     const precipitationForecast = weatherRaw.minutely_15.time
       .slice(current15MinIndex, current15MinIndex + 10)
-      .map((t: string, i: number) => {
+      .map((t: string, i: number): PrecipitationForecastEntry => {
         const timeStr = t.split('T')[1];
         return {
           time: timeStr,
@@ -90,7 +111,7 @@ export const useWeather = () => {
     // Temperature: Show next 2.5 hours (10 points)
     const tempForecast = weatherRaw.minutely_15.time
       .slice(current15MinIndex, current15MinIndex + 10)
-      .map((t: string, i: number) => {
+      .map((t: string, i: number): TemperatureForecastEntry => {
         const timeStr = t.split('T')[1];
         return {
           time: timeStr,

@@ -5,14 +5,10 @@ import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-interface TemperatureEntry {
-  time: string;
-  temp: number;
-  feelsLike: number;
-}
+import type { TemperatureForecastEntry } from '../../hooks/useWeather';
 
 interface TemperatureChartProps {
-  forecast: TemperatureEntry[];
+  forecast: TemperatureForecastEntry[];
 }
 
 const COLUMN_WIDTH = 68;
