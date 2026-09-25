@@ -118,6 +118,7 @@ export const assessFlightConditions = (inputs: FlightInputs): FlightAssessment =
   if (isNum(inputs.precipitationProbability) && isNum(inputs.precipitationAmount)) {
     const p = inputs.precipitationProbability;
     const mm = inputs.precipitationAmount;
+    // Opady: UWAGA już przy jakiejkolwiek ilości (> 0 mm), NO-GO od 1 mm w godzinę.
     const level: FlightStatusLevel =
       p >= T.precipitationProbability.nogo || mm >= T.precipitationAmount.nogo
         ? 'nogo'
