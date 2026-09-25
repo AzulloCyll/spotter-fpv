@@ -12,11 +12,14 @@ import { PrecipitationChart } from '../components/molecules/PrecipitationChart';
 import { WindChart } from '../components/molecules/WindChart';
 import { TemperatureChart } from '../components/molecules/TemperatureChart';
 import { KpIndexChart } from '../components/molecules/KpIndexChart';
+import { WindAtAltitude } from '../components/molecules/WindAtAltitude';
+import { GoNoGoIndicator } from '../components/organisms/GoNoGoIndicator';
 
 import { useTheme } from '../theme/ThemeContext';
 import { useWeather } from '../hooks/useWeather';
 import { useIsTablet } from '../hooks/useIsTablet';
 import { RootTabParamList } from '../navigation/types';
+import { assessFlightConditions } from '../utils/flightConditions';
 
 interface WeatherStatProps {
   icon: React.ReactNode;
@@ -82,6 +85,15 @@ export default function WeatherScreen() {
       </View>
     );
   }
+
+  const assessment = assessFlightConditions({
+    windSpeed: weather.windSpeed,
+    windGusts: weather.windGusts,
+    kpIndex: weather.kpIndex,
+    visibility: weather.visibility,
+    precipitationProbability: weather.nextHourPrecipitationProbability,
+    precipitationAmount: weather.nextHourPrecipitationAmount,
+  });
 
   return (
     <View style={dynamicStyles.container}>
@@ -162,7 +174,11 @@ export default function WeatherScreen() {
                   dynamicStyles={dynamicStyles}
                   icon={<Icon name="Eye" size={12} color={theme.colors.text} />}
                   label="Widoczność"
-                  value={`Widoczn. ${weather.visibility.toFixed(1)} km`}
+                  value={
+                    weather.visibility === null
+                      ? 'Widoczn. brak danych'
+                      : `Widoczn. ${weather.visibility.toFixed(1)} km`
+                  }
                 />
 
                 {/* 7. Kp */}
@@ -170,7 +186,9 @@ export default function WeatherScreen() {
                   dynamicStyles={dynamicStyles}
                   icon={<Icon name="Zap" size={12} color={theme.colors.text} />}
                   label="Kp"
-                  value={`Kp ${weather.kpIndex.toFixed(1)}`}
+                  value={
+                    weather.kpIndex === null ? 'Kp brak danych' : `Kp ${weather.kpIndex.toFixed(1)}`
+                  }
                 />
               </ScrollView>
             </View>
@@ -182,6 +200,8 @@ export default function WeatherScreen() {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
+            <GoNoGoIndicator assessment={assessment} />
+
             <Typography
               variant="h2"
               style={{
@@ -196,6 +216,14 @@ export default function WeatherScreen() {
 
             <View style={{ marginBottom: 16 }}>
               <WindChart forecast={weather.windForecast} />
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
+              <WindAtAltitude
+                speed10m={weather.windSpeed}
+                speed80m={weather.windSpeed80m}
+                speed120m={weather.windSpeed120m}
+              />
             </View>
 
             <View style={{ marginBottom: 16 }}>

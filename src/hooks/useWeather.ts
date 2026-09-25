@@ -28,9 +28,18 @@ export interface WeatherData {
   feelsLike: number;
   windSpeed: number;
   windGusts: number;
-  kpIndex: number;
+  /** null = brak danych z NOAA */
+  kpIndex: number | null;
   kpForecast: { hour: string; value: number }[];
-  visibility: number;
+  /** km; null = brak danych */
+  visibility: number | null;
+  /** Średni wiatr (nie porywy) w bieżącej godzinie, km/h; null = brak danych */
+  windSpeed80m: number | null;
+  windSpeed120m: number | null;
+  /** Najwyższa szansa opadów w najbliższej godzinie, % */
+  nextHourPrecipitationProbability: number | null;
+  /** Suma opadów w najbliższej godzinie, mm */
+  nextHourPrecipitationAmount: number | null;
   precipitation: number;
   humidity: number;
   uvIndex: number;
@@ -120,24 +129,56 @@ export const useWeather = () => {
         };
       });
 
-    let currentKp = 0;
-    let kpForecast: { hour: string; value: number }[] = [];
-    if (Array.isArray(spaceRaw) && spaceRaw.length > 1) {
-      const rows = spaceRaw.slice(1);
-      const parseNoaaDate = (dateStr: string) => new Date(dateStr + 'Z');
-      let currentIndex = rows.findIndex((row) => parseNoaaDate(row[0]) > new Date()) - 1;
-      if (currentIndex < 0 && rows.length > 0) currentIndex = rows.length - 1;
+    const numOrNull = (v: unknown): number | null =>
+      typeof v === 'number' && Number.isFinite(v) ? v : null;
 
-      if (currentIndex !== -1) {
-        currentKp = parseFloat(rows[currentIndex][1]);
-        kpForecast = rows.slice(currentIndex, currentIndex + 5).map((row) => ({
-          // Godzina w strefie spotu, tak jak na pozostałych wykresach.
-          hour:
-            new Date(parseNoaaDate(row[0]).getTime() + offsetSeconds * 1000).getUTCHours() + ':00',
-          value: parseFloat(row[1]),
-        }));
-      }
-    }
+    // NOAA podaje Kp w oknach 3 h. Obecnie jako tablicę obiektów { time_tag, kp },
+    // dawniej jako tablicę tablic z wierszem nagłówka - obsługujemy oba kształty.
+    const kpRows = (Array.isArray(spaceRaw) ? spaceRaw : [])
+      .map((row: any) => {
+        const timeTag = Array.isArray(row) ? row[0] : row?.time_tag;
+        const kpRaw = Array.isArray(row) ? row[1] : row?.kp;
+        const time = new Date(`${timeTag}Z`);
+        const kp = numOrNull(typeof kpRaw === 'string' ? parseFloat(kpRaw) : kpRaw);
+        return typeof timeTag === 'string' && !isNaN(time.getTime()) && kp !== null
+          ? { time, kp }
+          : null;
+      })
+      .filter((row): row is { time: Date; kp: number } => row !== null);
+
+    // Bieżące okno = ostatnie, które już się zaczęło.
+    const nowMs = Date.now();
+    let kpCurrentIndex = -1;
+    kpRows.forEach((row, i) => {
+      if (row.time.getTime() <= nowMs) kpCurrentIndex = i;
+    });
+
+    const currentKp: number | null = kpCurrentIndex === -1 ? null : kpRows[kpCurrentIndex].kp;
+    const kpForecast =
+      kpCurrentIndex === -1
+        ? []
+        : kpRows.slice(kpCurrentIndex, kpCurrentIndex + 5).map((row) => ({
+            // Godzina w strefie spotu, tak jak na pozostałych wykresach.
+            hour: new Date(row.time.getTime() + offsetSeconds * 1000).getUTCHours() + ':00',
+            value: row.kp,
+          }));
+
+    // Najbliższa godzina = 4 kolejne kwadranse; brak którejkolwiek wartości = brak danych.
+    const nextHourSlots = [0, 1, 2, 3].map((i) => current15MinIndex + i);
+    const nextHourProbs = nextHourSlots.map((i) =>
+      numOrNull(weatherRaw.minutely_15.precipitation_probability?.[i]),
+    );
+    const nextHourAmounts = nextHourSlots.map((i) =>
+      numOrNull(weatherRaw.minutely_15.precipitation?.[i]),
+    );
+    const nextHourPrecipitationProbability = nextHourProbs.every((v) => v !== null)
+      ? Math.max(...(nextHourProbs as number[]))
+      : null;
+    const nextHourPrecipitationAmount = nextHourAmounts.every((v) => v !== null)
+      ? (nextHourAmounts as number[]).reduce((a, b) => a + b, 0)
+      : null;
+
+    const visibilityMeters = numOrNull(weatherRaw.hourly?.visibility?.[currentHourIndex]);
 
     return {
       temp: current.temperature_2m,
@@ -147,7 +188,11 @@ export const useWeather = () => {
       windGusts: current.wind_gusts_10m,
       kpIndex: currentKp,
       kpForecast,
-      visibility: (weatherRaw.hourly.visibility[currentHourIndex] || 10000) / 1000,
+      visibility: visibilityMeters === null ? null : visibilityMeters / 1000,
+      windSpeed80m: numOrNull(weatherRaw.hourly?.wind_speed_80m?.[currentHourIndex]),
+      windSpeed120m: numOrNull(weatherRaw.hourly?.wind_speed_120m?.[currentHourIndex]),
+      nextHourPrecipitationProbability,
+      nextHourPrecipitationAmount,
       precipitation: current.precipitation,
       humidity: current.relative_humidity_2m,
       uvIndex: weatherRaw.daily.uv_index_max[0] || 0,
@@ -177,14 +222,15 @@ export const useWeather = () => {
       const { latitude, longitude } = locationCoords.coords;
 
       // 2. Prepare requests
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,relative_humidity_2m&minutely_15=precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,apparent_temperature&hourly=visibility&daily=uv_index_max&timezone=auto&forecast_days=1`;
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,relative_humidity_2m&minutely_15=precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,apparent_temperature&hourly=visibility,wind_speed_80m,wind_speed_120m&daily=uv_index_max&timezone=auto&forecast_days=1`;
       const spaceUrl = `https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json`;
 
       // 3. Execute concurrently: Reverse Geocode + Weather API + Space API
       const [reverseGeocode, weatherRes, spaceRes] = await Promise.all([
         Location.reverseGeocodeAsync({ latitude, longitude }),
         fetch(weatherUrl),
-        fetch(spaceUrl),
+        // Brak NOAA nie blokuje pogody - Kp będzie wtedy „brak danych”.
+        fetch(spaceUrl).catch(() => null),
       ]);
 
       const placeName = reverseGeocode[0]
@@ -199,11 +245,13 @@ export const useWeather = () => {
 
       // Space weather API can sometimes return 404 or other non-200 for specific requests,
       // but we want to proceed with weather data if space data fails.
-      let spaceData = [];
-      if (spaceRes.ok) {
-        spaceData = await spaceRes.json();
+      let spaceData: unknown = [];
+      if (spaceRes?.ok) {
+        spaceData = await spaceRes.json().catch(() => []);
       } else {
-        console.warn(`Space Weather API Error: ${spaceRes.status}. Proceeding without space data.`);
+        console.warn(
+          `Space Weather API Error: ${spaceRes?.status ?? 'network'}. Proceeding without space data.`,
+        );
       }
 
       const weatherData = await weatherRes.json();
