@@ -131,7 +131,9 @@ export const useWeather = () => {
       if (currentIndex !== -1) {
         currentKp = parseFloat(rows[currentIndex][1]);
         kpForecast = rows.slice(currentIndex, currentIndex + 5).map((row) => ({
-          hour: parseNoaaDate(row[0]).getHours() + ':00',
+          // Godzina w strefie spotu, tak jak na pozostałych wykresach.
+          hour:
+            new Date(parseNoaaDate(row[0]).getTime() + offsetSeconds * 1000).getUTCHours() + ':00',
           value: parseFloat(row[1]),
         }));
       }

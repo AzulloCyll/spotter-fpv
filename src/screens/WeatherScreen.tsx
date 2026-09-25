@@ -11,6 +11,7 @@ import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { PrecipitationChart } from '../components/molecules/PrecipitationChart';
 import { WindChart } from '../components/molecules/WindChart';
 import { TemperatureChart } from '../components/molecules/TemperatureChart';
+import { KpIndexChart } from '../components/molecules/KpIndexChart';
 
 import { useTheme } from '../theme/ThemeContext';
 import { useWeather } from '../hooks/useWeather';
@@ -155,6 +156,22 @@ export default function WeatherScreen() {
                   label="Wiatr"
                   value={`${weather.windSpeed} km/h`}
                 />
+
+                {/* 6. Widoczność */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Eye" size={12} color={theme.colors.text} />}
+                  label="Widoczność"
+                  value={`Widoczn. ${weather.visibility.toFixed(1)} km`}
+                />
+
+                {/* 7. Kp */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Zap" size={12} color={theme.colors.text} />}
+                  label="Kp"
+                  value={`Kp ${weather.kpIndex.toFixed(1)}`}
+                />
               </ScrollView>
             </View>
           </View>
@@ -187,6 +204,10 @@ export default function WeatherScreen() {
 
             <View style={{ marginBottom: 16 }}>
               <TemperatureChart forecast={weather.tempForecast} />
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
+              <KpIndexChart forecast={weather.kpForecast} />
             </View>
           </ScrollView>
         </View>
