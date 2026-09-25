@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { BottomTabNavigationProp, useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Typography } from '../components/atoms/Typography';
@@ -11,11 +11,15 @@ import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { PrecipitationChart } from '../components/molecules/PrecipitationChart';
 import { WindChart } from '../components/molecules/WindChart';
 import { TemperatureChart } from '../components/molecules/TemperatureChart';
+import { KpIndexChart } from '../components/molecules/KpIndexChart';
+import { WindAtAltitude } from '../components/molecules/WindAtAltitude';
+import { GoNoGoIndicator } from '../components/organisms/GoNoGoIndicator';
 
 import { useTheme } from '../theme/ThemeContext';
 import { useWeather } from '../hooks/useWeather';
 import { useIsTablet } from '../hooks/useIsTablet';
 import { RootTabParamList } from '../navigation/types';
+import { assessFlightConditions } from '../utils/flightConditions';
 
 interface WeatherStatProps {
   icon: React.ReactNode;
@@ -41,6 +45,8 @@ export default function WeatherScreen() {
   const { weather, location, loading, error, refetch } = useWeather();
   const { isTabletLandscape } = useIsTablet();
   const insets = useSafeAreaInsets();
+  // Pasek zakładek leży nad treścią - bez tego ostatni wykres chowa się pod nim.
+  const tabBarHeight = useBottomTabBarHeight();
 
   const dynamicStyles = getStyles(theme);
 
@@ -81,6 +87,15 @@ export default function WeatherScreen() {
       </View>
     );
   }
+
+  const assessment = assessFlightConditions({
+    windSpeed: weather.windSpeed,
+    windGusts: weather.windGusts,
+    kpIndex: weather.kpIndex,
+    visibility: weather.visibility,
+    precipitationProbability: weather.nextHourPrecipitationProbability,
+    precipitationAmount: weather.nextHourPrecipitationAmount,
+  });
 
   return (
     <View style={dynamicStyles.container}>
@@ -155,16 +170,43 @@ export default function WeatherScreen() {
                   label="Wiatr"
                   value={`${weather.windSpeed} km/h`}
                 />
+
+                {/* 6. Widoczność */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Eye" size={12} color={theme.colors.text} />}
+                  label="Widoczność"
+                  value={
+                    weather.visibility === null
+                      ? 'Widoczn. brak danych'
+                      : `Widoczn. ${weather.visibility.toFixed(1)} km`
+                  }
+                />
+
+                {/* 7. Kp */}
+                <StatPill
+                  dynamicStyles={dynamicStyles}
+                  icon={<Icon name="Zap" size={12} color={theme.colors.text} />}
+                  label="Kp"
+                  value={
+                    weather.kpIndex === null ? 'Kp brak danych' : `Kp ${weather.kpIndex.toFixed(1)}`
+                  }
+                />
               </ScrollView>
             </View>
           </View>
 
           <ScrollView
             style={dynamicStyles.content}
-            contentContainerStyle={dynamicStyles.scrollContent}
+            contentContainerStyle={[
+              dynamicStyles.scrollContent,
+              { paddingBottom: tabBarHeight + 20 },
+            ]}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
+            <GoNoGoIndicator assessment={assessment} />
+
             <Typography
               variant="h2"
               style={{
@@ -182,11 +224,23 @@ export default function WeatherScreen() {
             </View>
 
             <View style={{ marginBottom: 16 }}>
+              <WindAtAltitude
+                speed10m={weather.windSpeed}
+                speed80m={weather.windSpeed80m}
+                speed120m={weather.windSpeed120m}
+              />
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
               <PrecipitationChart forecast={weather.precipitationForecast} />
             </View>
 
             <View style={{ marginBottom: 16 }}>
               <TemperatureChart forecast={weather.tempForecast} />
+            </View>
+
+            <View style={{ marginBottom: 16 }}>
+              <KpIndexChart forecast={weather.kpForecast} />
             </View>
           </ScrollView>
         </View>
