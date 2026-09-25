@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { BottomTabNavigationProp, useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Typography } from '../components/atoms/Typography';
@@ -45,6 +45,8 @@ export default function WeatherScreen() {
   const { weather, location, loading, error, refetch } = useWeather();
   const { isTabletLandscape } = useIsTablet();
   const insets = useSafeAreaInsets();
+  // Pasek zakładek leży nad treścią - bez tego ostatni wykres chowa się pod nim.
+  const tabBarHeight = useBottomTabBarHeight();
 
   const dynamicStyles = getStyles(theme);
 
@@ -196,7 +198,10 @@ export default function WeatherScreen() {
 
           <ScrollView
             style={dynamicStyles.content}
-            contentContainerStyle={dynamicStyles.scrollContent}
+            contentContainerStyle={[
+              dynamicStyles.scrollContent,
+              { paddingBottom: tabBarHeight + 20 },
+            ]}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >

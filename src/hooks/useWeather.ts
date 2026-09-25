@@ -92,9 +92,10 @@ export const useWeather = () => {
     const windForecast = weatherRaw.minutely_15.time
       .slice(current15MinIndex, current15MinIndex + 10)
       .map((t: string, i: number): WindForecastEntry => {
-        const d = new Date(t);
+        // Czas lokalny spotu wprost z API (jak w opadach i temperaturze);
+        // new Date(t) czytało go jako czas telefonu i przesuwało godziny.
         return {
-          time: `${d.getUTCHours()}:${d.getUTCMinutes().toString().padStart(2, '0')}`,
+          time: t.split('T')[1],
           speed: weatherRaw.minutely_15.wind_speed_10m[current15MinIndex + i],
           gust: weatherRaw.minutely_15.wind_gusts_10m[current15MinIndex + i],
           direction: weatherRaw.minutely_15.wind_direction_10m[current15MinIndex + i],

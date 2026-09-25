@@ -23,7 +23,7 @@ export const KpIndexChart: React.FC<KpIndexChartProps> = ({ forecast }) => {
     return theme.colors.error;
   };
 
-  const chartHeight = 80;
+  const chartHeight = 100;
 
   return (
     <View style={styles.container}>
@@ -58,23 +58,24 @@ export const KpIndexChart: React.FC<KpIndexChartProps> = ({ forecast }) => {
       ) : (
         <View style={styles.chartArea}>
           {forecast.map((item, index) => {
-            const barHeight = Math.max((item.value / 9) * chartHeight, 2);
+            // Miejsce na etykietę wartości nad słupkiem.
+            const barHeight = Math.max((item.value / 9) * (chartHeight - 24), 2);
             const isNow = index === 0;
 
             return (
               <View key={`${item.hour}-${index}`} style={styles.barColumn}>
-                <Typography
-                  variant="caption"
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '800',
-                    color: isNow ? theme.colors.text : theme.colors.textSecondary,
-                    marginBottom: 6,
-                  }}
-                >
-                  {item.value.toFixed(1)}
-                </Typography>
                 <View style={[styles.barContainer, { height: chartHeight }]}>
+                  <Typography
+                    variant="caption"
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '800',
+                      color: isNow ? theme.colors.text : theme.colors.textSecondary,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {item.value.toFixed(1)}
+                  </Typography>
                   <View
                     style={[
                       styles.bar,
@@ -149,12 +150,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   barContainer: {
-    width: '40%',
+    width: '100%',
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
   bar: {
-    width: '100%',
+    width: '40%',
     borderRadius: 4,
   },
   legend: {
