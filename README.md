@@ -2,7 +2,7 @@
 
 Aplikacja dla pilotów dronów FPV: mapa miejscówek do latania, pogoda oceniana pod kątem bezpieczeństwa lotu i galeria zdjęć. Expo / React Native — iOS, Android i przeglądarka z jednego kodu.
 
-Plany rozwoju: [`ROADMAP.md`](./ROADMAP.md).
+Plany rozwoju prowadzę poza repozytorium.
 
 ## Wymagania
 
