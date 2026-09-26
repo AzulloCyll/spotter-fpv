@@ -17,7 +17,7 @@ import { MOCK_MESSAGES } from '../constants/mockData';
 import { useNavigation } from '@react-navigation/native';
 
 import { RootTabParamList } from '../navigation/types';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { BottomTabNavigationProp, useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 export default function ChatScreen() {
   const { theme } = useTheme();
@@ -25,6 +25,9 @@ export default function ChatScreen() {
   const [message, setMessage] = useState('');
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
+  // The tab bar is absolutely positioned, so the screen has to leave room for it itself.
+  const measuredTabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = isTabletLandscape ? 0 : measuredTabBarHeight;
 
   const dynamicStyles = getStyles(theme);
 
@@ -43,7 +46,7 @@ export default function ChatScreen() {
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          keyboardVerticalOffset={100}
+          keyboardVerticalOffset={-tabBarHeight}
         >
           <View style={dynamicStyles.header}>
             {!isTabletLandscape && (
@@ -90,7 +93,7 @@ export default function ChatScreen() {
             ))}
           </ScrollView>
 
-          <View style={dynamicStyles.inputArea}>
+          <View style={[dynamicStyles.inputArea, { paddingBottom: 15 + tabBarHeight }]}>
             <Input
               placeholder="Napisz do ekipy..."
               value={message}
@@ -171,7 +174,6 @@ const getStyles = (theme: any) =>
       flexDirection: 'row',
       alignItems: 'center',
       padding: 15,
-      paddingBottom: Platform.OS === 'ios' ? 40 : 15,
       backgroundColor: theme.colors.surface,
       borderTopWidth: 1,
       borderTopColor: theme.colors.border,
