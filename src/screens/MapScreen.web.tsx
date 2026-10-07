@@ -281,7 +281,7 @@ const getStyles = (theme: any) =>
       backgroundColor: theme.colors.background,
     },
     mapContainer: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       backgroundColor: '#f5f5f5',
       overflow: 'hidden',
       zIndex: -1,
