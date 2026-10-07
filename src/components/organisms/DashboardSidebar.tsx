@@ -53,7 +53,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     >
       <LinearGradient
         colors={[theme.colors.background, theme.colors.primary + '25']}
-        style={StyleSheet.absoluteFillObject}
+        style={StyleSheet.absoluteFill}
         start={{ x: 0.5, y: 0 }}
         end={{ x: 0.5, y: 0.8 }}
       />

@@ -482,7 +482,7 @@ const getStyles = (theme: any) =>
       backgroundColor: theme.colors.background,
     },
     map: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
     },
     topContainer: {
       position: 'absolute',

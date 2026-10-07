@@ -174,11 +174,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   gridBackground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1,
   },
   gridForeground: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 10,
   },
   gridLine: {

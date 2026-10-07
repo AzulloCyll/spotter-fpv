@@ -49,7 +49,7 @@ export default function TelemetryScreen() {
           <View style={[dynamicStyles.sidebar, { flex: 1 }]}>
             <LinearGradient
               colors={[theme.colors.background, theme.colors.primary + '15']}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
             />
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
               <View style={{ height: 60 }} />

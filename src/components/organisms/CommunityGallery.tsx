@@ -245,7 +245,7 @@ const getStyles = (theme: any) =>
       width: 140,
     },
     loadingOverlay: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
       justifyContent: 'center',
       alignItems: 'center',
     },
@@ -273,7 +273,7 @@ const getStyles = (theme: any) =>
       alignItems: 'center',
     },
     modalBackground: {
-      ...StyleSheet.absoluteFillObject,
+      ...StyleSheet.absoluteFill,
     },
     modalContent: {
       width: '100%',
