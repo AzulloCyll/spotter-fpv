@@ -44,7 +44,8 @@ export const SpotImageViewer: React.FC<SpotImageViewerProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [width]);
 
-  const handleScrollEnd = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+  // onMomentumScrollEnd does not fire on react-native-web, so track the index while scrolling.
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(event.nativeEvent.contentOffset.x / width);
     setCurrentIndex(Math.min(Math.max(index, 0), images.length - 1));
   };
@@ -62,7 +63,8 @@ export const SpotImageViewer: React.FC<SpotImageViewerProps> = ({
             showsHorizontalScrollIndicator={false}
             initialScrollIndex={initialIndex}
             getItemLayout={(_, index) => ({ length: width, offset: width * index, index })}
-            onMomentumScrollEnd={handleScrollEnd}
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
             renderItem={({ item }) => (
               <View style={{ width, height }}>
                 <Image source={{ uri: item }} style={styles.image} resizeMode="contain" />

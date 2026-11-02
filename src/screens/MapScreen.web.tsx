@@ -239,8 +239,13 @@ export default function MapScreen() {
               style={{ marginVertical: 12 }}
               contentContainerStyle={{ paddingRight: 20 }}
             >
-              {selectedSpot.images.map((img, index) => (
-                <TouchableOpacity key={index} onPress={() => setViewerIndex(index)}>
+              {selectedSpot.images.map((img, index, all) => (
+                <TouchableOpacity
+                  key={index}
+                  onPress={() => setViewerIndex(index)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Powiększ zdjęcie ${index + 1} z ${all.length}`}
+                >
                   <Image
                     source={{ uri: img }}
                     resizeMode="cover"

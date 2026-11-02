@@ -22,7 +22,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 const SPOTS_DIR = `${FileSystem.documentDirectory}spots/`;
 
 const persistImages = async (uris: string[]): Promise<string[]> => {
-  // The web build has no document directory; picked images are already self-contained there.
+  // The web build has no document directory. The picker returns a blob: URL there, which is
+  // gone after a page reload, so photos added on web are not persistent (out of scope).
   if (Platform.OS === 'web') return uris;
 
   const dirInfo = await FileSystem.getInfoAsync(SPOTS_DIR);

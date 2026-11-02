@@ -287,8 +287,13 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
                   showsHorizontalScrollIndicator={false}
                   style={{ marginVertical: 12 }}
                 >
-                  {selectedSpot.images.map((img: string, index: number) => (
-                    <TouchableOpacity key={index} onPress={() => setViewerIndex(index)}>
+                  {selectedSpot.images.map((img: string, index: number, all: string[]) => (
+                    <TouchableOpacity
+                      key={index}
+                      onPress={() => setViewerIndex(index)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Powiększ zdjęcie ${index + 1} z ${all.length}`}
+                    >
                       <Image
                         source={{ uri: img }}
                         style={{ width: 120, height: 80, borderRadius: 8, marginRight: 8 }}
