@@ -20,6 +20,7 @@ import { useSpots } from '../context/SpotsContext';
 import { SpotsSidebarPanel } from '../components/organisms/SpotsSidebarPanel';
 
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
+import { SpotImageViewer } from '../components/organisms/SpotImageViewer';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 
 import { MAP_STYLES, MAP_LAYERS } from '../constants/mapStyles';
@@ -43,6 +44,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const [showMenu, setShowMenu] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [locationPermission, setLocationPermission] = useState<boolean>(false);
   const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
 
@@ -245,6 +247,12 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
         onSave={handleSaveSpot}
       />
 
+      <SpotImageViewer
+        images={selectedSpot?.images ?? []}
+        initialIndex={selectedSpot ? viewerIndex : null}
+        onClose={() => setViewerIndex(null)}
+      />
+
       {selectedSpot && (
         <View
           style={
@@ -280,11 +288,12 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
                   style={{ marginVertical: 12 }}
                 >
                   {selectedSpot.images.map((img: string, index: number) => (
-                    <Image
-                      key={index}
-                      source={{ uri: img }}
-                      style={{ width: 120, height: 80, borderRadius: 8, marginRight: 8 }}
-                    />
+                    <TouchableOpacity key={index} onPress={() => setViewerIndex(index)}>
+                      <Image
+                        source={{ uri: img }}
+                        style={{ width: 120, height: 80, borderRadius: 8, marginRight: 8 }}
+                      />
+                    </TouchableOpacity>
                   ))}
                 </ScrollView>
               )}
