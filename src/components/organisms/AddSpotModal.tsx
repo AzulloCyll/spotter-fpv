@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Modal,
@@ -60,6 +60,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
   const [difficulty, setDifficulty] = useState<(typeof DIFFICULTIES)[number]>('easy');
   const [images, setImages] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -85,7 +86,9 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
   };
 
   const handleSave = async () => {
-    if (!name || !description || isSaving) return; // Simple validation
+    if (!name || !description || savingRef.current) return; // Simple validation
+    // A ref blocks a second tap right away; state only updates after the next render.
+    savingRef.current = true;
     setIsSaving(true);
     let savedImages: string[];
     try {
@@ -93,9 +96,11 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
     } catch (error) {
       console.error('Error saving spot images:', error);
       Alert.alert('Błąd', 'Nie udało się zapisać zdjęć.');
+      savingRef.current = false;
       setIsSaving(false);
       return;
     }
+    savingRef.current = false;
     setIsSaving(false);
     onSave({
       name,
@@ -217,9 +222,9 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
               </View>
 
               <TouchableWithoutFeedback onPress={handleSave}>
-                <View style={styles.saveButton}>
+                <View style={[styles.saveButton, isSaving && { opacity: 0.6 }]}>
                   <Typography variant="label" style={{ color: '#fff', fontSize: 14 }}>
-                    ZAPISZ SPOT
+                    {isSaving ? 'ZAPISYWANIE...' : 'ZAPISZ SPOT'}
                   </Typography>
                 </View>
               </TouchableWithoutFeedback>
