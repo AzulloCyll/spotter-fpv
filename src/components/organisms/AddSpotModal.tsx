@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   Modal,
@@ -8,12 +8,39 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Alert,
+  Platform,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { Spot, SpotType } from '../../data/mockSpots';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system/legacy';
+
+// Picker URIs live in a cache the system may clear, so saved spots keep their own copies.
+const SPOTS_DIR = `${FileSystem.documentDirectory}spots/`;
+
+const persistImages = async (uris: string[]): Promise<string[]> => {
+  // The web build has no document directory. The picker returns a blob: URL there, which is
+  // gone after a page reload, so photos added on web are not persistent (out of scope).
+  if (Platform.OS === 'web') return uris;
+
+  const dirInfo = await FileSystem.getInfoAsync(SPOTS_DIR);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(SPOTS_DIR, { intermediates: true });
+  }
+
+  const stamp = Date.now();
+  return Promise.all(
+    uris.map(async (uri, index) => {
+      const extension = uri.split('?')[0].split('.').pop() || 'jpg';
+      const permanentUri = `${SPOTS_DIR}${stamp}_${index}.${extension}`;
+      await FileSystem.copyAsync({ from: uri, to: permanentUri });
+      return permanentUri;
+    }),
+  );
+};
 
 interface AddSpotModalProps {
   visible: boolean;
@@ -33,8 +60,16 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
   const [type, setType] = useState<SpotType>('park');
   const [difficulty, setDifficulty] = useState<(typeof DIFFICULTIES)[number]>('easy');
   const [images, setImages] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
 
   const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Brak uprawnień', 'Potrzebujemy dostępu do galerii, abyś mógł dodać zdjęcie.');
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       allowsEditing: true,
@@ -51,14 +86,29 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSave = () => {
-    if (!name || !description) return; // Simple validation
+  const handleSave = async () => {
+    if (!name || !description || savingRef.current) return; // Simple validation
+    // A ref blocks a second tap right away; state only updates after the next render.
+    savingRef.current = true;
+    setIsSaving(true);
+    let savedImages: string[];
+    try {
+      savedImages = await persistImages(images);
+    } catch (error) {
+      console.error('Error saving spot images:', error);
+      Alert.alert('Błąd', 'Nie udało się zapisać zdjęć.');
+      savingRef.current = false;
+      setIsSaving(false);
+      return;
+    }
+    savingRef.current = false;
+    setIsSaving(false);
     onSave({
       name,
       description,
       type,
       difficulty,
-      images,
+      images: savedImages,
     });
     // Reset form
     setName('');
@@ -173,9 +223,9 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
               </View>
 
               <TouchableWithoutFeedback onPress={handleSave}>
-                <View style={styles.saveButton}>
+                <View style={[styles.saveButton, isSaving && { opacity: 0.6 }]}>
                   <Typography variant="label" style={{ color: '#fff', fontSize: 14 }}>
-                    ZAPISZ SPOT
+                    {isSaving ? 'ZAPISYWANIE...' : 'ZAPISZ SPOT'}
                   </Typography>
                 </View>
               </TouchableWithoutFeedback>

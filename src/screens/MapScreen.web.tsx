@@ -14,6 +14,7 @@ import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
 import { useSpots } from '../context/SpotsContext';
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
+import { SpotImageViewer } from '../components/organisms/SpotImageViewer';
 import { Spot } from '../data/mockSpots';
 
 // Custom providers for different modes
@@ -49,6 +50,7 @@ export default function MapScreen() {
   const [showSpotList, setShowSpotList] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
 
   const activeProvider =
     WEB_STYLES.find((s) => s.id === activeStyleId)?.provider || providers.light;
@@ -213,6 +215,12 @@ export default function MapScreen() {
         </View>
       )}
 
+      <SpotImageViewer
+        images={selectedSpot?.images ?? []}
+        initialIndex={selectedSpot ? viewerIndex : null}
+        onClose={() => setViewerIndex(null)}
+      />
+
       {/* Spot Details Overlay (Web) */}
       {selectedSpot && (
         <View style={dynamicStyles.webSpotCard}>
@@ -231,19 +239,25 @@ export default function MapScreen() {
               style={{ marginVertical: 12 }}
               contentContainerStyle={{ paddingRight: 20 }}
             >
-              {selectedSpot.images.map((img, index) => (
-                <Image
+              {selectedSpot.images.map((img, index, all) => (
+                <TouchableOpacity
                   key={index}
-                  source={{ uri: img }}
-                  resizeMode="cover"
-                  style={{
-                    width: 120,
-                    height: 80,
-                    borderRadius: 8,
-                    marginRight: 8,
-                    backgroundColor: theme.colors.background,
-                  }}
-                />
+                  onPress={() => setViewerIndex(index)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Powiększ zdjęcie ${index + 1} z ${all.length}`}
+                >
+                  <Image
+                    source={{ uri: img }}
+                    resizeMode="cover"
+                    style={{
+                      width: 120,
+                      height: 80,
+                      borderRadius: 8,
+                      marginRight: 8,
+                      backgroundColor: theme.colors.background,
+                    }}
+                  />
+                </TouchableOpacity>
               ))}
             </ScrollView>
           )}
