@@ -158,8 +158,12 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
         var mapContainer = map.getContainer();
         mapContainer.addEventListener('wheel', markTouched, { passive: true });
         mapContainer.addEventListener('dblclick', markTouched);
+        var lastTouchStart = 0;
         mapContainer.addEventListener('touchstart', function(e) {
-          if (e.touches && e.touches.length > 1) markTouched();
+          var now = Date.now();
+          // Pinch (more than one finger) or double-tap (two touches in quick succession).
+          if ((e.touches && e.touches.length > 1) || now - lastTouchStart < 350) markTouched();
+          lastTouchStart = now;
         }, { passive: true });
 
         // Custom panes for weather overlays – z-index above default overlayPane (400)
@@ -199,19 +203,23 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
         };
         var wantRain = false;
 
-        fetch('${RAINVIEWER_INDEX_URL}')
-          .then(function(res) { return res.json(); })
-          .then(function(data) {
-            var frames = (data.radar && data.radar.past) || [];
-            if (!frames.length) return;
-            var newest = frames[frames.length - 1];
-            overlays.rain = L.tileLayer(
-              data.host + newest.path + '/256/{z}/{x}/{y}/2/1_1.png',
-              { opacity: 0.6, pane: 'rainPane', ...tileOptions }
-            );
-            if (wantRain) overlays.rain.addTo(map);
-          })
-          .catch(function() { /* brak radaru nie może przewrócić mapy */ });
+        // Fetched on every switch-on of the rain layer, so the pilot always gets the newest frame.
+        function loadRain() {
+          fetch('${RAINVIEWER_INDEX_URL}')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+              var frames = (data.radar && data.radar.past) || [];
+              if (!frames.length) return;
+              var newest = frames[frames.length - 1];
+              if (overlays.rain && map.hasLayer(overlays.rain)) map.removeLayer(overlays.rain);
+              overlays.rain = L.tileLayer(
+                data.host + newest.path + '/256/{z}/{x}/{y}/2/1_1.png',
+                { opacity: 0.6, pane: 'rainPane', ...tileOptions }
+              );
+              if (wantRain) overlays.rain.addTo(map);
+            })
+            .catch(function() { /* brak radaru nie może przewrócić mapy */ });
+        }
 
 
         var markers = {};
@@ -264,6 +272,7 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
           }
           if (showOFM) { if (!map.hasLayer(overlays.ofm)) overlays.ofm.addTo(map); }
           else { if (map.hasLayer(overlays.ofm)) map.removeLayer(overlays.ofm); }
+          if (showRain && !wantRain) loadRain();
           wantRain = showRain;
           if (overlays.rain) {
             if (showRain) { if (!map.hasLayer(overlays.rain)) overlays.rain.addTo(map); }
