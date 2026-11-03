@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../../theme/ThemeContext';
 import { TopBar } from './TopBar';
 import { FlightStatus } from './FlightStatus';
@@ -27,6 +28,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 }) => {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
+  const tabBarHeight = useBottomTabBarHeight();
   const dynamicStyles = getStyles(theme);
   const [topBarHeight, setTopBarHeight] = React.useState(insets.top + 78);
 
@@ -135,7 +137,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
           <QuickNavigation onNavigate={handleNavigate} />
         </View>
 
-        <View style={{ height: 20 }} />
+        {/* Room for the tab bar, which overlays the screen (hidden on tablet landscape) */}
+        <View style={{ height: isTabletLandscape ? 20 : tabBarHeight + 20 }} />
       </ScrollView>
 
       {isTabletLandscape && (

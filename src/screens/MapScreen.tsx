@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { LeafletMap, LeafletMapRef } from '../components/organisms/LeafletMap';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as Location from 'expo-location';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
@@ -51,8 +52,10 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   const mapRef = useRef<LeafletMapRef>(null);
   const [showSpotsModal, setShowSpotsModal] = useState(false);
   const insets = useSafeAreaInsets();
+  const measuredTabBarHeight = useBottomTabBarHeight();
+  const tabBarHeight = isTabletLandscape ? 0 : measuredTabBarHeight;
 
-  const dynamicStyles = getStyles(theme);
+  const dynamicStyles = getStyles(theme, tabBarHeight);
   // const mapCenterRelativeToScreen = sidebarWidth + (windowWidth - sidebarWidth) / 2;
 
   useEffect(() => {
@@ -175,7 +178,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
       <View
         style={{
           position: 'absolute',
-          bottom: isTabletLandscape ? 40 : theme.spacing.xl + 90,
+          bottom: isTabletLandscape ? 40 : tabBarHeight + theme.spacing.xl + 20,
           left: isTabletLandscape ? sidebarWidth + 20 : 16,
           alignItems: 'center',
           zIndex: 10,
@@ -336,7 +339,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
           <View
             style={{
               position: 'absolute',
-              bottom: isTabletLandscape ? 105 : theme.spacing.xl + 155,
+              bottom: isTabletLandscape ? 105 : tabBarHeight + theme.spacing.xl + 85,
               right: 20,
               width: 240,
               backgroundColor: theme.colors.surface,
@@ -489,7 +492,8 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
   );
 }
 
-const getStyles = (theme: any) =>
+// Bottom offsets sit above the tab bar (tabBarHeight is 0 on tablet landscape)
+const getStyles = (theme: any, tabBarHeight: number) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -547,7 +551,7 @@ const getStyles = (theme: any) =>
     },
     fabContainer: {
       position: 'absolute',
-      bottom: theme.spacing.xl + 90,
+      bottom: tabBarHeight + theme.spacing.xl + 20,
       right: theme.spacing.md,
     },
     sideButton: {
@@ -586,7 +590,7 @@ const getStyles = (theme: any) =>
     },
     spotCardContainer: {
       position: 'absolute',
-      bottom: theme.spacing.xl + 60,
+      bottom: tabBarHeight + theme.spacing.xl - 10,
       left: theme.spacing.md,
       maxWidth: 380,
       zIndex: 1000,

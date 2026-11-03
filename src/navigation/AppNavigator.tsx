@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useWindowDimensions, Platform } from 'react-native';
 import { NavigationBar } from 'expo-navigation-bar';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../components/atoms/Icon';
 import { useTheme } from '../theme/ThemeContext';
 import { StatusBar } from 'expo-status-bar';
@@ -22,25 +23,19 @@ export default function AppNavigator() {
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
 
+  const insets = useSafeAreaInsets();
+
   useEffect(() => {
-    const setupSystemUI = () => {
-      // NavigationBar API is Android-only; on iOS StatusBar handles the status bar
-      if (Platform.OS !== 'android') {
-        return;
-      }
-      try {
-        NavigationBar.setHidden(true);
-        NavigationBar.setStyle(isDark ? 'light' : 'dark');
-      } catch {
-        // Ignore errors
-      }
-    };
-
-    setupSystemUI();
-
-    // Re-enforce periodically if needed (handles some system UI popups)
-    const interval = setInterval(setupSystemUI, 5000);
-    return () => clearInterval(interval);
+    // NavigationBar API is Android-only; on iOS StatusBar handles the status bar
+    if (Platform.OS !== 'android') {
+      return;
+    }
+    try {
+      NavigationBar.setHidden(true);
+      NavigationBar.setStyle(isDark ? 'light' : 'dark');
+    } catch {
+      // Ignore errors
+    }
   }, [isDark]);
 
   const hiddenTabBarStyle = { display: 'none' as const };
@@ -52,10 +47,12 @@ export default function AppNavigator() {
     right: 0,
     backgroundColor: 'transparent',
     borderTopColor: 'transparent',
-    height: 70,
+    // Explicit height (BottomTabBar skips its own inset when a height is set);
+    // useBottomTabBarHeight reads this value
+    height: 70 + insets.bottom,
     borderTopWidth: 1,
     elevation: 0,
-    paddingBottom: 15,
+    paddingBottom: 15 + insets.bottom,
     paddingTop: 10,
     paddingHorizontal: 40,
   };

@@ -9,6 +9,7 @@ import {
   Image,
 } from 'react-native';
 import { Map as MapView, Marker } from 'pigeon-maps';
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
@@ -55,7 +56,11 @@ export default function MapScreen() {
   const activeProvider =
     WEB_STYLES.find((s) => s.id === activeStyleId)?.provider || providers.light;
 
-  const dynamicStyles = getStyles(theme);
+  // The tab bar is hidden in wide landscape windows (same rule as AppNavigator)
+  const isTabletLandscape = windowWidth > windowHeight && windowWidth > 800;
+  const tabBarHeight = useBottomTabBarHeight();
+
+  const dynamicStyles = getStyles(theme, isTabletLandscape, tabBarHeight);
 
   const handleSaveSpot = (spotData: Omit<Spot, 'id' | 'coordinates' | 'rating'>) => {
     // Web implementation: simple geolocation or center of map
@@ -288,7 +293,8 @@ export default function MapScreen() {
   );
 }
 
-const getStyles = (theme: any) =>
+// Bottom offsets sit above the tab bar; wide landscape keeps the old fixed values
+const getStyles = (theme: any, isTabletLandscape: boolean, tabBarHeight: number) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -340,7 +346,7 @@ const getStyles = (theme: any) =>
     },
     fab: {
       position: 'absolute',
-      bottom: theme.spacing.xl + 90,
+      bottom: isTabletLandscape ? theme.spacing.xl + 90 : tabBarHeight + theme.spacing.xl + 20,
       right: theme.spacing.md,
       width: 56,
       height: 56,
@@ -375,7 +381,7 @@ const getStyles = (theme: any) =>
     },
     webSpotCard: {
       position: 'absolute',
-      bottom: 100,
+      bottom: isTabletLandscape ? 100 : tabBarHeight + 30,
       left: 20,
       right: 20,
       backgroundColor: theme.colors.surface,
@@ -416,7 +422,7 @@ const getStyles = (theme: any) =>
       position: 'absolute',
       left: 20,
       top: 100,
-      bottom: 100,
+      bottom: isTabletLandscape ? 100 : tabBarHeight + 30,
       width: 300,
       backgroundColor: theme.colors.surface + 'CC', // 80% opacity
       // @ts-ignore
