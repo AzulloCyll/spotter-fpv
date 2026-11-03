@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp, useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,7 +7,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Typography } from '../components/atoms/Typography';
 import { IconButton } from '../components/atoms/IconButton';
 import { Icon } from '../components/atoms/Icon';
+import { Button } from '../components/atoms/Button';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
+import { PlacePickerModal } from '../components/organisms/PlacePickerModal';
 import { PrecipitationChart } from '../components/molecules/PrecipitationChart';
 import { WindChart } from '../components/molecules/WindChart';
 import { TemperatureChart } from '../components/molecules/TemperatureChart';
@@ -20,6 +22,7 @@ import { useWeather } from '../hooks/useWeather';
 import { useIsTablet } from '../hooks/useIsTablet';
 import { RootTabParamList } from '../navigation/types';
 import { assessFlightConditions } from '../utils/flightConditions';
+import { DEFAULT_MAP_CENTER, LOCATION_PROBLEM_TEXT } from '../utils/location';
 
 interface WeatherStatProps {
   icon: React.ReactNode;
@@ -42,13 +45,40 @@ export default function WeatherScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { theme } = useTheme();
 
-  const { weather, location, loading, error, refetch } = useWeather();
+  const {
+    weather,
+    location,
+    loading,
+    error,
+    locationProblem,
+    manualPlace,
+    choosePlace,
+    clearPlace,
+    refetch,
+  } = useWeather();
   const { isTabletLandscape } = useIsTablet();
   const insets = useSafeAreaInsets();
   // Pasek zakładek leży nad treścią - bez tego ostatni wykres chowa się pod nim.
   const tabBarHeight = useBottomTabBarHeight();
+  const [showPicker, setShowPicker] = useState(false);
 
   const dynamicStyles = getStyles(theme);
+
+  // The picker opens on the place shown now, else the last picked one.
+  const pickerCenter = location
+    ? { latitude: location.lat, longitude: location.lng }
+    : manualPlace
+      ? { latitude: manualPlace.lat, longitude: manualPlace.lng }
+      : DEFAULT_MAP_CENTER;
+
+  const placePicker = (
+    <PlacePickerModal
+      visible={showPicker}
+      initialCenter={pickerCenter}
+      onClose={() => setShowPicker(false)}
+      onConfirm={(center) => choosePlace(center.latitude, center.longitude)}
+    />
+  );
 
   if (loading) {
     return (
@@ -57,6 +87,51 @@ export default function WeatherScreen() {
         <Typography variant="body" color="textSecondary" style={{ marginTop: 16 }}>
           Pobieranie danych pogodowych...
         </Typography>
+        {placePicker}
+      </View>
+    );
+  }
+
+  if (locationProblem) {
+    const text = LOCATION_PROBLEM_TEXT[locationProblem];
+    return (
+      <View
+        style={[
+          dynamicStyles.container,
+          { justifyContent: 'center', alignItems: 'center', padding: 20 },
+        ]}
+      >
+        <Icon name="MapPinOff" size={48} color={theme.colors.textSecondary} />
+        <Typography variant="h3" style={{ marginTop: 16, textAlign: 'center' }}>
+          {text.title}
+        </Typography>
+        <Typography
+          variant="body"
+          color="textSecondary"
+          style={{ marginTop: 8, textAlign: 'center' }}
+        >
+          {text.message}
+        </Typography>
+        <Typography
+          variant="body"
+          color="textSecondary"
+          style={{ marginTop: 8, textAlign: 'center', marginBottom: 24 }}
+        >
+          Możesz też wybrać miejsce na mapie i zobaczyć pogodę dla niego.
+        </Typography>
+        <Button
+          label="Wybierz miejsce"
+          icon={<Icon name="MapPin" size={18} color="#FFFFFF" />}
+          onPress={() => setShowPicker(true)}
+          style={{ alignSelf: 'stretch', maxWidth: 360, width: '100%' }}
+        />
+        <Button
+          label="Spróbuj ponownie"
+          variant="outline"
+          onPress={refetch}
+          style={{ alignSelf: 'stretch', maxWidth: 360, width: '100%', marginTop: 12 }}
+        />
+        {placePicker}
       </View>
     );
   }
@@ -78,12 +153,13 @@ export default function WeatherScreen() {
           color="textSecondary"
           style={{ marginTop: 8, textAlign: 'center', marginBottom: 24 }}
         >
-          {error || 'Nie udało się pobrać danych locally.'}
+          {error || 'Nie udało się pobrać danych pogodowych.'}
         </Typography>
         <IconButton icon={<Icon name="RefreshCw" />} onPress={refetch} variant="primary" />
         <Typography variant="label" color="primary" style={{ marginTop: 8 }}>
           Spróbuj ponownie
         </Typography>
+        {placePicker}
       </View>
     );
   }
@@ -123,6 +199,20 @@ export default function WeatherScreen() {
                 <Typography variant="h3" color="primary">
                   {location.name}
                 </Typography>
+                <View style={dynamicStyles.placeActions}>
+                  <TouchableOpacity onPress={() => setShowPicker(true)} accessibilityRole="button">
+                    <Typography variant="caption" color="primary" style={{ fontWeight: '700' }}>
+                      Zmień miejsce
+                    </Typography>
+                  </TouchableOpacity>
+                  {manualPlace && (
+                    <TouchableOpacity onPress={clearPlace} accessibilityRole="button">
+                      <Typography variant="caption" color="primary" style={{ fontWeight: '700' }}>
+                        Użyj mojej lokalizacji
+                      </Typography>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
 
               <ScrollView
@@ -245,6 +335,7 @@ export default function WeatherScreen() {
           </ScrollView>
         </View>
       </View>
+      {placePicker}
     </View>
   );
 }
@@ -274,6 +365,11 @@ const getStyles = (theme: any) =>
     locationContainer: {
       marginBottom: 8,
       justifyContent: 'center',
+    },
+    placeActions: {
+      flexDirection: 'row',
+      gap: 16,
+      marginTop: 4,
     },
     content: {
       flex: 1,

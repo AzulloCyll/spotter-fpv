@@ -27,6 +27,7 @@ import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { MAP_STYLES, MAP_LAYERS } from '../constants/mapStyles';
 import { useIsTablet } from '../hooks/useIsTablet';
 import { appleMapsRouteUrl, googleMapsRouteUrl } from '../utils/navigation';
+import { DEFAULT_MAP_CENTER, LOCATION_PROBLEM_TEXT, type Coordinates } from '../utils/location';
 
 import { RootTabScreenProps } from '../navigation/types';
 
@@ -62,8 +63,8 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        Alert.alert('Brak uprawnień', 'Nie możemy pokazać Twojej lokalizacji bez zgody.');
-        console.log('Permission to access location was denied');
+        const text = LOCATION_PROBLEM_TEXT.denied;
+        Alert.alert(text.title, text.message);
         return;
       }
       setLocationPermission(true);
@@ -81,16 +82,22 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     }
   }, [route.params?.openList]);
 
+  // Centre of the visible map; a new spot is placed there (as on web).
+  const mapCenterRef = useRef<Coordinates>(DEFAULT_MAP_CENTER);
+
+  // The map jumps to the user when the location arrives without sending MAP_MOVE
+  // (LeafletMap rebuilds its page), so the centre follows the location here too.
+  useEffect(() => {
+    if (userLocation) {
+      mapCenterRef.current = {
+        latitude: userLocation.coords.latitude,
+        longitude: userLocation.coords.longitude,
+      };
+    }
+  }, [userLocation]);
+
   const handleSaveSpot = (spotData: Omit<Spot, 'id' | 'coordinates' | 'rating'>) => {
-    const newLocation = userLocation
-      ? {
-          latitude: userLocation.coords.latitude,
-          longitude: userLocation.coords.longitude,
-        }
-      : {
-          latitude: 52.2297,
-          longitude: 21.0122,
-        };
+    const newLocation = { ...mapCenterRef.current };
 
     const newSpot: Spot = {
       id: Date.now().toString(),
@@ -157,8 +164,8 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
           <LeafletMap
             ref={mapRef}
             initialRegion={{
-              latitude: userLocation?.coords.latitude ?? 52.2297,
-              longitude: userLocation?.coords.longitude ?? 21.0122,
+              latitude: userLocation?.coords.latitude ?? DEFAULT_MAP_CENTER.latitude,
+              longitude: userLocation?.coords.longitude ?? DEFAULT_MAP_CENTER.longitude,
               latitudeDelta: 0.15,
               longitudeDelta: 0.15,
             }}
@@ -169,9 +176,8 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             showWind={showWind}
             isDark={isDark}
             onMarkerPress={handleSpotPress}
-            onMapMove={(center, zoom) => {
-              // Update heading if needed, but Leaflet usually handles its own orientation
-              // For now, we keep it simple
+            onMapMove={(center) => {
+              mapCenterRef.current = { latitude: center.lat, longitude: center.lng };
             }}
           />
         </View>
