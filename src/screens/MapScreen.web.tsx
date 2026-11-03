@@ -17,6 +17,7 @@ import { useSpots } from '../context/SpotsContext';
 import { AddSpotModal } from '../components/organisms/AddSpotModal';
 import { SpotImageViewer } from '../components/organisms/SpotImageViewer';
 import { Spot } from '../data/mockSpots';
+import { googleMapsRouteUrl } from '../utils/navigation';
 
 // Custom providers for different modes
 const providers = {
@@ -79,6 +80,11 @@ export default function MapScreen() {
     addSpot(newSpot);
   };
 
+  const navigateToSpot = (spot: Spot) => {
+    const { latitude, longitude } = spot.coordinates;
+    window.open(googleMapsRouteUrl(latitude, longitude), '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <View style={dynamicStyles.container}>
       <View style={dynamicStyles.mapContainer}>
@@ -122,14 +128,6 @@ export default function MapScreen() {
             </Marker>
           ))}
         </MapView>
-      </View>
-
-      {/* Górna wyszukiwarka */}
-      <View style={dynamicStyles.searchBar}>
-        <Icon name="Search" color={theme.colors.textSecondary} size={20} />
-        <View style={dynamicStyles.searchPlaceholder}>
-          <Typography color="textSecondary">Szukaj spotów...</Typography>
-        </View>
       </View>
 
       {/* Przyciski boczne */}
@@ -273,6 +271,16 @@ export default function MapScreen() {
           <Typography variant="caption" style={{ marginTop: 8, color: theme.colors.textSecondary }}>
             Typ: {selectedSpot.type.toUpperCase()}
           </Typography>
+          <TouchableOpacity
+            style={dynamicStyles.navigateButton}
+            onPress={() => navigateToSpot(selectedSpot)}
+            accessibilityRole="button"
+            accessibilityLabel={`Nawiguj do spotu ${selectedSpot.name}`}
+          >
+            <Typography variant="label" style={{ color: '#fff' }}>
+              Nawiguj
+            </Typography>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -305,23 +313,6 @@ const getStyles = (theme: any, isTabletLandscape: boolean, tabBarHeight: number)
       backgroundColor: '#f5f5f5',
       overflow: 'hidden',
       zIndex: -1,
-    },
-    searchBar: {
-      position: 'absolute',
-      top: theme.spacing.xl + 8,
-      left: theme.spacing.lg - 4,
-      right: theme.spacing.lg - 4,
-      backgroundColor: theme.colors.surface,
-      padding: theme.spacing.md - 1,
-      borderRadius: theme.borderRadius.md + 2,
-      flexDirection: 'row',
-      alignItems: 'center',
-      ...theme.shadows.medium,
-      borderWidth: 1,
-      borderColor: theme.colors.border,
-    },
-    searchPlaceholder: {
-      marginLeft: 10,
     },
     sideButtons: {
       position: 'absolute',
@@ -378,6 +369,13 @@ const getStyles = (theme: any, isTabletLandscape: boolean, tabBarHeight: number)
       zIndex: 20,
       borderWidth: 1,
       borderColor: theme.colors.border,
+    },
+    navigateButton: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.md,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: theme.spacing.lg,
     },
     webSpotCard: {
       position: 'absolute',
