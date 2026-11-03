@@ -21,6 +21,7 @@ Scripts in `package.json`:
 | `npm run web` | `expo start --web` |
 | `npm run tunnel` | `expo start --tunnel` |
 | `npm run lint` | `eslint .` |
+| `npm test` | unit tests: `node --test` on `src/**/*.test.ts` (needs Node 22.18+, used with 24: Node strips the types; `scripts/resolve-ts.mjs` resolves extensionless imports) |
 
 Type check (not a script): `npx tsc --noEmit`
 
