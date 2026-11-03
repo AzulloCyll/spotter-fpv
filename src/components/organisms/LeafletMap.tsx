@@ -1,4 +1,11 @@
-import React, { useRef, useEffect, useMemo, useImperativeHandle, forwardRef } from 'react';
+import React, {
+  useRef,
+  useState,
+  useEffect,
+  useMemo,
+  useImperativeHandle,
+  forwardRef,
+} from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import { Spot } from '../../data/mockSpots';
@@ -47,16 +54,48 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
   ) => {
     const webViewRef = useRef<WebView>(null);
 
+    // The WebView is built once around the first center; later changes of
+    // initialRegion (the user's location arriving) are applied as a move, not a reload.
+    const [initialCenter] = useState(() => ({
+      latitude: initialRegion.latitude,
+      longitude: initialRegion.longitude,
+    }));
+    // Latest location target, applied again on every WebView load (the first one,
+    // and a reload after a dark mode change).
+    const userTargetRef = useRef<{ lat: number; lng: number } | null>(null);
+
+    // window.mapTouched is set inside the WebView by the pilot's gestures and by any
+    // explicit move (animateTo*); once set, the location handoff leaves the view alone.
     useImperativeHandle(ref, () => ({
       animateToByBounds: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => {
-        const js = `if (window.map) map.fitBounds([[${sw.lat}, ${sw.lng}], [${ne.lat}, ${ne.lng}]]);`;
+        const js = `if (window.map) { window.mapTouched = true; map.fitBounds([[${sw.lat}, ${sw.lng}], [${ne.lat}, ${ne.lng}]]); }`;
         webViewRef.current?.injectJavaScript(js);
       },
       animateTo: (lat: number, lng: number, zoom?: number) => {
-        const js = `if (window.map) map.setView([${lat}, ${lng}], ${zoom || 15});`;
+        const js = `if (window.map) { window.mapTouched = true; map.setView([${lat}, ${lng}], ${zoom || 15}); }`;
         webViewRef.current?.injectJavaScript(js);
       },
     }));
+
+    const moveToUserTarget = () => {
+      const target = userTargetRef.current;
+      if (!target) return;
+      const js = `if (window.map && !window.mapTouched) map.setView([${target.lat}, ${target.lng}], 13);`;
+      webViewRef.current?.injectJavaScript(js);
+    };
+
+    useEffect(() => {
+      if (
+        initialRegion.latitude === initialCenter.latitude &&
+        initialRegion.longitude === initialCenter.longitude
+      ) {
+        return;
+      }
+      userTargetRef.current = { lat: initialRegion.latitude, lng: initialRegion.longitude };
+      // If the WebView is still loading, window.map is missing and this is a no-op;
+      // onLoadEnd applies the stored target then.
+      moveToUserTarget();
+    }, [initialRegion.latitude, initialRegion.longitude]);
 
     const leafletHtml = useMemo(
       () => `
@@ -108,9 +147,20 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
           zoomControl: false, attributionControl: false,
           zoomSnap: 1, zoomDelta: 1, fadeAnimation: false,
           markerZoomAnimation: true, inertia: true
-        }).setView([${initialRegion.latitude}, ${initialRegion.longitude}], 13);
+        }).setView([${initialCenter.latitude}, ${initialCenter.longitude}], 13);
 
         window.map = map;
+
+        // The pilot's own gestures (pan, wheel/double-tap/pinch zoom) mark the map as touched.
+        window.mapTouched = false;
+        function markTouched() { window.mapTouched = true; }
+        map.on('dragstart', markTouched);
+        var mapContainer = map.getContainer();
+        mapContainer.addEventListener('wheel', markTouched, { passive: true });
+        mapContainer.addEventListener('dblclick', markTouched);
+        mapContainer.addEventListener('touchstart', function(e) {
+          if (e.touches && e.touches.length > 1) markTouched();
+        }, { passive: true });
 
         // Custom panes for weather overlays – z-index above default overlayPane (400)
         map.createPane('rainPane');
@@ -240,18 +290,11 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
     </body>
     </html>
   `,
-      [
-        isDark,
-        initialRegion.latitude,
-        initialRegion.longitude,
-        showRain,
-        OFM_TILE_URL,
-        WEATHER_API_WIND_URL,
-        RAINVIEWER_INDEX_URL,
-      ],
+      [isDark, initialCenter, OFM_TILE_URL, WEATHER_API_WIND_URL, RAINVIEWER_INDEX_URL],
     );
 
     const syncAll = () => {
+      moveToUserTarget();
       const js = `
             if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});
             if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain}, ${showWind});
