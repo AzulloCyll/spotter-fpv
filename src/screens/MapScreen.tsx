@@ -7,14 +7,14 @@ import {
   Alert,
   ScrollView,
   Image,
+  Linking,
+  Platform,
 } from 'react-native';
 import { LeafletMap, LeafletMapRef } from '../components/organisms/LeafletMap';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as Location from 'expo-location';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
-import { Input } from '../components/atoms/Input';
 import { Icon } from '../components/atoms/Icon';
 import { Spot } from '../data/mockSpots';
 import { useSpots } from '../context/SpotsContext';
@@ -26,6 +26,7 @@ import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 
 import { MAP_STYLES, MAP_LAYERS } from '../constants/mapStyles';
 import { useIsTablet } from '../hooks/useIsTablet';
+import { appleMapsRouteUrl, googleMapsRouteUrl } from '../utils/navigation';
 
 import { RootTabScreenProps } from '../navigation/types';
 
@@ -51,7 +52,6 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
   const mapRef = useRef<LeafletMapRef>(null);
   const [showSpotsModal, setShowSpotsModal] = useState(false);
-  const insets = useSafeAreaInsets();
   const measuredTabBarHeight = useBottomTabBarHeight();
   const tabBarHeight = isTabletLandscape ? 0 : measuredTabBarHeight;
 
@@ -121,6 +121,20 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
   const closeSpotDetails = () => {
     setSelectedSpot(null);
+  };
+
+  const navigateToSpot = (spot: Spot) => {
+    const { latitude, longitude } = spot.coordinates;
+    const url = Platform.select({
+      ios: appleMapsRouteUrl(latitude, longitude),
+      default: googleMapsRouteUrl(latitude, longitude),
+    });
+    Linking.openURL(url).catch(() => {
+      Alert.alert(
+        'Nie można otworzyć map',
+        'Nie udało się uruchomić aplikacji map na tym telefonie.',
+      );
+    });
   };
 
   return (
@@ -321,7 +335,12 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
                 </View>
               </View>
 
-              <TouchableOpacity style={dynamicStyles.navigateButton}>
+              <TouchableOpacity
+                style={dynamicStyles.navigateButton}
+                onPress={() => navigateToSpot(selectedSpot)}
+                accessibilityRole="button"
+                accessibilityLabel={`Nawiguj do spotu ${selectedSpot.name}`}
+              >
                 <Typography variant="label" style={{ color: '#fff' }}>
                   Nawiguj
                 </Typography>
@@ -467,27 +486,6 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
           </View>
         </>
       )}
-      {/* Search bar - floating above map */}
-      <View
-        style={[
-          dynamicStyles.topContainer,
-          {
-            top: isTabletLandscape ? 16 : insets.top + 8,
-            left: isTabletLandscape ? sidebarWidth + 16 : 16,
-            right: 16,
-            zIndex: 1000,
-            elevation: 1000,
-          },
-        ]}
-        pointerEvents="box-none"
-      >
-        <View style={dynamicStyles.searchBarContainer}>
-          <Input
-            placeholder="Szukaj spotów..."
-            icon={<Icon name="Search" size={20} color={theme.colors.textSecondary} />}
-          />
-        </View>
-      </View>
     </View>
   );
 }
@@ -501,17 +499,6 @@ const getStyles = (theme: any, tabBarHeight: number) =>
     },
     map: {
       ...StyleSheet.absoluteFill,
-    },
-    topContainer: {
-      position: 'absolute',
-      // top handles via style prop with insets
-      left: theme.spacing.lg - 4,
-      right: theme.spacing.lg - 4,
-      zIndex: 100,
-    },
-    searchBarContainer: {
-      marginBottom: 0,
-      ...theme.shadows.medium,
     },
     sideButtons: {
       position: 'absolute',
