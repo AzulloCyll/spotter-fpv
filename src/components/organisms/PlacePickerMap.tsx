@@ -27,7 +27,9 @@ export const PlacePickerMap: React.FC<PlacePickerMapProps> = ({
     <LeafletMap
       initialRegion={initialRegion}
       spots={[]}
-      activeStyleId={isDark ? 'dark' : 'standard'}
+      // Satellite only: every carto layer ('standard', 'dark', the 'hybrid' labels) now
+      // shows an "API KEY REQUIRED" watermark.
+      activeStyleId="satellite"
       showOFM={false}
       showRain={false}
       showWind={false}
