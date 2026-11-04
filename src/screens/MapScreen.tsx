@@ -84,17 +84,31 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 
   // Centre of the visible map; a new spot is placed there (as on web).
   const mapCenterRef = useRef<Coordinates>(DEFAULT_MAP_CENTER);
+  // True once the map reported a move; from then on only MAP_MOVE sets the centre.
+  const mapMovedRef = useRef(false);
 
-  // The map jumps to the user when the location arrives without sending MAP_MOVE
-  // (LeafletMap rebuilds its page), so the centre follows the location here too.
+  // Fallback for the location arriving before any MAP_MOVE. The map's own jump to the
+  // user sends MAP_MOVE too, and it skips the jump when the pilot already moved the map.
   useEffect(() => {
-    if (userLocation) {
+    if (userLocation && !mapMovedRef.current) {
       mapCenterRef.current = {
         latitude: userLocation.coords.latitude,
         longitude: userLocation.coords.longitude,
       };
     }
   }, [userLocation]);
+
+  // A dark mode change reloads the map page at its first centre (the default, as the
+  // location comes later) without MAP_MOVE; a jump to the user, if any, reports itself.
+  const isFirstThemeRef = useRef(true);
+  useEffect(() => {
+    if (isFirstThemeRef.current) {
+      isFirstThemeRef.current = false;
+      return;
+    }
+    mapCenterRef.current = DEFAULT_MAP_CENTER;
+    mapMovedRef.current = false;
+  }, [isDark]);
 
   const handleSaveSpot = (spotData: Omit<Spot, 'id' | 'coordinates' | 'rating'>) => {
     const newLocation = { ...mapCenterRef.current };
@@ -177,6 +191,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             isDark={isDark}
             onMarkerPress={handleSpotPress}
             onMapMove={(center) => {
+              mapMovedRef.current = true;
               mapCenterRef.current = { latitude: center.lat, longitude: center.lng };
             }}
           />
