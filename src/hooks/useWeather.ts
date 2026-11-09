@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
+import { useIsFocused } from '@react-navigation/native';
 
 import { mapData, type WeatherData } from '../utils/weatherMapping';
 import {
@@ -29,6 +30,12 @@ export interface LocationData {
   lng: number;
 }
 
+const REFRESH_INTERVAL_MS = 300000; // 5 minutes
+
+// Two places closer than ~110 m share one reverse-geocoded name (GPS jitters a little).
+const sameSpot = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) =>
+  a.lat.toFixed(3) === b.lat.toFixed(3) && a.lng.toFixed(3) === b.lng.toFixed(3);
+
 const readSavedPlace = async (): Promise<WeatherPlace | null> => {
   try {
     return parseStoredPlace(await AsyncStorage.getItem(PLACE_STORAGE_KEY));
@@ -38,11 +45,16 @@ const readSavedPlace = async (): Promise<WeatherPlace | null> => {
   }
 };
 
-const readGps = async (): Promise<
+// `background` refreshes only read the permission state; they never show the system prompt.
+const readGps = async (
+  background: boolean,
+): Promise<
   | { gps: { lat: number; lng: number }; problem?: undefined }
   | { gps: null; problem: LocationProblem }
 > => {
-  const { status } = await Location.requestForegroundPermissionsAsync();
+  const { status } = background
+    ? await Location.getForegroundPermissionsAsync()
+    : await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') return { gps: null, problem: 'denied' };
   try {
     // A fresh reading (avoid stale cached positions)
@@ -76,17 +88,31 @@ export const useWeather = () => {
   const [manualPlace, setManualPlace] = useState<WeatherPlace | null>(null);
   // Only the latest fetch may write state (the 5-minute refetch can overlap a place change).
   const requestIdRef = useRef(0);
+  // The last good data, so a background refresh knows whether it may stay silent.
+  const hasDataRef = useRef(false);
+  // The last reverse-geocoded name, reused while the spot did not move.
+  const geocodeRef = useRef<{ lat: number; lng: number; name: string } | null>(null);
+  const lastFetchAtRef = useRef(0);
+  const isFocused = useIsFocused();
 
-  const fetchWeather = useCallback(async () => {
+  /**
+   * `background` = the 5-minute refresh. When there is good data it is silent: no loading
+   * flag, no permission prompt, no error and no change to the data if it fails.
+   */
+  const fetchWeather = useCallback(async (background = false) => {
     const requestId = ++requestIdRef.current;
     const isCurrent = () => requestId === requestIdRef.current;
+    const quiet = background && hasDataRef.current;
+    lastFetchAtRef.current = Date.now();
     try {
-      setLoading(true);
-      setError(null);
-      setLocationProblem(null);
+      if (!quiet) {
+        setLoading(true);
+        setError(null);
+        setLocationProblem(null);
+      }
 
       const savedPlace = await readSavedPlace();
-      const gpsResult = savedPlace ? null : await readGps();
+      const gpsResult = savedPlace ? null : await readGps(background);
       if (!isCurrent()) return;
       setManualPlace(savedPlace);
 
@@ -96,6 +122,9 @@ export const useWeather = () => {
         gpsProblem: gpsResult?.problem,
       });
       if (target.source === 'none') {
+        // A quiet refresh keeps the old data when the position is briefly unavailable.
+        if (quiet) return;
+        hasDataRef.current = false;
         setWeather(null);
         setLocation(null);
         setLocationProblem(target.problem);
@@ -105,21 +134,30 @@ export const useWeather = () => {
       const { lat: latitude, lng: longitude } = target;
 
       // Prepare requests
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,relative_humidity_2m&minutely_15=precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,apparent_temperature&hourly=visibility,wind_speed_80m,wind_speed_120m&daily=uv_index_max&timezone=auto&forecast_days=1`;
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m,wind_gusts_10m,relative_humidity_2m&minutely_15=precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,wind_direction_10m,temperature_2m,apparent_temperature&hourly=visibility,wind_speed_80m,wind_speed_120m&daily=uv_index_max&timezone=auto&forecast_days=2`;
       const spaceUrl = `https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json`;
+
+      const reverseGeocodeOnce = async () => {
+        const cached = geocodeRef.current;
+        if (cached && sameSpot(cached, { lat: latitude, lng: longitude })) return cached.name;
+        const fallback = 'Moja lokalizacja';
+        const name = await reverseGeocodeName(latitude, longitude, fallback);
+        // A failed lookup is not remembered, so the next refresh tries again.
+        geocodeRef.current = name === fallback ? null : { lat: latitude, lng: longitude, name };
+        return name;
+      };
 
       // Execute concurrently: place name + Weather API + Space API
       const [placeName, weatherRes, spaceRes] = await Promise.all([
-        target.source === 'manual'
-          ? target.name
-          : reverseGeocodeName(latitude, longitude, 'Moja lokalizacja'),
+        target.source === 'manual' ? target.name : reverseGeocodeOnce(),
         fetch(weatherUrl),
         // Brak NOAA nie blokuje pogody - Kp będzie wtedy „brak danych”.
         fetch(spaceUrl).catch(() => null),
       ]);
       if (!isCurrent()) return;
 
-      setLocation({ name: placeName, lat: latitude, lng: longitude });
+      // Keep showing the place even when the weather request fails (not on a quiet refresh).
+      if (!quiet) setLocation({ name: placeName, lat: latitude, lng: longitude });
 
       if (!weatherRes.ok) {
         throw new Error(`Weather API Error: ${weatherRes.status}`);
@@ -140,9 +178,16 @@ export const useWeather = () => {
       const mapped = mapData(weatherData, spaceData);
       if (!isCurrent()) return;
 
+      setLocation({ name: placeName, lat: latitude, lng: longitude });
+      hasDataRef.current = true;
       setWeather(mapped);
     } catch (err) {
       if (!isCurrent()) return;
+      // With good old data a failed background refresh shows nothing new.
+      if (quiet) return;
+      // A failed normal load puts the screen in the error state; the next background refresh
+      // must then behave like a normal load so it can clear that state.
+      hasDataRef.current = false;
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       if (isCurrent()) setLoading(false);
@@ -175,12 +220,23 @@ export const useWeather = () => {
     await fetchWeather();
   }, [fetchWeather]);
 
+  /** Manual refresh (button): a full load with the loading state. */
+  const refetch = useCallback(() => fetchWeather(false), [fetchWeather]);
+
+  // First load on mount.
   useEffect(() => {
-    fetchWeather();
-    // Every refetch reads the saved place again, so it stays on the same place.
-    const interval = setInterval(fetchWeather, 300000); // Refetch every 5 minutes
-    return () => clearInterval(interval); // Cleanup on unmount
+    fetchWeather(false);
   }, [fetchWeather]);
+
+  // Tabs stay mounted, so the refresh runs only while this screen is focused. Coming back
+  // after a break longer than the interval refreshes at once.
+  useEffect(() => {
+    if (!isFocused) return;
+    if (Date.now() - lastFetchAtRef.current >= REFRESH_INTERVAL_MS) fetchWeather(true);
+    // Every refetch reads the saved place again, so it stays on the same place.
+    const interval = setInterval(() => fetchWeather(true), REFRESH_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [fetchWeather, isFocused]);
 
   return {
     weather,
@@ -191,6 +247,6 @@ export const useWeather = () => {
     manualPlace,
     choosePlace,
     clearPlace,
-    refetch: fetchWeather,
+    refetch,
   };
 };
