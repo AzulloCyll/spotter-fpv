@@ -14,6 +14,7 @@ import {
   WEATHER_API_WIND_URL,
   RAINVIEWER_INDEX_URL,
 } from '../../constants/mapStyles';
+import { parseMapMessage } from '../../utils/mapMessages';
 
 export interface LeafletMapRef {
   animateToByBounds: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => void;
@@ -104,9 +105,11 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
     <head>
       <title>Leaflet Map</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-      <script src="https://unpkg.com/lucide@latest"></script>
+      <!-- Pinned versions with Subresource Integrity (sha384 of the exact files). Changing a
+           version means recomputing its hash: curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
+      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+      <script src="https://unpkg.com/lucide@1.70.0/dist/umd/lucide.min.js" integrity="sha384-64z4N640tVzhAicQVGzxE/48VNN9yS53U5kv9UH8ca7xGU4KSJ9zz8nD4C2BEerP" crossorigin="anonymous"></script>
       <style>
         body { margin: 0; padding: 0; overflow: hidden; background: ${isDark ? '#111827' : '#f3f4f6'}; }
         #map { height: 100vh; width: 100vw; }
@@ -129,20 +132,6 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
     <body class="${isDark ? 'dark-mode' : ''}">
       <div id="map"></div>
       <script>
-        // Log proxy for debugging
-        (function() {
-          var oldLog = console.log;
-          console.log = function(message) {
-            try {
-              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'CONSOLE_LOG', payload: String(message) }));
-            } catch(e) {}
-            oldLog.apply(console, arguments);
-          };
-          window.onerror = function(msg, url, line) {
-            console.log("JS Error: " + msg + " at line " + line);
-          };
-        })();
-
         var map = L.map('map', {
           zoomControl: false, attributionControl: false,
           zoomSnap: 1, zoomDelta: 1, fadeAnimation: false,
@@ -255,7 +244,7 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
               .on('click', function() {
                 window.ReactNativeWebView.postMessage(JSON.stringify({
                   type: 'MARKER_PRESS',
-                  payload: spot
+                  id: spot.id
                 }));
               });
             markers[spot.id] = marker;
@@ -326,19 +315,23 @@ export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
     }, [spots]);
 
     const handleMessage = (event: WebViewMessageEvent) => {
-      try {
-        const { type, payload } = JSON.parse(event.nativeEvent.data);
-        if (type === 'MARKER_PRESS') onMarkerPress(payload);
-        else if (type === 'MAP_MOVE' && onMapMove) onMapMove(payload.center, payload.zoom);
-        else if (type === 'CONSOLE_LOG') console.log('[WebView]', payload);
-      } catch {}
+      // The page runs third-party scripts: validate every message, and resolve a pressed
+      // spot by id from the app's own list instead of trusting data from the page.
+      const message = parseMapMessage(event.nativeEvent.data);
+      if (!message) return;
+      if (message.type === 'MARKER_PRESS') {
+        const spot = spots.find((s) => s.id === message.id);
+        if (spot) onMarkerPress(spot);
+      } else if (onMapMove) {
+        onMapMove(message.center, message.zoom);
+      }
     };
 
     return (
       <View style={styles.container}>
         <WebView
           ref={webViewRef}
-          originWhitelist={['*']}
+          originWhitelist={['https://*']}
           source={{ html: leafletHtml, baseUrl: 'https://openflightmaps.org' }}
           onMessage={handleMessage}
           scrollEnabled={false}
