@@ -5,7 +5,6 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../../theme/ThemeContext';
 import { TopBar } from './TopBar';
 import { FlightStatus } from './FlightStatus';
-import { WeatherSummary } from './WeatherSummary';
 import { QuickNavigation } from './QuickNavigation';
 import { SidebarNav } from './SidebarNav';
 import { Icon } from '../atoms/Icon';
@@ -133,7 +132,6 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
         <View style={{ paddingHorizontal: isTabletLandscape ? 15 : theme.spacing.lg }}>
           <FlightStatus />
-          <WeatherSummary />
           <QuickNavigation onNavigate={handleNavigate} />
         </View>
 

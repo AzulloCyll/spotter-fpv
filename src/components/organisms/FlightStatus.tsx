@@ -9,15 +9,14 @@ import {
   MOCK_GPS_POSITION,
   MOCK_IS_LINK_ACTIVE,
   MOCK_VTX_TEMP,
-  MOCK_WEATHER_DATA,
 } from '../../constants/mockData';
+import { DemoBadge } from '../atoms/DemoBadge';
 
 export const FlightStatus: React.FC = () => {
   const { theme, isDark } = useTheme();
   const isLinkActive = MOCK_IS_LINK_ACTIVE;
   const battery = MOCK_BATTERY;
   const gps = MOCK_GPS_POSITION;
-  const weather = MOCK_WEATHER_DATA;
   const vtxTemp = MOCK_VTX_TEMP;
 
   const textColor = isDark ? '#FFFFFF' : theme.colors.text;
@@ -55,10 +54,11 @@ export const FlightStatus: React.FC = () => {
           variant="bodySmall"
           style={[dynamicStyles.telemetry, { color: secondaryColor }]}
         >
-          GPS: {gps.satellites} • {battery.voltage}V • {vtxTemp}°C • Kp: {weather.kpIndex}
+          GPS: {gps.satellites} • {battery.voltage}V • {vtxTemp}°C
         </Typography>
 
         <View style={dynamicStyles.bottomRow}>
+          <DemoBadge style={{ marginRight: 8 }} />
           <Badge
             label={isLinkActive ? 'SYSTEM OK' : 'DISARMED'}
             variant={isLinkActive ? 'green' : 'error'}

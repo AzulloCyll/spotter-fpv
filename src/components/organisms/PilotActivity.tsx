@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, Image } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
 import { Avatar } from '../atoms/Avatar';
+import { DemoBadge } from '../atoms/DemoBadge';
 
 const MOCK_ACTIVITY = [
   {
@@ -71,9 +72,12 @@ export const PilotActivity: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Typography variant="label" color="textSecondary" style={styles.label}>
-          OSTATNIA AKTYWNOŚĆ
-        </Typography>
+        <View style={styles.labelRow}>
+          <Typography variant="label" color="textSecondary" style={styles.label}>
+            OSTATNIA AKTYWNOŚĆ
+          </Typography>
+          <DemoBadge style={{ marginLeft: 8 }} />
+        </View>
         <Typography variant="bodySmall" color="primary" weight="700">
           CZAT
         </Typography>
@@ -167,6 +171,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   label: {
     letterSpacing: 1.2,
