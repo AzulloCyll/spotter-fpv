@@ -10,42 +10,52 @@ import { getConditionText, mapData, parseKpRows } from './weatherMapping';
 const at = (iso: string) => Date.parse(iso);
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const slotTime = (i: number) => `2026-06-15T${pad(Math.floor(i / 4))}:${pad((i % 4) * 15)}`;
+const slotTime = (i: number) => {
+  const day = 15 + Math.floor(i / 96);
+  const j = i % 96;
+  return `2026-06-${day}T${pad(Math.floor(j / 4))}:${pad((j % 4) * 15)}`;
+};
 const series = (length: number, fn: (i: number) => number | null) =>
   Array.from({ length }, (_, i) => fn(i));
 
 /**
- * Open-Meteo response for one day (forecast_days=1, 96 quarter-hours).
+ * Open-Meteo response for `days` days (forecast_days=N, 96 quarter-hours per day).
  * Values are derived from the slot / hour index, so a value tells which slot it came from.
  */
-const makeWeatherRaw = ({ offsetSeconds = 7200, slots = 96 } = {}) => ({
-  utc_offset_seconds: offsetSeconds,
-  current: {
-    temperature_2m: 18,
-    apparent_temperature: 17,
-    precipitation: 0.2,
-    weather_code: 2,
-    wind_speed_10m: 12,
-    wind_gusts_10m: 20,
-    relative_humidity_2m: 60,
-  },
-  minutely_15: {
-    time: Array.from({ length: slots }, (_, i) => slotTime(i)),
-    wind_speed_10m: series(slots, (i) => i),
-    wind_gusts_10m: series(slots, (i) => i + 100),
-    wind_direction_10m: series(slots, (i) => i + 200),
-    precipitation: series(slots, (i) => (i % 2 === 0 ? 0 : 0.5)),
-    precipitation_probability: series(slots, (i) => i),
-    temperature_2m: series(slots, (i) => i + 0.5),
-    apparent_temperature: series(slots, (i) => i - 0.5),
-  },
-  hourly: {
-    visibility: series(24, (h) => h * 1000 + 500),
-    wind_speed_80m: series(24, (h) => h + 80),
-    wind_speed_120m: series(24, (h) => h + 120),
-  },
-  daily: { uv_index_max: [5] },
-});
+const makeWeatherRaw = ({
+  offsetSeconds = 7200,
+  days = 1,
+}: { offsetSeconds?: number; days?: number } = {}) => {
+  const slots = 96 * days;
+  return {
+    utc_offset_seconds: offsetSeconds,
+    current: {
+      temperature_2m: 18,
+      apparent_temperature: 17,
+      precipitation: 0.2,
+      weather_code: 2,
+      wind_speed_10m: 12,
+      wind_gusts_10m: 20,
+      relative_humidity_2m: 60,
+    },
+    minutely_15: {
+      time: Array.from({ length: slots }, (_, i) => slotTime(i)),
+      wind_speed_10m: series(slots, (i) => i),
+      wind_gusts_10m: series(slots, (i) => i + 100),
+      wind_direction_10m: series(slots, (i) => i + 200),
+      precipitation: series(slots, (i) => (i % 2 === 0 ? 0 : 0.5)),
+      precipitation_probability: series(slots, (i) => i),
+      temperature_2m: series(slots, (i) => i + 0.5),
+      apparent_temperature: series(slots, (i) => i - 0.5),
+    },
+    hourly: {
+      visibility: series(24 * days, (h) => h * 1000 + 500),
+      wind_speed_80m: series(24 * days, (h) => h + 80),
+      wind_speed_120m: series(24 * days, (h) => h + 120),
+    },
+    daily: { uv_index_max: Array.from({ length: days }, () => 5) },
+  };
+};
 
 describe('getConditionText', () => {
   test('maps WMO weather codes to Polish labels', () => {
@@ -161,32 +171,34 @@ describe('mapData: forecasts and current values', () => {
   });
 });
 
-describe('mapData: end-of-day window (Z-143, known bug)', () => {
-  // These tests document the CURRENT behaviour. The request uses forecast_days=1,
-  // so the quarter-hour data ends at 23:45 local time. Z-143 will fix this; when it
-  // does, these expectations must change.
-  const raw = makeWeatherRaw({ offsetSeconds: 0 });
+describe('mapData: end-of-day window with two days of data (Z-143)', () => {
+  // The request asks for forecast_days=2, so the quarter-hour series runs to the end
+  // of tomorrow and the window "now + 10 slots" never runs out in the evening.
+  // Index 0 is today 00:00, so the hour-of-day index still points at today.
+  const raw = makeWeatherRaw({ offsetSeconds: 0, days: 2 });
 
-  test('21:30 still has the full 10-slot window', () => {
-    assert.equal(mapData(raw, [], at('2026-06-15T21:30:00Z')).windForecast.length, 10);
+  test('21:45 and 23:00 have the full 10-slot window', () => {
+    for (const iso of ['2026-06-15T21:45:00Z', '2026-06-15T23:00:00Z', '2026-06-15T23:45:00Z']) {
+      const data = mapData(raw, [], at(iso));
+      assert.equal(data.windForecast.length, 10, iso);
+      assert.equal(data.precipitationForecast.length, 10, iso);
+      assert.equal(data.tempForecast.length, 10, iso);
+    }
   });
 
-  test('known bug: after 21:45 the window has fewer than 10 slots', () => {
-    assert.equal(mapData(raw, [], at('2026-06-15T21:45:00Z')).windForecast.length, 9);
-    assert.equal(mapData(raw, [], at('2026-06-15T23:00:00Z')).windForecast.length, 4);
-  });
-
-  test('23:00 still has a full next hour', () => {
-    const data = mapData(raw, [], at('2026-06-15T23:00:00Z'));
-    assert.equal(data.nextHourPrecipitationProbability, 95);
-    assert.equal(data.nextHourPrecipitationAmount, 1);
-  });
-
-  test('known bug: after 23:15 the next hour has no data, so the rating is UWAGA', () => {
+  test('the window crosses midnight into tomorrow', () => {
     const data = mapData(raw, [], at('2026-06-15T23:30:00Z'));
-    assert.equal(data.windForecast.length, 2);
-    assert.equal(data.nextHourPrecipitationProbability, null);
-    assert.equal(data.nextHourPrecipitationAmount, null);
+    // Slots 94 and 95 are today; 96..103 are tomorrow 00:00..01:45.
+    assert.equal(data.windForecast[0].speed, 94);
+    assert.equal(data.windForecast[2].speed, 96);
+    assert.equal(data.windForecast[2].time, '00:00');
+    assert.equal(data.windForecast[9].time, '01:45');
+  });
+
+  test('after 23:15 the next hour has data, so the rating is not forced to UWAGA', () => {
+    const data = mapData(raw, [], at('2026-06-15T23:30:00Z'));
+    assert.notEqual(data.nextHourPrecipitationProbability, null);
+    assert.notEqual(data.nextHourPrecipitationAmount, null);
 
     const assessment = assessFlightConditions({
       windSpeed: 5,
@@ -196,10 +208,17 @@ describe('mapData: end-of-day window (Z-143, known bug)', () => {
       precipitationProbability: data.nextHourPrecipitationProbability,
       precipitationAmount: data.nextHourPrecipitationAmount,
     });
-    assert.equal(assessment.level, 'caution');
+    // The fixture's probabilities are high (they equal the slot index), so this is a
+    // real rating from data (no-go), not the "no data" fallback (caution).
+    assert.equal(assessment.level, 'nogo');
   });
 
-  test.todo('Z-143: full 10-slot window and next-hour data late in the evening');
+  test('hourly values and UV still come from today', () => {
+    const data = mapData(raw, [], at('2026-06-15T23:30:00Z'));
+    assert.equal(data.windSpeed80m, 23 + 80);
+    assert.equal(data.visibility, 23.5);
+    assert.equal(data.uvIndex, 5);
+  });
 });
 
 describe('parseKpRows (NOAA planetary K-index forecast)', () => {
