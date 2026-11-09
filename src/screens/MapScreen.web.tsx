@@ -40,7 +40,7 @@ const WEB_STYLES = [
 export default function MapScreen() {
   const { theme, isDark } = useTheme();
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
-  const { spots, addSpot } = useSpots();
+  const { spots, addSpot, canAddSpots } = useSpots();
   const [center, setCenter] = useState<[number, number]>([52.2297, 21.0122]); // Warsaw
   const [zoom, setZoom] = useState(12);
   const [activeStyleId, setActiveStyleId] = useState(isDark ? 'dark' : 'light');
@@ -147,7 +147,9 @@ export default function MapScreen() {
       {/* FAB - Dodawanie Spota */}
       <TouchableOpacity
         onPress={() => setShowAddModal(true)}
-        style={dynamicStyles.fab}
+        // Blocked until saved spots load, so a new spot cannot overwrite them.
+        disabled={!canAddSpots}
+        style={[dynamicStyles.fab, !canAddSpots && { opacity: 0.5 }]}
         activeOpacity={0.8}
       >
         <Icon name="Plus" size={32} color="#FFFFFF" />

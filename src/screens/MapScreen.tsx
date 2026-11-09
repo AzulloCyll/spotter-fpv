@@ -36,7 +36,7 @@ const MemoizedSpotsSidebarPanel = React.memo(SpotsSidebarPanel);
 
 export default function MapScreen({ navigation, route }: RootTabScreenProps<'Mapa'>) {
   const { theme, isDark } = useTheme();
-  const { spots, addSpot } = useSpots();
+  const { spots, addSpot, canAddSpots } = useSpots();
   const [activeStyleId, setActiveStyleId] = useState('hybrid');
   const [showOFM, setShowOFM] = useState(false);
   const [showRain, setShowRain] = useState(false);
@@ -222,7 +222,13 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
       >
         <TouchableOpacity
           onPress={() => setShowAddModal(true)}
-          style={[dynamicStyles.fab, { backgroundColor: theme.colors.primary + 'D9' }]}
+          // Blocked until saved spots load, so a new spot cannot overwrite them.
+          disabled={!canAddSpots}
+          style={[
+            dynamicStyles.fab,
+            { backgroundColor: theme.colors.primary + 'D9' },
+            !canAddSpots && { opacity: 0.5 },
+          ]}
         >
           <Icon name="Plus" size={32} color="#FFFFFF" />
         </TouchableOpacity>

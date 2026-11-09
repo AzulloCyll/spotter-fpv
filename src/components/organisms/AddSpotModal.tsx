@@ -17,6 +17,11 @@ import { Icon } from '../atoms/Icon';
 import { Spot, SpotType } from '../../data/mockSpots';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
+import {
+  normalizeSpotText,
+  SPOT_DESCRIPTION_MAX_LENGTH,
+  SPOT_NAME_MAX_LENGTH,
+} from '../../utils/spots';
 
 // Picker URIs live in a cache the system may clear, so saved spots keep their own copies.
 const SPOTS_DIR = `${FileSystem.documentDirectory}spots/`;
@@ -87,7 +92,10 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
   };
 
   const handleSave = async () => {
-    if (!name || !description || savingRef.current) return; // Simple validation
+    const cleanName = normalizeSpotText(name, SPOT_NAME_MAX_LENGTH);
+    const cleanDescription = normalizeSpotText(description, SPOT_DESCRIPTION_MAX_LENGTH);
+    // Trimmed first, so a name or description of spaces only does not pass.
+    if (!cleanName || !cleanDescription || savingRef.current) return;
     // A ref blocks a second tap right away; state only updates after the next render.
     savingRef.current = true;
     setIsSaving(true);
@@ -104,8 +112,8 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
     savingRef.current = false;
     setIsSaving(false);
     onSave({
-      name,
-      description,
+      name: cleanName,
+      description: cleanDescription,
       type,
       difficulty,
       images: savedImages,
@@ -139,6 +147,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
                 style={styles.input}
                 value={name}
                 onChangeText={setName}
+                maxLength={SPOT_NAME_MAX_LENGTH}
                 placeholder="Np. Opuszczona hala"
                 placeholderTextColor={theme.colors.textSecondary}
               />
@@ -150,6 +159,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
                 style={[styles.input, styles.textArea]}
                 value={description}
                 onChangeText={setDescription}
+                maxLength={SPOT_DESCRIPTION_MAX_LENGTH}
                 placeholder="Opisz to miejsce..."
                 placeholderTextColor={theme.colors.textSecondary}
                 multiline
