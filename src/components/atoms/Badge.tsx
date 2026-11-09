@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from './Typography';
 
 interface BadgeProps {
@@ -76,7 +77,7 @@ export const Badge: React.FC<BadgeProps> = ({ label, variant = 'info', pulse = f
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flexDirection: 'row',

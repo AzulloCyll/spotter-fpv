@@ -94,17 +94,14 @@ export const useGalleryStorage = () => {
           to: permanentUri,
         });
 
-        // Symulacja opóźnienia dla UX
-        setTimeout(() => {
-          const newPhoto: PhotoItem = {
-            id: Date.now().toString(),
-            uri: permanentUri,
-            likes: 0,
-            isLiked: false,
-          };
-          setPhotos((prev) => [newPhoto, ...prev]);
-          setIsUploading(false);
-        }, 1000);
+        const newPhoto: PhotoItem = {
+          id: Date.now().toString(),
+          uri: permanentUri,
+          likes: 0,
+          isLiked: false,
+        };
+        setPhotos((prev) => [newPhoto, ...prev]);
+        setIsUploading(false);
       } catch (error) {
         console.error('Error saving image:', error);
         Alert.alert('Błąd', 'Nie udało się zapisać zdjęcia.');
@@ -129,20 +126,10 @@ export const useGalleryStorage = () => {
     );
   };
 
-  const getFilesDebug = async () => {
-    try {
-      const files = await FileSystem.readDirectoryAsync(GALLERY_DIR);
-      return files;
-    } catch {
-      return [];
-    }
-  };
-
   return {
     photos,
     isUploading,
     addPhoto,
     toggleLike,
-    getFilesDebug,
   };
 };

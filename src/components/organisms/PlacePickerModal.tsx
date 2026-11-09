@@ -3,6 +3,7 @@ import { View, Modal, StyleSheet, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import type { Coordinates } from '../../utils/location';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
@@ -91,7 +92,7 @@ export const PlacePickerModal: React.FC<PlacePickerModalProps> = ({
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,

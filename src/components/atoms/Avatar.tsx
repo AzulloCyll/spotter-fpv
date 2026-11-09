@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Image, StyleSheet, type ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 
 interface AvatarProps {
   source?: string;
@@ -30,7 +31,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       // No border, clean look
