@@ -8,12 +8,12 @@ import {
   StatusBar,
   Pressable,
   ActivityIndicator,
-  Alert,
   FlatList,
   ListRenderItem,
 } from 'react-native';
 import { Skeleton } from '../atoms/Skeleton';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { IconButton } from '../atoms/IconButton';
@@ -22,7 +22,7 @@ import { useGalleryStorage, PhotoItem } from '../../hooks/useGalleryStorage';
 
 export const CommunityGallery: React.FC = () => {
   const { theme, isDark } = useTheme();
-  const { photos, isUploading, addPhoto, toggleLike, getFilesDebug } = useGalleryStorage();
+  const { photos, isUploading, addPhoto, toggleLike } = useGalleryStorage();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoItem | null>(null);
 
   // Połącz prawdziwe zdjęcia z placeholderem ładowania
@@ -34,18 +34,6 @@ export const CommunityGallery: React.FC = () => {
   const activePhoto = selectedPhoto
     ? photos.find((p) => p.id === selectedPhoto.id) || selectedPhoto
     : null;
-
-  const checkLocalStorage = async () => {
-    const files = await getFilesDebug();
-    if (files.length > 0) {
-      Alert.alert(
-        'Status Pamięci Lokalnej',
-        `Folder: /gallery/\nPlików: ${files.length}\n\nLista plików:\n${files.slice(0, 10).join('\n')}${files.length > 10 ? '\n...' : ''}`,
-      );
-    } else {
-      Alert.alert('Status', 'Folder jest jeszcze pusty lub nie został utworzony.');
-    }
-  };
 
   const dynamicStyles = getStyles(theme);
 
@@ -91,11 +79,9 @@ export const CommunityGallery: React.FC = () => {
   return (
     <View style={dynamicStyles.container}>
       <View style={dynamicStyles.header}>
-        <Pressable onLongPress={checkLocalStorage} delayLongPress={2000}>
-          <Typography variant="label" color="textSecondary" style={dynamicStyles.label}>
-            GALERIA SPOŁECZNOŚCI
-          </Typography>
-        </Pressable>
+        <Typography variant="label" color="textSecondary" style={dynamicStyles.label}>
+          GALERIA SPOŁECZNOŚCI
+        </Typography>
         <TouchableOpacity
           style={[
             dynamicStyles.addButton,
@@ -205,7 +191,7 @@ export const CommunityGallery: React.FC = () => {
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       marginTop: 20,

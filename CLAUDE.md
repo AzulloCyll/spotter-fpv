@@ -21,11 +21,10 @@ Scripts in `package.json`:
 | `npm run web` | `expo start --web` |
 | `npm run tunnel` | `expo start --tunnel` |
 | `npm run lint` | `eslint .` |
+| `npm run typecheck` | `tsc --noEmit` — type check |
 | `npm test` | unit tests: `node --test` on `src/**/*.test.ts` (needs Node 22.18+, used with 24: Node strips the types; `scripts/resolve-ts.mjs` resolves extensionless imports) |
 
-Type check (not a script): `npx tsc --noEmit`
-
-**Minimum check before a PR:** `npm run lint` and `npx tsc --noEmit`, both clean.
+**Minimum check before a PR:** `npm run lint` and `npm run typecheck`, both clean.
 
 ## Project facts
 

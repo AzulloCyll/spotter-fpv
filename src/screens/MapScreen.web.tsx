@@ -11,6 +11,7 @@ import {
 import { Map as MapView, Marker } from 'pigeon-maps';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../theme/ThemeContext';
+import type { Theme } from '../theme';
 import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
 import { useSpots } from '../context/SpotsContext';
@@ -107,10 +108,9 @@ export default function MapScreen() {
               anchor={[spot.coordinates.latitude, spot.coordinates.longitude]}
             >
               <View
-                // @ts-ignore - Direct DOM interaction for Web
-                onClick={(e: any) => {
+                // @ts-expect-error - onClick is a react-native-web DOM prop missing from RN's ViewProps
+                onClick={(e: { stopPropagation: () => void }) => {
                   e.stopPropagation();
-                  console.log('DOM Click:', spot.name);
                   setSelectedSpot(spot);
                 }}
                 style={{
@@ -119,7 +119,6 @@ export default function MapScreen() {
                   justifyContent: 'center',
                   alignItems: 'center',
                   cursor: 'pointer',
-                  // @ts-ignore
                   pointerEvents: 'auto',
                 }}
               >
@@ -304,7 +303,7 @@ export default function MapScreen() {
 }
 
 // Bottom offsets sit above the tab bar; wide landscape keeps the old fixed values
-const getStyles = (theme: any, isTabletLandscape: boolean, tabBarHeight: number) =>
+const getStyles = (theme: Theme, isTabletLandscape: boolean, tabBarHeight: number) =>
   StyleSheet.create({
     container: {
       flex: 1,
@@ -425,7 +424,7 @@ const getStyles = (theme: any, isTabletLandscape: boolean, tabBarHeight: number)
       bottom: isTabletLandscape ? 100 : tabBarHeight + 30,
       width: 300,
       backgroundColor: theme.colors.surface + 'CC', // 80% opacity
-      // @ts-ignore
+      // @ts-expect-error - backdropFilter is a web-only CSS property missing from RN's ViewStyle
       backdropFilter: 'blur(10px)', // Web specific
       borderRadius: 16,
       shadowColor: '#000',

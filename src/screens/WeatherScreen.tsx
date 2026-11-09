@@ -18,6 +18,7 @@ import { WindAtAltitude } from '../components/molecules/WindAtAltitude';
 import { GoNoGoIndicator } from '../components/organisms/GoNoGoIndicator';
 
 import { useTheme } from '../theme/ThemeContext';
+import type { Theme } from '../theme';
 import { useWeather } from '../hooks/useWeather';
 import { useIsTablet } from '../hooks/useIsTablet';
 import { RootTabParamList } from '../navigation/types';
@@ -340,7 +341,7 @@ export default function WeatherScreen() {
   );
 }
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 
 interface CardProps {
   children: React.ReactNode;
@@ -15,7 +16,7 @@ export const Card: React.FC<CardProps> = ({ children, style, variant = 'outline'
   return <View style={[dynamicStyles.card, dynamicStyles[variant], style]}>{children}</View>;
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     card: {
       padding: 15,
@@ -32,9 +33,9 @@ const getStyles = (theme: any) =>
       elevation: theme.shadows.soft.elevation,
     },
     glass: {
-      backgroundColor: theme.isDark ? 'rgba(30, 41, 59, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+      backgroundColor: 'rgba(255, 255, 255, 0.7)',
       borderWidth: 1,
-      borderColor: theme.isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.3)',
+      borderColor: 'rgba(255, 255, 255, 0.3)',
     },
     tinted: {
       backgroundColor: theme.colors.primary + '08',

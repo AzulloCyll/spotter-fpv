@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, StyleSheet, ViewStyle, TextInputProps } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from './Typography';
 
 interface InputProps extends TextInputProps {
@@ -60,7 +61,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(InputComponent);
 
 Input.displayName = 'Input';
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       marginBottom: 16,

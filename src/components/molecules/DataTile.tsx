@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 
 interface DataTileProps {
@@ -56,7 +57,7 @@ export const DataTile: React.FC<DataTileProps> = ({
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       width: '48%',

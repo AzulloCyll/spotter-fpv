@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { Spot } from '../../data/mockSpots';
@@ -28,7 +29,7 @@ const getIconName = (type: Spot['type']) => {
   }
 };
 
-const getIconColor = (type: Spot['type'], theme: any) => {
+const getIconColor = (type: Spot['type'], theme: Theme) => {
   switch (type) {
     case 'bando':
       return theme.colors.error;
@@ -209,10 +210,7 @@ export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({
             placeholder="Szukaj..."
             placeholderTextColor={theme.colors.textSecondary}
             value={searchQuery}
-            onChangeText={(text) => {
-              console.log('Search query changed:', text);
-              setSearchQuery(text);
-            }}
+            onChangeText={setSearchQuery}
             autoCapitalize="none"
             autoCorrect={false}
             spellCheck={false}

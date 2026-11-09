@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { Spot, SpotType } from '../../data/mockSpots';
@@ -247,7 +248,7 @@ export const AddSpotModal: React.FC<AddSpotModalProps> = ({ visible, onClose, on
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
@@ -262,7 +263,6 @@ const getStyles = (theme: any) =>
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.lg,
       padding: theme.spacing.lg,
-      ...theme.shadows.strong,
     },
     header: {
       flexDirection: 'row',

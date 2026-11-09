@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 import { Icon, IconName } from '../atoms/Icon';
 import { RootTabParamList } from '../../navigation/types';
@@ -123,7 +124,7 @@ export const QuickNavigation: React.FC<QuickNavigationProps> = ({ onNavigate }) 
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     section: {
       paddingHorizontal: 0,

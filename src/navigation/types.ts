@@ -2,7 +2,7 @@ import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 
 export type RootTabParamList = {
   Start: undefined;
-  Mapa: { spotId?: string; openList?: boolean } | undefined;
+  Mapa: { openList?: boolean } | undefined;
   Pogoda: undefined;
   Czat: undefined;
   Telemetria: undefined;

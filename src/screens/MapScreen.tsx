@@ -14,6 +14,7 @@ import { LeafletMap, LeafletMapRef } from '../components/organisms/LeafletMap';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import * as Location from 'expo-location';
 import { useTheme } from '../theme/ThemeContext';
+import type { Theme } from '../theme';
 import { Typography } from '../components/atoms/Typography';
 import { Icon } from '../components/atoms/Icon';
 import { Spot } from '../data/mockSpots';
@@ -518,89 +519,19 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
 }
 
 // Bottom offsets sit above the tab bar (tabBarHeight is 0 on tablet landscape)
-const getStyles = (theme: any, tabBarHeight: number) =>
+const getStyles = (theme: Theme, tabBarHeight: number) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: theme.colors.background,
     },
-    map: {
-      ...StyleSheet.absoluteFill,
-    },
-    sideButtons: {
-      position: 'absolute',
-      right: theme.spacing.lg - 4,
-      top: 100,
-    },
     contentWrapper: {
       flex: 1,
-    },
-    sidebar: {
-      width: '30%',
-      maxWidth: 400,
-      backgroundColor: theme.colors.background,
-      borderRightWidth: 1,
-      borderRightColor: theme.colors.border,
-      overflow: 'hidden',
-    },
-    sidebarHeader: {
-      padding: 15,
-      paddingBottom: 4,
-    },
-    sidebarSearch: {
-      paddingHorizontal: 15,
-      marginBottom: theme.spacing.md,
-    },
-    sidebarContent: {
-      flex: 1,
-    },
-    sidebarItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-      borderLeftWidth: 4,
-      borderLeftColor: 'transparent',
     },
     fabContainer: {
       position: 'absolute',
       bottom: tabBarHeight + theme.spacing.xl + 20,
       right: theme.spacing.md,
-    },
-    sideButton: {
-      backgroundColor: theme.colors.surface,
-      ...theme.shadows.medium,
-    },
-    markerContainer: {
-      padding: 5,
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      justifyContent: 'flex-end',
-    },
-    menuContent: {
-      backgroundColor: theme.colors.surface,
-      borderTopLeftRadius: theme.borderRadius.lg + 4,
-      borderTopRightRadius: theme.borderRadius.lg + 4,
-      padding: theme.spacing.lg,
-      paddingBottom: theme.spacing.xl + 8,
-    },
-    menuTitle: {
-      marginBottom: 20,
-    },
-    menuItem: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingVertical: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.colors.border,
-    },
-    menuItemText: {
-      fontSize: 16,
-      fontWeight: '600',
     },
     spotCardContainer: {
       position: 'absolute',
@@ -621,7 +552,6 @@ const getStyles = (theme: any, tabBarHeight: number) =>
       backgroundColor: theme.colors.surface,
       borderRadius: theme.borderRadius.lg,
       padding: theme.spacing.lg,
-      ...theme.shadows.strong,
     },
     spotHeader: {
       flexDirection: 'row',
