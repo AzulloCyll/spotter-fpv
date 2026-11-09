@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet, Animated } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import { Typography } from '../atoms/Typography';
+import { DemoBadge } from '../atoms/DemoBadge';
 import { MOCK_SIGNAL, MOCK_IS_LINK_ACTIVE } from '../../constants/mockData';
 
 export const TelemetryStatus: React.FC = () => {
@@ -83,6 +84,7 @@ export const TelemetryStatus: React.FC = () => {
           </Typography>
         )}
       </View>
+      <DemoBadge style={{ marginLeft: 6 }} />
     </View>
   );
 };

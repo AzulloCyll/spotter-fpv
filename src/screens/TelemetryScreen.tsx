@@ -3,6 +3,7 @@ import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { Typography } from '../components/atoms/Typography';
 import { Badge } from '../components/atoms/Badge';
+import { DemoBadge } from '../components/atoms/DemoBadge';
 import { IconButton } from '../components/atoms/IconButton';
 import { Divider } from '../components/atoms/Divider';
 import { DataTile } from '../components/molecules/DataTile';
@@ -10,7 +11,6 @@ import { Icon } from '../components/atoms/Icon';
 import { useNavigation } from '@react-navigation/native';
 import { SidebarNav } from '../components/organisms/SidebarNav';
 import { FlightStatus } from '../components/organisms/FlightStatus';
-import { WeatherSummary } from '../components/organisms/WeatherSummary';
 import { QuickNavigation } from '../components/organisms/QuickNavigation';
 import { TopBar } from '../components/organisms/TopBar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -57,7 +57,6 @@ export default function TelemetryScreen() {
 
               <View style={{ paddingHorizontal: 15 }}>
                 <FlightStatus />
-                <WeatherSummary />
                 <QuickNavigation onNavigate={(screen) => navigation.navigate(screen as any)} />
               </View>
               <View style={{ height: 60 }} />
@@ -81,12 +80,14 @@ export default function TelemetryScreen() {
               <Typography variant="h2" weight="800">
                 Telemetria
               </Typography>
-              <Badge
-                label={isLinkActive ? 'LINK AKTYWNY' : 'BRAK LINKU'}
-                variant={isLinkActive ? 'success' : 'error'}
-                pulse={isLinkActive}
-                style={{ marginTop: 4 }}
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                <Badge
+                  label={isLinkActive ? 'LINK AKTYWNY' : 'BRAK LINKU'}
+                  variant={isLinkActive ? 'success' : 'error'}
+                  pulse={isLinkActive}
+                />
+                <DemoBadge style={{ marginLeft: 8 }} />
+              </View>
             </View>
           </View>
 

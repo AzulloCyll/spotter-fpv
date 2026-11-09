@@ -4,6 +4,7 @@ import { View, StyleSheet, ImageBackground, TouchableOpacity } from 'react-nativ
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { Badge } from '../atoms/Badge';
+import { DemoBadge } from '../atoms/DemoBadge';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export const FeaturedSpot: React.FC = () => {
@@ -11,9 +12,12 @@ export const FeaturedSpot: React.FC = () => {
 
   return (
     <View style={styles.wrapper}>
-      <Typography variant="label" color="textSecondary" style={styles.sectionLabel}>
-        SPOT DNIA
-      </Typography>
+      <View style={styles.labelRow}>
+        <Typography variant="label" color="textSecondary" style={styles.sectionLabel}>
+          SPOT DNIA
+        </Typography>
+        <DemoBadge style={{ marginLeft: 8, marginBottom: 8 }} />
+      </View>
 
       <TouchableOpacity activeOpacity={0.9} style={styles.container}>
         <ImageBackground
@@ -75,6 +79,10 @@ const styles = StyleSheet.create({
   wrapper: {
     marginTop: 10,
     flex: 1,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   sectionLabel: {
     marginBottom: 8,

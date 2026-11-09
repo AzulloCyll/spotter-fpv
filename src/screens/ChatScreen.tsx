@@ -12,6 +12,7 @@ import { Typography } from '../components/atoms/Typography';
 import { IconButton } from '../components/atoms/IconButton';
 import { Input } from '../components/atoms/Input';
 import { Icon } from '../components/atoms/Icon';
+import { DemoBadge } from '../components/atoms/DemoBadge';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { MOCK_MESSAGES } from '../constants/mockData';
 import { useNavigation } from '@react-navigation/native';
@@ -57,7 +58,10 @@ export default function ChatScreen() {
               />
             )}
             <View style={dynamicStyles.groupInfo}>
-              <Typography variant="h3">Warszawa FPV Team</Typography>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Typography variant="h3">Warszawa FPV Team</Typography>
+                <DemoBadge style={{ marginLeft: 8 }} />
+              </View>
               <Typography variant="caption" color="textSecondary">
                 12 pilotów aktywnych
               </Typography>
