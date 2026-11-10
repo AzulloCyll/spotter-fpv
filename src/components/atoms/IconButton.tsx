@@ -3,6 +3,9 @@ import { TouchableOpacity, StyleSheet, type ViewStyle, type StyleProp } from 're
 import { useTheme } from '../../theme/ThemeContext';
 import type { Theme } from '../../theme';
 
+// Props the button injects into the icon element it is given (an <Icon />).
+type IconInjectedProps = { size?: number; color?: string; strokeWidth?: number };
+
 interface IconButtonProps {
   icon: React.ReactNode;
   onPress: () => void;
@@ -34,7 +37,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
         style,
       ]}
     >
-      {React.cloneElement(icon as React.ReactElement<any>, {
+      {React.cloneElement(icon as React.ReactElement<IconInjectedProps>, {
         size: size * 0.5,
         color: variant === 'primary' ? '#FFFFFF' : theme.colors.primary,
       })}

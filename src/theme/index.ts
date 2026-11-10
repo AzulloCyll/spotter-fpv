@@ -1,3 +1,5 @@
+import type { TextStyle, ViewStyle } from 'react-native';
+
 export interface Theme {
   colors: {
     primary: string;
@@ -17,13 +19,13 @@ export interface Theme {
     black: string;
   };
   typography: {
-    h1: any;
-    h2: any;
-    h3: any;
-    body: any;
-    bodySmall: any;
-    caption: any;
-    label: any;
+    h1: TextStyle;
+    h2: TextStyle;
+    h3: TextStyle;
+    body: TextStyle;
+    bodySmall: TextStyle;
+    caption: TextStyle;
+    label: TextStyle;
   };
   spacing: {
     xs: number;
@@ -40,9 +42,9 @@ export interface Theme {
     full: number;
   };
   shadows: {
-    soft: any;
-    medium: any;
-    card: any;
+    soft: ViewStyle;
+    medium: ViewStyle;
+    card: ViewStyle;
   };
 }
 

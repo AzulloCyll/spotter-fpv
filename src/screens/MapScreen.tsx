@@ -170,7 +170,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
             style={{ height: '100%', width: sidebarWidth, zIndex: 2000 }}
             onNavigate={(screen) => {
               if (screen === 'Mapa') setShowSpotsModal(!showSpotsModal);
-              else navigation.navigate(screen as any);
+              else navigation.navigate(screen);
             }}
           />
         )}

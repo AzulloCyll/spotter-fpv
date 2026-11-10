@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  TouchableOpacity,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp, useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,8 +37,8 @@ interface WeatherStatProps {
   icon: React.ReactNode;
   label: string;
   value: string;
-  style?: any;
-  dynamicStyles: any;
+  style?: StyleProp<ViewStyle>;
+  dynamicStyles: ReturnType<typeof getStyles>;
 }
 
 const StatPill: React.FC<WeatherStatProps> = ({ icon, label, value, style, dynamicStyles }) => (

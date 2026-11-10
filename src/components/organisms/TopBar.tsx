@@ -2,10 +2,13 @@ import React from 'react';
 import { View, StyleSheet, TouchableOpacity, LayoutChangeEvent } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 import { Avatar } from '../atoms/Avatar';
 import { Icon } from '../atoms/Icon';
 import { useNavigation } from '@react-navigation/native';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { RootTabParamList } from '../../navigation/types';
 import { TelemetryStatus } from '../molecules/TelemetryStatus';
 
 interface TopBarProps {
@@ -13,7 +16,7 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({ onHeightChange }) => {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { theme, isDark, toggleTheme } = useTheme();
   const insets = useSafeAreaInsets();
   const dynamicStyles = getStyles(theme);
@@ -61,7 +64,7 @@ export const TopBar: React.FC<TopBarProps> = ({ onHeightChange }) => {
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       position: 'absolute',

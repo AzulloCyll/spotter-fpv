@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 import { Icon } from '../atoms/Icon';
 import { Badge } from '../atoms/Badge';
@@ -70,7 +71,7 @@ export const FlightStatus: React.FC = () => {
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     wrapper: {
       paddingHorizontal: 8,

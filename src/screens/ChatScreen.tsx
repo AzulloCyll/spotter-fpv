@@ -8,6 +8,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import type { Theme } from '../theme';
 import { Typography } from '../components/atoms/Typography';
 import { IconButton } from '../components/atoms/IconButton';
 import { Input } from '../components/atoms/Input';
@@ -116,7 +117,7 @@ export default function ChatScreen() {
   );
 }
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,

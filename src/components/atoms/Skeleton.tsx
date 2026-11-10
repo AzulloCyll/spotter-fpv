@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Animated, DimensionValue } from 'react-native';
+import { Animated, DimensionValue, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 
 interface SkeletonProps {
@@ -7,7 +7,7 @@ interface SkeletonProps {
   height?: DimensionValue;
   borderRadius?: number;
   circle?: boolean;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const Skeleton: React.FC<SkeletonProps> = ({

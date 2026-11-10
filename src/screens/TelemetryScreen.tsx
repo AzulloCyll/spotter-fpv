@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import type { Theme } from '../theme';
 import { Typography } from '../components/atoms/Typography';
 import { Badge } from '../components/atoms/Badge';
 import { DemoBadge } from '../components/atoms/DemoBadge';
@@ -60,7 +61,7 @@ export default function TelemetryScreen() {
 
               <View style={{ paddingHorizontal: 15 }}>
                 <FlightStatus />
-                <QuickNavigation onNavigate={(screen) => navigation.navigate(screen as any)} />
+                <QuickNavigation onNavigate={(screen) => navigation.navigate(screen)} />
               </View>
               <View style={{ height: 60 }} />
             </ScrollView>
@@ -222,7 +223,7 @@ export default function TelemetryScreen() {
   );
 }
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,

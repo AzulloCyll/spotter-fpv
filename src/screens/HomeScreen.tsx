@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import type { Theme } from '../theme';
 import { DashboardSidebar } from '../components/organisms/DashboardSidebar';
 import { FeaturedSpot } from '../components/organisms/FeaturedSpot';
 import { PilotActivity } from '../components/organisms/PilotActivity';
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     safeArea: {
       flex: 1,
