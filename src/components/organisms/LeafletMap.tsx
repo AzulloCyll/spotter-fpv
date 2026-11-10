@@ -1,351 +1,50 @@
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-  useImperativeHandle,
-  forwardRef,
-} from 'react';
+import React, { useRef, forwardRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
-import { Spot } from '../../data/mockSpots';
+
+import type { MapCommand } from '../../utils/mapMessages';
 import {
-  OFM_TILE_URL,
-  WEATHER_API_WIND_URL,
-  RAINVIEWER_INDEX_URL,
-} from '../../constants/mapStyles';
-import { parseMapMessage } from '../../utils/mapMessages';
+  useLeafletMapBridge,
+  type LeafletMapProps,
+  type LeafletMapRef,
+} from './useLeafletMapBridge';
 
-export interface LeafletMapRef {
-  animateToByBounds: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => void;
-  animateTo: (lat: number, lng: number, zoom?: number) => void;
-}
+export type { LeafletMapProps, LeafletMapRef } from './useLeafletMapBridge';
 
-interface LeafletMapProps {
-  initialRegion: {
-    latitude: number;
-    longitude: number;
-    latitudeDelta: number;
-    longitudeDelta: number;
+// Native map: the shared Leaflet page (leafletMapHtml.ts) in react-native-webview.
+// The web build uses LeafletMap.web.tsx, which renders the same page in an iframe.
+export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>((props, ref) => {
+  const webViewRef = useRef<WebView>(null);
+
+  // A command is handed to the page's window.mapCommand. JSON is a valid JS literal;
+  // if the page is still loading, window.mapCommand is missing and this is a no-op.
+  const send = (command: MapCommand) => {
+    webViewRef.current?.injectJavaScript(
+      `if (window.mapCommand) window.mapCommand(${JSON.stringify(command)}); true;`,
+    );
   };
-  spots: Spot[];
-  activeStyleId: string;
-  showOFM: boolean;
-  showRain: boolean;
-  showWind: boolean;
-  isDark: boolean;
-  onMarkerPress: (spot: Spot) => void;
-  onMapMove?: (center: { lat: number; lng: number }, zoom: number) => void;
-}
 
-export const LeafletMap = forwardRef<LeafletMapRef, LeafletMapProps>(
-  (
-    {
-      initialRegion,
-      spots,
-      activeStyleId,
-      showOFM,
-      showRain,
-      showWind,
-      isDark,
-      onMarkerPress,
-      onMapMove,
-    },
-    ref,
-  ) => {
-    const webViewRef = useRef<WebView>(null);
+  const { html, onPageLoad, handleMessage } = useLeafletMapBridge(props, ref, send);
+  const { isDark } = props;
 
-    // The WebView is built once around the first center; later changes of
-    // initialRegion (the user's location arriving) are applied as a move, not a reload.
-    const [initialCenter] = useState(() => ({
-      latitude: initialRegion.latitude,
-      longitude: initialRegion.longitude,
-    }));
-    // Latest location target, applied again on every WebView load (the first one,
-    // and a reload after a dark mode change).
-    const userTargetRef = useRef<{ lat: number; lng: number } | null>(null);
-
-    // window.mapTouched is set inside the WebView by the pilot's gestures and by any
-    // explicit move (animateTo*); once set, the location handoff leaves the view alone.
-    useImperativeHandle(ref, () => ({
-      animateToByBounds: (sw: { lat: number; lng: number }, ne: { lat: number; lng: number }) => {
-        const js = `if (window.map) { window.mapTouched = true; map.fitBounds([[${sw.lat}, ${sw.lng}], [${ne.lat}, ${ne.lng}]]); }`;
-        webViewRef.current?.injectJavaScript(js);
-      },
-      animateTo: (lat: number, lng: number, zoom?: number) => {
-        const js = `if (window.map) { window.mapTouched = true; map.setView([${lat}, ${lng}], ${zoom || 15}); }`;
-        webViewRef.current?.injectJavaScript(js);
-      },
-    }));
-
-    const moveToUserTarget = () => {
-      const target = userTargetRef.current;
-      if (!target) return;
-      const js = `if (window.map && !window.mapTouched) map.setView([${target.lat}, ${target.lng}], 13);`;
-      webViewRef.current?.injectJavaScript(js);
-    };
-
-    useEffect(() => {
-      if (
-        initialRegion.latitude === initialCenter.latitude &&
-        initialRegion.longitude === initialCenter.longitude
-      ) {
-        return;
-      }
-      userTargetRef.current = { lat: initialRegion.latitude, lng: initialRegion.longitude };
-      // If the WebView is still loading, window.map is missing and this is a no-op;
-      // onLoadEnd applies the stored target then.
-      moveToUserTarget();
-    }, [initialRegion.latitude, initialRegion.longitude]);
-
-    const leafletHtml = useMemo(
-      () => `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>Leaflet Map</title>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-      <!-- Pinned versions with Subresource Integrity (sha384 of the exact files). Changing a
-           version means recomputing its hash: curl -sL <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
-      <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
-      <script src="https://unpkg.com/lucide@1.70.0/dist/umd/lucide.min.js" integrity="sha384-64z4N640tVzhAicQVGzxE/48VNN9yS53U5kv9UH8ca7xGU4KSJ9zz8nD4C2BEerP" crossorigin="anonymous"></script>
-      <style>
-        body { margin: 0; padding: 0; overflow: hidden; background: ${isDark ? '#111827' : '#f3f4f6'}; }
-        #map { height: 100vh; width: 100vw; }
-        .leaflet-tile-container img { filter: brightness(1); will-change: transform; }
-        .leaflet-pane.leaflet-windPane-pane { mix-blend-mode: multiply; }
-        .leaflet-pane.leaflet-windPane-pane img { filter: contrast(2) saturate(3) !important; }
-        .leaflet-pane.leaflet-rainPane-pane { mix-blend-mode: multiply; }
-        .leaflet-pane.leaflet-rainPane-pane img { filter: contrast(2) saturate(3) !important; }
-        .leaflet-tile { outline: 1px solid transparent; }
-        .leaflet-container { background: ${isDark ? '#111827' : '#f3f4f6'} !important; }
-        .custom-marker {
-          display: flex; align-items: center; justify-content: center;
-          border-radius: 50%; border-style: solid;
-          background: ${isDark ? '#1e293b' : '#ffffff'};
-          box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-        .custom-marker i { display: flex; align-items: center; justify-content: center; }
-      </style>
-    </head>
-    <body class="${isDark ? 'dark-mode' : ''}">
-      <div id="map"></div>
-      <script>
-        var map = L.map('map', {
-          zoomControl: false, attributionControl: false,
-          zoomSnap: 1, zoomDelta: 1, fadeAnimation: false,
-          markerZoomAnimation: true, inertia: true
-        }).setView([${initialCenter.latitude}, ${initialCenter.longitude}], 13);
-
-        window.map = map;
-
-        // The pilot's own gestures (pan, wheel/double-tap/pinch zoom) mark the map as touched.
-        window.mapTouched = false;
-        function markTouched() { window.mapTouched = true; }
-        map.on('dragstart', markTouched);
-        var mapContainer = map.getContainer();
-        mapContainer.addEventListener('wheel', markTouched, { passive: true });
-        mapContainer.addEventListener('dblclick', markTouched);
-        var lastTouchStart = 0;
-        mapContainer.addEventListener('touchstart', function(e) {
-          var now = Date.now();
-          // Pinch (more than one finger) or double-tap (two touches in quick succession).
-          if ((e.touches && e.touches.length > 1) || now - lastTouchStart < 350) markTouched();
-          lastTouchStart = now;
-        }, { passive: true });
-
-        // Custom panes for weather overlays – z-index above default overlayPane (400)
-        map.createPane('rainPane');
-        map.getPane('rainPane').style.zIndex = 640;
-        map.getPane('rainPane').style.pointerEvents = 'none';
-        map.createPane('windPane');
-        map.getPane('windPane').style.zIndex = 650;
-        map.getPane('windPane').style.pointerEvents = 'none';
-
-        var tileOptions = {
-          keepBuffer: 4, updateWhenZooming: true, updateWhenIdle: false,
-          noWrap: false, bounds: [[-90, -180], [90, 180]]
-        };
-
-
-        var baseLayers = {
-          'standard': L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', tileOptions),
-          'dark': L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', tileOptions),
-          'satellite': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', tileOptions),
-          'hybrid': L.layerGroup([
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', tileOptions),
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png', tileOptions)
-          ])
-        };
-
-        var currentStyleId = '${activeStyleId}';
-        var currentBaseLayer = baseLayers[currentStyleId] || baseLayers['standard'];
-        currentBaseLayer.addTo(map);
-
-        var overlays = {
-          ofm: L.tileLayer('${OFM_TILE_URL}', { opacity: 0.8, zIndex: 10, ...tileOptions }),
-          // Dociągana asynchronicznie - RainViewer podaje ścieżkę do najnowszej
-          // klatki radaru dopiero w odpowiedzi indeksu.
-          rain: null,
-          wind: L.tileLayer('${WEATHER_API_WIND_URL}', { opacity: 1.0, pane: 'windPane', ...tileOptions })
-        };
-        var wantRain = false;
-
-        // Fetched on every switch-on of the rain layer, so the pilot always gets the newest frame.
-        function loadRain() {
-          fetch('${RAINVIEWER_INDEX_URL}')
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-              var frames = (data.radar && data.radar.past) || [];
-              if (!frames.length) return;
-              var newest = frames[frames.length - 1];
-              if (overlays.rain && map.hasLayer(overlays.rain)) map.removeLayer(overlays.rain);
-              overlays.rain = L.tileLayer(
-                data.host + newest.path + '/256/{z}/{x}/{y}/2/1_1.png',
-                { opacity: 0.6, pane: 'rainPane', ...tileOptions }
-              );
-              if (wantRain) overlays.rain.addTo(map);
-            })
-            .catch(function() { /* brak radaru nie może przewrócić mapy */ });
-        }
-
-
-        var markers = {};
-
-        function getMarkerConfig(type) {
-          var config = { icon: 'map-pin', color: '#1e40af' };
-          switch(type) {
-            case 'bando': config = { icon: 'alert-triangle', color: '#ef4444' }; break;
-            case 'nature': config = { icon: 'tree-pine', color: '#22c55e' }; break;
-            case 'park': config = { icon: 'flag', color: '#f59e0b' }; break;
-            case 'urban': config = { icon: 'building-2', color: '#8b5cf6' }; break;
-          }
-          return config;
-        }
-
-        function updateMarkers(spots) {
-          Object.values(markers).forEach(m => map.removeLayer(m));
-          markers = {};
-          spots.forEach(spot => {
-            var config = getMarkerConfig(spot.type);
-            var size = 32;
-            var icon = L.divIcon({
-              className: 'custom-div-icon',
-              html: \`<div class="custom-marker" style="width: \${size}px; height: \${size}px; border-width: 2px; border-color: \${config.color}; color: \${config.color};">
-                        <i data-lucide="\${config.icon}" style="width: 18px; height: 18px;"></i>
-                      </div>\`,
-              iconSize: [size, size],
-              iconAnchor: [size/2, size/2]
-            });
-
-            var marker = L.marker([spot.coordinates.latitude, spot.coordinates.longitude], { icon: icon })
-              .addTo(map)
-              .on('click', function() {
-                window.ReactNativeWebView.postMessage(JSON.stringify({
-                  type: 'MARKER_PRESS',
-                  id: spot.id
-                }));
-              });
-            markers[spot.id] = marker;
-          });
-          if (window.lucide) lucide.createIcons();
-        }
-
-        function updateLayers(activeStyleId, showOFM, showRain, showWind) {
-          if (activeStyleId !== currentStyleId) {
-            map.removeLayer(currentBaseLayer);
-            currentStyleId = activeStyleId;
-            currentBaseLayer = baseLayers[activeStyleId] || baseLayers['standard'];
-            currentBaseLayer.addTo(map);
-          }
-          if (showOFM) { if (!map.hasLayer(overlays.ofm)) overlays.ofm.addTo(map); }
-          else { if (map.hasLayer(overlays.ofm)) map.removeLayer(overlays.ofm); }
-          if (showRain && !wantRain) loadRain();
-          wantRain = showRain;
-          if (overlays.rain) {
-            if (showRain) { if (!map.hasLayer(overlays.rain)) overlays.rain.addTo(map); }
-            else { if (map.hasLayer(overlays.rain)) map.removeLayer(overlays.rain); }
-          }
-          if (showWind) { if (!map.hasLayer(overlays.wind)) overlays.wind.addTo(map); }
-          else { if (map.hasLayer(overlays.wind)) map.removeLayer(overlays.wind); }
-        }
-
-
-        map.on('moveend', function() {
-          var center = map.getCenter();
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'MAP_MOVE',
-            payload: {
-              center: { lat: center.lat, lng: center.lng },
-              zoom: map.getZoom()
-            }
-          }));
-        });
-        window.rnUpdateMarkers = updateMarkers;
-        window.rnUpdateLayers = updateLayers;
-      </script>
-    </body>
-    </html>
-  `,
-      [isDark, initialCenter, OFM_TILE_URL, WEATHER_API_WIND_URL, RAINVIEWER_INDEX_URL],
-    );
-
-    const syncAll = () => {
-      moveToUserTarget();
-      const js = `
-            if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});
-            if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain}, ${showWind});
-        `;
-      webViewRef.current?.injectJavaScript(js);
-    };
-
-    useEffect(() => {
-      const js = `
-            if (window.rnUpdateLayers) window.rnUpdateLayers('${activeStyleId}', ${showOFM}, ${showRain}, ${showWind});
-            document.body.className = '${isDark ? 'dark-mode' : ''}';
-            document.body.style.background = '${isDark ? '#111827' : '#f3f4f6'}';
-        `;
-      webViewRef.current?.injectJavaScript(js);
-    }, [activeStyleId, showOFM, showRain, showWind, isDark]);
-
-    useEffect(() => {
-      const js = `if (window.rnUpdateMarkers) window.rnUpdateMarkers(${JSON.stringify(spots)});`;
-      webViewRef.current?.injectJavaScript(js);
-    }, [spots]);
-
-    const handleMessage = (event: WebViewMessageEvent) => {
-      // The page runs third-party scripts: validate every message, and resolve a pressed
-      // spot by id from the app's own list instead of trusting data from the page.
-      const message = parseMapMessage(event.nativeEvent.data);
-      if (!message) return;
-      if (message.type === 'MARKER_PRESS') {
-        const spot = spots.find((s) => s.id === message.id);
-        if (spot) onMarkerPress(spot);
-      } else if (onMapMove) {
-        onMapMove(message.center, message.zoom);
-      }
-    };
-
-    return (
-      <View style={styles.container}>
-        <WebView
-          ref={webViewRef}
-          originWhitelist={['https://*']}
-          source={{ html: leafletHtml, baseUrl: 'https://openflightmaps.org' }}
-          onMessage={handleMessage}
-          scrollEnabled={false}
-          style={styles.webview}
-          onLoadEnd={syncAll}
-          renderLoading={() => (
-            <View style={{ flex: 1, backgroundColor: isDark ? '#111827' : '#f3f4f6' }} />
-          )}
-          startInLoadingState
-        />
-      </View>
-    );
-  },
-);
+  return (
+    <View style={styles.container}>
+      <WebView
+        ref={webViewRef}
+        originWhitelist={['https://*']}
+        source={{ html, baseUrl: 'https://openflightmaps.org' }}
+        onMessage={(event: WebViewMessageEvent) => handleMessage(event.nativeEvent.data)}
+        scrollEnabled={false}
+        style={styles.webview}
+        onLoadEnd={onPageLoad}
+        renderLoading={() => (
+          <View style={{ flex: 1, backgroundColor: isDark ? '#111827' : '#f3f4f6' }} />
+        )}
+        startInLoadingState
+      />
+    </View>
+  );
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1 },

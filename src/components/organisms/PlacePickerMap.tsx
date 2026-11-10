@@ -9,7 +9,7 @@ export interface PlacePickerMapProps {
   onCenterChange: (center: Coordinates) => void;
 }
 
-// Native map of the place picker. The web build uses PlacePickerMap.web.tsx (pigeon-maps).
+// Map of the place picker on every platform (LeafletMap picks the WebView or the iframe).
 export const PlacePickerMap: React.FC<PlacePickerMapProps> = ({
   initialCenter,
   onCenterChange,

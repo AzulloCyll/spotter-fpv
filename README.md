@@ -59,4 +59,4 @@ src/
   data/          spoty demonstracyjne
 ```
 
-Mapa istnieje w dwóch wariantach: `MapScreen.tsx` rysuje Leafletem w WebView (natywnie), `MapScreen.web.tsx` używa `pigeon-maps` (przeglądarka). Bundler wybiera plik po rozszerzeniu — zmiana zachowania mapy wymaga poprawki w obu.
+Mapa ma jedną implementację na wszystkie platformy: stronę Leafleta budowaną w `leafletMapHtml.ts`. Natywnie `LeafletMap.tsx` pokazuje ją w WebView, w przeglądarce `LeafletMap.web.tsx` w ramce `<iframe>` (bundler wybiera plik po rozszerzeniu). Logika mapy (warstwy, pinezki, komunikaty) jest wspólna w `useLeafletMapBridge.ts`, więc zmiana zachowania mapy to jedna poprawka.
