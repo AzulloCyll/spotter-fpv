@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { parseMapMessage } from './mapMessages';
+import { isFromMapFrame, parseMapMessage, toMarkerData } from './mapMessages';
 
 test('accepts a marker press with an id', () => {
   assert.deepEqual(parseMapMessage('{"type":"MARKER_PRESS","id":"s1"}'), {
@@ -47,4 +47,29 @@ test('rejects unknown types, console logs, junk and non-strings', () => {
   assert.equal(parseMapMessage('null'), null);
   assert.equal(parseMapMessage('42'), null);
   assert.equal(parseMapMessage(undefined), null);
+});
+
+test('takes a message only from the map iframe with the opaque origin', () => {
+  const frame = {};
+  assert.equal(isFromMapFrame({ source: frame, origin: 'null' }, frame), true);
+  // Another window, or the right window with a real origin (not sandboxed).
+  assert.equal(isFromMapFrame({ source: {}, origin: 'null' }, frame), false);
+  assert.equal(isFromMapFrame({ source: frame, origin: 'https://evil.example' }, frame), false);
+  // No iframe yet: nothing is trusted, also not a message without a source.
+  assert.equal(isFromMapFrame({ source: null, origin: 'null' }, null), false);
+  assert.equal(isFromMapFrame({ source: undefined, origin: 'null' }, undefined), false);
+});
+
+test('marker data carries only id, position and type', () => {
+  const spot = {
+    id: 's1',
+    name: 'Hidden name',
+    description: 'Hidden note',
+    type: 'bando',
+    difficulty: 'easy',
+    coordinates: { latitude: 52.1, longitude: 21.2 },
+    rating: 4,
+    images: ['file:///photo.jpg'],
+  };
+  assert.deepEqual(toMarkerData([spot]), [{ id: 's1', lat: 52.1, lng: 21.2, type: 'bando' }]);
 });

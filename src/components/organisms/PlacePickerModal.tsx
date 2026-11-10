@@ -19,7 +19,7 @@ interface PlacePickerModalProps {
 
 /**
  * Full-screen map with a fixed crosshair: the pilot moves the map under it and confirms
- * the centre. The map itself is platform specific (PlacePickerMap / PlacePickerMap.web).
+ * the centre. The map is the shared Leaflet map (PlacePickerMap → LeafletMap).
  */
 export const PlacePickerModal: React.FC<PlacePickerModalProps> = ({
   visible,

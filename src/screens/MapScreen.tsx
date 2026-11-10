@@ -83,7 +83,7 @@ export default function MapScreen({ navigation, route }: RootTabScreenProps<'Map
     }
   }, [route.params?.openList]);
 
-  // Centre of the visible map; a new spot is placed there (as on web).
+  // Centre of the visible map; a new spot is placed there.
   const mapCenterRef = useRef<Coordinates>(DEFAULT_MAP_CENTER);
   // True once the map reported a move; from then on only MAP_MOVE sets the centre.
   const mapMovedRef = useRef(false);

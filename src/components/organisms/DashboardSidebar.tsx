@@ -43,7 +43,11 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     <View
       style={[
         dynamicStyles.dashboardColumn,
-        isTabletLandscape ? { width: '30%', maxWidth: 400, flex: 0 } : { flex: 1 },
+        // Not `flex: 0`: on web it becomes `flex: 0 1 0%`, which ignores the width and
+        // collapses the column; grow/shrink 0 keeps the width on every platform.
+        isTabletLandscape
+          ? { width: '30%', maxWidth: 400, flexGrow: 0, flexShrink: 0 }
+          : { flex: 1 },
         isDark && {
           backgroundColor: theme.colors.background,
           borderRightColor: theme.colors.border,
