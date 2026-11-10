@@ -25,12 +25,15 @@ import {
 } from '../constants/mockData';
 
 import { RootTabParamList } from '../navigation/types';
-import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { BottomTabNavigationProp, useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 
 export default function TelemetryScreen() {
   const navigation = useNavigation<BottomTabNavigationProp<RootTabParamList>>();
   const { theme } = useTheme();
   const { isTabletLandscape } = useIsTablet();
+  // Tab bar floats over the content; on tablet landscape it is hidden.
+  const tabBarHeight = useBottomTabBarHeight();
+  const bottomSpacing = isTabletLandscape ? 40 : tabBarHeight + 20;
   const dynamicStyles = getStyles(theme);
 
   // Mock Global State
@@ -211,7 +214,7 @@ export default function TelemetryScreen() {
               </View>
             </TouchableOpacity>
 
-            <View style={{ height: 40 }} />
+            <View style={{ height: bottomSpacing }} />
           </ScrollView>
         </View>
       </View>
