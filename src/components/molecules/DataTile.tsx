@@ -4,6 +4,8 @@ import { useTheme } from '../../theme/ThemeContext';
 import type { Theme } from '../../theme';
 import { Typography } from '../atoms/Typography';
 
+type IconInjectedProps = { size?: number; color?: string; strokeWidth?: number };
+
 interface DataTileProps {
   icon: React.ReactNode;
   label: string;
@@ -29,7 +31,7 @@ export const DataTile: React.FC<DataTileProps> = ({
   return (
     <View style={[dynamicStyles.container, style]}>
       <View style={dynamicStyles.iconContainer}>
-        {React.cloneElement(icon as React.ReactElement<any>, {
+        {React.cloneElement(icon as React.ReactElement<IconInjectedProps>, {
           size: 32,
           color: isCritical ? theme.colors.error : theme.colors.primary,
           strokeWidth: 1.2,

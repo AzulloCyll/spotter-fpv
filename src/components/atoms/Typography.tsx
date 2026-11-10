@@ -27,7 +27,7 @@ export const Typography: React.FC<TypographyProps> = ({
   return (
     <Text
       style={[
-        typographyStyle as any,
+        typographyStyle,
         { color: textColor, textAlign: align },
         weight ? { fontWeight: weight } : null,
         lineHeight ? { lineHeight } : null,

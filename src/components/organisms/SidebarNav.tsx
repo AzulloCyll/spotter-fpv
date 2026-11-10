@@ -1,13 +1,13 @@
 import React from 'react';
 import { View, StyleSheet, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
-import { Icon } from '../atoms/Icon';
+import { Icon, IconName } from '../atoms/Icon';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
 import { RootTabParamList } from '../../navigation/types';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
-const NAV_ITEMS: { name: keyof RootTabParamList; icon: any; label: string }[] = [
+const NAV_ITEMS: { name: keyof RootTabParamList; icon: IconName; label: string }[] = [
   { name: 'Start', icon: 'House' as const, label: 'Start' },
   { name: 'Mapa', icon: 'Map' as const, label: 'Mapa' },
   { name: 'Pogoda', icon: 'CloudSun' as const, label: 'Pogoda' },

@@ -7,6 +7,8 @@ import {
   Keyboard,
   Animated,
   TextInput,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import { useTheme } from '../../theme/ThemeContext';
 import type { Theme } from '../../theme';
@@ -49,7 +51,7 @@ interface SpotsSidebarPanelProps {
   onClose: () => void;
   spots: Spot[];
   onSpotSelect: (spot: Spot) => void;
-  style?: any;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const SpotsSidebarPanel: React.FC<SpotsSidebarPanelProps> = ({

@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, ScrollView, StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useTheme } from '../../theme/ThemeContext';
+import type { Theme } from '../../theme';
 import { TopBar } from './TopBar';
 import { FlightStatus } from './FlightStatus';
 import { QuickNavigation } from './QuickNavigation';
@@ -13,10 +14,19 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { RootTabParamList } from '../../navigation/types';
 
 interface DashboardSidebarProps {
-  navigation: any; // navigation.navigate(screen) still needs to be flexible or we cast it
+  // Only what the sidebar needs; method syntax keeps the typed tab navigator assignable.
+  navigation: {
+    navigate(
+      screen: keyof RootTabParamList,
+      params?: RootTabParamList[keyof RootTabParamList],
+    ): void;
+  };
   isTabletLandscape: boolean;
-  onNavigate?: (screen: keyof RootTabParamList, params?: any) => void;
-  style?: any;
+  onNavigate?: (
+    screen: keyof RootTabParamList,
+    params?: RootTabParamList[keyof RootTabParamList],
+  ) => void;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
@@ -31,7 +41,10 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   const dynamicStyles = getStyles(theme);
   const [topBarHeight, setTopBarHeight] = React.useState(insets.top + 78);
 
-  const handleNavigate = (screen: keyof RootTabParamList, params?: any) => {
+  const handleNavigate = (
+    screen: keyof RootTabParamList,
+    params?: RootTabParamList[keyof RootTabParamList],
+  ) => {
     if (onNavigate) {
       onNavigate(screen, params);
     } else {
@@ -152,7 +165,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   );
 };
 
-const getStyles = (theme: any) =>
+const getStyles = (theme: Theme) =>
   StyleSheet.create({
     container: {
       flex: 1,
