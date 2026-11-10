@@ -291,7 +291,7 @@ export default function WeatherScreen() {
             style={dynamicStyles.content}
             contentContainerStyle={[
               dynamicStyles.scrollContent,
-              { paddingBottom: tabBarHeight + 20 },
+              { paddingBottom: isTabletLandscape ? 20 : tabBarHeight + 20 },
             ]}
             showsVerticalScrollIndicator={false}
             bounces={false}
